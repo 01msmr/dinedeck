@@ -71,6 +71,7 @@ export function createLogic(db, { admins = [] } = {}) {
     if (r.ordered_at && body.ordered !== false && (body.buyer !== undefined || body.paypal !== undefined || body.delivery_fee !== undefined)) throw new HttpError(400, 'Erst „Bestellt“ zurücknehmen');
     let orderedAt = r.ordered_at ?? null;
     let etaAt = r.eta_at ?? null;
+    let etaMin = r.eta_minutes ?? null; // zuletzt eingegebene Lieferzeit (Minuten)
     let deliveredAt = r.delivered_at ?? null;
     let expires = r.expires_at;
     const now = Date.now();
@@ -81,6 +82,7 @@ export function createLogic(db, { admins = [] } = {}) {
       } else {
         orderedAt = null;
         etaAt = null;
+        etaMin = null;
         deliveredAt = null;
       }
     }
@@ -93,9 +95,10 @@ export function createLogic(db, { admins = [] } = {}) {
       if (!Number.isFinite(m) || m < 1 || m > LIMITS.etaMaxMinutes) throw new HttpError(400, 'Lieferzeit 1–240 Minuten');
       if (!orderedAt) throw new HttpError(400, 'Erst als bestellt melden');
       etaAt = now + Math.round(m) * 60000;
+      etaMin = Math.round(m);
     }
     q.roundUpdate.run(buyer, paypal, fee, r.id);
-    q.roundOrder.run(orderedAt, etaAt, expires, deliveredAt, r.id);
+    q.roundOrder.run(orderedAt, etaAt, etaMin, expires, deliveredAt, r.id);
     if (body.approve) {
       if (r.ordered_at) throw new HttpError(400, 'Bestellt – keine neuen User mehr');
       q.partApprove.run(r.id, cleanUser(body.approve));

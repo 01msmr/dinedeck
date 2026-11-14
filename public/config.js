@@ -57,7 +57,8 @@ export const TIMING = {
   undoMs: 15 * 1000, // so lange bleibt „Rückgängig“ nach dem Löschen einer Zeile
   refreshDebounceMs: 150,
   tickMs: 1000,
-  lowTimeMs: 2 * 60 * 1000, // darunter wird der Countdown rot
+  lowTimeMs: 5 * 60 * 1000, // darunter wird der Countdown rot
+  blinkTimeMs: 10 * 60 * 1000, // von hier bis lowTimeMs pulsiert der Hintergrund der Restzeit in der Ablaufzeile
   editRevertMs: 30 * 1000, // ungespeicherte Änderung im Bestellkopf wird danach zurückgenommen
   editWarnMs: 10 * 1000, // so lange läuft der Warnbalken rückwärts
   barTickMs: 100,

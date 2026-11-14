@@ -139,6 +139,28 @@ function extArrow() {
   svg.append(path);
   return svg;
 }
+// Schloss „jetzt schließen“, in Schriftgröße (1em) und Textfarbe
+export function lockIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'lock-icon' })) svg.setAttribute(k, v);
+  const body = document.createElementNS(ns, 'rect');
+  for (const [k, v] of Object.entries({ x: '5', y: '11', width: '14', height: '9', rx: '2' })) body.setAttribute(k, v);
+  const shackle = document.createElementNS(ns, 'path');
+  shackle.setAttribute('d', 'M8 11V8a4 4 0 0 1 8 0v3');
+  svg.append(body, shackle);
+  return svg;
+}
+// Pfeil „wieder öffnen“ (zurück), in Schriftgröße (1em) und Textfarbe
+export function undoIcon() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'lock-icon' })) svg.setAttribute(k, v);
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3');
+  svg.append(path);
+  return svg;
+}
 export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   const tel = telHref(r.phone);
   const web = webHref(r.url);

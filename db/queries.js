@@ -22,7 +22,7 @@ export function prepareQueries(db) {
     knownUsers: db.prepare('SELECT user AS name FROM participants UNION SELECT user FROM items UNION SELECT creator FROM rounds UNION SELECT buyer FROM rounds'),
     roundList: db.prepare('SELECT id FROM rounds ORDER BY created_at DESC, id DESC LIMIT ?'),
     roundsOfRestaurant: db.prepare('SELECT created_at, expires_at, ordered_at FROM rounds WHERE restaurant_id = ?'),
-    roundOrder: db.prepare('UPDATE rounds SET ordered_at = ?, eta_at = ?, expires_at = ?, delivered_at = ? WHERE id = ?'),
+    roundOrder: db.prepare('UPDATE rounds SET ordered_at = ?, eta_at = ?, eta_minutes = ?, expires_at = ?, delivered_at = ? WHERE id = ?'),
     roundUpdate: db.prepare('UPDATE rounds SET buyer = ?, paypal = ?, delivery_fee_cents = ? WHERE id = ?'),
     roundCwr: db.prepare('UPDATE rounds SET close_when_ready = ? WHERE id = ?'),
     roundExpiry: db.prepare('UPDATE rounds SET expires_at = ? WHERE id = ?'),

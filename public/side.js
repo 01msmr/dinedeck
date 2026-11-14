@@ -69,6 +69,13 @@ export function tickCountdowns() {
     el.textContent = left > 0 ? fmtRemaining(left) : t('abgelaufen');
     el.className = 'badge ' + (left > 0 ? (left < TIMING.lowTimeMs ? 'off' : 'on') : 'mid');
   }
+  for (const el of document.querySelectorAll('[data-until]')) { // Restzeit in der Ablaufzeile: nur Text, kein Badge
+    const left = Number(el.dataset.until) - Date.now();
+    el.textContent = left > 0 ? fmtRemaining(left) : t('abgelaufen');
+    el.classList.toggle('low', left < TIMING.lowTimeMs);
+    el.classList.toggle('blink', left > TIMING.lowTimeMs && left <= TIMING.blinkTimeMs); // 10–5 min: Hintergrund pulsiert grau
+    el.classList.toggle('glow', left > 0 && left <= TIMING.lowTimeMs); // 5–0 min: rot mit pulsierendem Schein
+  }
 }
 setInterval(tickCountdowns, TIMING.tickMs);
 

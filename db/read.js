@@ -91,6 +91,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isB
       close_when_ready: !!r.close_when_ready,
       ordered_at: r.ordered_at ?? null,
       eta_at: r.eta_at ?? null,
+      eta_minutes: r.eta_minutes ?? null,
       delivered_at: r.delivered_at ?? null,
       pending: r.close_when_ready && viewer && canManage(r, viewer) ? q.partPending.all(r.id).map((x) => x.user) : [],
       viewer_pending: !!(r.close_when_ready && viewer && !canManage(r, viewer) && q.partGet.get(r.id, viewer)?.approved === 0),

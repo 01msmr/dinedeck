@@ -19,8 +19,27 @@ function articleCell(g) {
   return [h('strong', null, g.article), unit, h('span', { class: 'who-line' }, h('span', { class: 'muted' }, `${variant} · ${who}`))];
 }
 
-export function orderContent(d) {
+// „Text kopieren“ und „Anrufen“ stehen im Kopf beim Restaurant (immer, für alle)
+export function orderActions(d) {
   const tel = telHref(d.restaurant.phone);
+  return [
+    h('button', {
+      class: 'link-pill', type: 'button',
+      onclick: async (e) => {
+        const btn = e.currentTarget; // nach dem await ist currentTarget leer
+        try {
+          await navigator.clipboard.writeText(orderText(d));
+          flashButton(btn, `✓ ${t('Kopiert')}`);
+        } catch {
+          flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
+        }
+      },
+    }, t('Text kopieren')),
+    tel ? h('a', { class: 'link-pill', href: tel }, t('Anrufen')) : null,
+  ].filter(Boolean);
+}
+
+export function orderContent(d) {
   const placed = !!d.ordered_at; // nach „Bestellt“ zählt nur noch die Liste: Kopf, Hinweis und Knöpfe stehen oben bzw. sind erledigt
   return [
     placed ? null : h('h3', { class: 'flush' }, t('Bestellliste')), // Restaurant, Besteller und Kontakt stehen schon im Kopf
@@ -55,27 +74,6 @@ export function orderContent(d) {
     d.users.some((u) => u.excluded)
       ? h('p', { class: 'muted mt-3' }, t('{n} nicht ready – nicht enthalten: {names}', { n: d.users.filter((u) => u.excluded).length, names: d.users.filter((u) => u.excluded).map((u) => u.user).join(', ') }))
       : null,
-    placed ? null : h('div', { class: 'notice mt-4' }, h('strong', null, t('Preise sind nicht geprüft'))),
-    placed ? null : h(
-      'div',
-      { class: 'row mt-4' },
-      h(
-        'button',
-        {
-          class: 'btn small',
-          onclick: async (e) => {
-            const btn = e.currentTarget; // nach dem await ist currentTarget leer
-            try {
-              await navigator.clipboard.writeText(orderText(d));
-              flashButton(btn, `✓ ${t('Kopiert')}`);
-            } catch {
-              flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
-            }
-          },
-        },
-        t('Text kopieren')
-      ),
-      tel ? h('a', { class: 'btn small no-underline', href: tel }, t('Anrufen')) : null
-    )
+    placed ? null : h('div', { class: 'notice mt-4' }, h('strong', null, t('Preise sind nicht geprüft')))
   ];
 }

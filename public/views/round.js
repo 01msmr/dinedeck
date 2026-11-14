@@ -2,7 +2,7 @@
 import { t, lang } from '/i18n.js';
 import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
 import { isCurrentRound } from '/group.js';
-import { orderContent } from '/views/round/order.js';
+import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
 import { payRows } from '/views/round/pay.js';
@@ -29,8 +29,7 @@ export function roundView(id) {
   const head = h('section', { class: 'card' });
   const timerNum = h('div', { class: 'timer' }, '--:--');
   const timerLabel = h('div', { class: 'muted' });
-  const timerBtns = h('div', { class: 'row' });
-  const timerCard = h('section', { class: 'card row between fold-item' }, h('div', null, timerLabel, timerNum), timerBtns);
+  const timerCard = h('section', { class: 'card fold-item' }, h('div', null, timerLabel, timerNum));
   // Status-Zeilen (nicht ready, unbezahlt, Freigaben) als markante Leiste unter dem Kopf
   const banners = h('div', { class: 'status-lines' });
   document.getElementById('statusbar').replaceChildren(banners);
@@ -149,14 +148,27 @@ export function roundView(id) {
     await act(() => api('POST', `/rounds/${id}/${path}`, body));
     nav.current.refresh();
   };
-  const status = createStatus({ banners, toggle, decide });
+  const patchRound = async (body) => { // Schritt vor/zurück oder Lieferzeit setzen
+    await act(() => api('PATCH', `/rounds/${id}`, body));
+    nav.current.refresh();
+  };
+  const advance = (key) => { // nächster Schritt: schließen, bestellt (mit vorbelegter Lieferzeit) bzw. geliefert
+    if (key === 'close') return timeAction('lock');
+    const eta = inEta.value === '' ? {} : { eta_minutes: Number(inEta.value) };
+    return patchRound(key === 'ordered' ? { ordered: true, ...eta } : { delivered: true });
+  };
+  // Lieferzeit: erst nach „Bestellt“ in der Ablaufzeile vor „geliefert“; Eingabe wird sofort übernommen
+  const etaField = h('label', { class: 'step-eta' }, t('Lieferzeit (min)'), inEta);
+  inEta.addEventListener('change', () => { if (d?.ordered_at && !d.delivered_at && inEta.value !== '') patchRound({ eta_minutes: Number(inEta.value) }); });
+  inEta.addEventListener('keydown', (e) => { if (e.key === 'Enter') inEta.blur(); });
+  const status = createStatus({ banners, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
 
   const flagBadge = (u, flag) => flagBadgeOf(d, toggle, u, flag);
 
   // Dauerhaftes Formular (Besteller, PayPal, Lieferkosten): wird bei Live-Updates nicht neu gebaut; ungespeicherte Eingaben bleiben
   const eBuyer = h('input', { maxlength: LIMITS.userName });
   const ePaypal = h('input', { maxlength: LIMITS.paypal });
-  const eFee = h('input', { inputmode: 'decimal' });
+  const eFee = h('input', { inputmode: 'decimal', form: 'head-form' }); // steht oben neben der Adresse, gehört zum Formular
   const editInputs = [eBuyer, ePaypal, eFee];
   const saveBtn = h('button', { class: 'btn small', type: 'submit', disabled: true }, t('Speichern'));
   const editFill = h('i');
@@ -192,7 +204,9 @@ export function roundView(id) {
   }
   for (const i of editInputs) i.addEventListener('input', () => syncEdit(true));
   const headPick = h('nav', { class: 'head-pick' });
-  const headTop = h('div');
+  const addrEl = h('div', { class: 'muted fold-item' });
+  const feeLabel = h('label', { class: 'fee-field fold-item' }, t('Lieferkosten (€)'), eFee);
+  const headTop = h('div', { class: 'head-top' }, addrEl, feeLabel); // Adresse links, Lieferkosten rechts
   const headBand = h('div', { class: 'head-band' });
   headBand.addEventListener('click', (e) => {
     if (!d || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
@@ -202,6 +216,7 @@ export function roundView(id) {
   const headForm = h(
     'form',
     {
+      id: 'head-form',
       class: 'grid2 mt-4 fold-item',
       onsubmit: async (e) => {
         e.preventDefault();
@@ -215,9 +230,8 @@ export function roundView(id) {
     },
     h('label', null, t('Bestellt von'), eBuyer),
     h('label', null, 'PayPal', ePaypal),
-    h('label', null, t('Lieferkosten (€)'), eFee),
-    editBar,
-    h('div', { class: 'form-actions' }, saveBtn)
+    h('div', { class: 'form-actions inline' }, saveBtn), // Speichern am Ende der Zeile Besteller/PayPal
+    editBar
   );
   head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm), h('div', { class: 'head-side' }, timerCard, orderCard), payCard); // Bezahlen: unten, eigene Zeile, zu- und aufgeklappt gleich
 
@@ -239,13 +253,14 @@ export function roundView(id) {
     headBand.replaceChildren(
       h('button', { class: 'fold-toggle', type: 'button', 'aria-expanded': String(foldOpen), 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()),
       h('h2', { class: 'round-title' }, d.restaurant.name, d.locked ? h('span', { class: 'round-closed' }, t('Bestellung geschlossen')) : null, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
-      h('div', { class: 'head-contact' + (lc(me) === lc(d.buyer) ? '' : ' fold-item') }, contactLinks(d.restaurant, { linkPill: true })) // Kontakt zum Bestellen: beim Besteller immer sichtbar, sonst eingeklappt
+      h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );
-    headTop.replaceChildren(...(d.restaurant.address ? [h('div', { class: 'muted fold-item' }, d.restaurant.address)] : []));
+    addrEl.textContent = d.restaurant.address || '';
     head.classList.toggle('folded', !foldOpen);
     const manage = d.viewer.can_manage;
     headMeta.replaceChildren(...(manage || !d.delivery_fee_cents ? [] : [t('Lieferkosten: {fee}', { fee: eur(d.delivery_fee_cents) })]));
     headForm.classList.toggle('hidden', !manage);
+    feeLabel.classList.toggle('hidden', !manage);
     const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents)];
     saved = vals;
     editInputs.forEach((i, n) => {
@@ -266,27 +281,12 @@ export function roundView(id) {
       etaPrefilled = true;
       if (d.restaurant.delivery_minutes >= 1) inEta.value = d.restaurant.delivery_minutes;
     }
+    if (d.eta_minutes && document.activeElement !== inEta) inEta.value = d.eta_minutes; // gespeicherte Lieferzeit anzeigen (auch nach Neuladen)
     orderCard.classList.toggle('hidden', !ordered && !manage);
-    orderCard.classList.toggle('fold-item', !!d.delivered_at); // nach „geliefert“ bleibt nur „Bestellt zurücknehmen“: eingeklappt
-    const patch = (body) => act(() => api('PATCH', `/rounds/${id}`, body)).then(() => nav.current.refresh());
-    const eta = inEta.value === '' ? {} : { eta_minutes: Number(inEta.value) };
+    orderCard.classList.toggle('fold-item', !!d.delivered_at); // nach „geliefert“ bleibt nichts zu tun: eingeklappt
+    inEta.title = d.restaurant.delivery_count ? t('Ø {n} min bei diesem Restaurant', { n: d.restaurant.delivery_minutes }) : '';
     const kids = [];
     if (ordered && !d.delivered_at) kids.push(etaText);
-    if (manage) {
-      kids.push(
-        d.delivered_at ? null : h('label', { class: 'row muted' }, t('Lieferzeit (Minuten, geschätzt)'), inEta, d.restaurant.delivery_count ? h('span', null, t('Ø {n} min bei diesem Restaurant', { n: d.restaurant.delivery_minutes })) : null),
-        h(
-          'div',
-          { class: 'form-actions gap-3' },
-          !ordered && !d.locked ? h('span', { class: 'warn-text' }, t('Erst schließen, dann bestellen')) : null,
-          ordered ? h('button', { class: 'btn small ghost', type: 'button', onclick: () => patch({ ordered: false }) }, t('Bestellt zurücknehmen')) : null,
-          ordered && !d.delivered_at ? h('button', { class: 'btn small', type: 'button', onclick: () => patch({ delivered: true }) }, t('Geliefert')) : null,
-          ordered
-            ? d.delivered_at ? null : h('button', { class: 'btn small', type: 'button', onclick: () => patch(eta) }, t('Lieferzeit aktualisieren'))
-            : h('button', { class: 'btn small', type: 'button', disabled: !d.locked, onclick: () => patch({ ordered: true, ...eta }) }, t('Als bestellt melden'))
-        )
-      );
-    }
     orderCard.replaceChildren(...kids.filter(Boolean));
     if (wasOrdered === false && ordered) toast(d.eta_at ? t('✓ Bestellt – Lieferung ca. {time}', { time: fmtClock(d.eta_at) }) : t('✓ Bestellt'));
     wasOrdered = ordered;
@@ -303,24 +303,6 @@ export function roundView(id) {
 
   function renderTimerControls() {
     timerLabel.textContent = d.locked ? t('Bestellfrist abgelaufen – Bestellung geschlossen') : t('Bestellfrist');
-    const buttons = [];
-    if (d.viewer.can_manage) {
-      const ordered = !!d.ordered_at;
-      const reason = ordered ? t('Erst „Bestellt“ zurücknehmen') : d.locked ? t('Zum Verlängern erst wieder öffnen') : null;
-      if (reason) buttons.push(h('span', { class: 'warn-text w-full' }, reason));
-      buttons.push(h('button', { class: 'btn small', disabled: d.locked, onclick: () => timeAction('extend', DEFAULTS.extendMinutes) }, `+${DEFAULTS.extendMinutes} min`));
-      if (!d.locked) buttons.push(h('button', { class: 'btn small ghost', onclick: () => timeAction('lock') }, t('Jetzt schließen')));
-      else buttons.push(h('button', { class: 'btn small ghost', disabled: ordered, onclick: () => timeAction('reopen', DEFAULTS.extendMinutes) }, t('Wieder öffnen')));
-    }
-    if (d.viewer.can_manage) {
-      const cb = h('input', { type: 'checkbox', onchange: () => act(() => api('PATCH', `/rounds/${id}`, { close_when_ready: cb.checked })).then(() => nav.current.refresh()) });
-      cb.checked = d.close_when_ready;
-      cb.disabled = d.locked;
-      buttons.push(h('label', { class: 'row muted gap-2 w-full' }, cb, t('Schließen, wenn alle ready')));
-    } else if (d.close_when_ready && !d.locked) {
-      buttons.push(h('div', { class: 'muted' }, t('Schließt, sobald alle ready sind')));
-    }
-    timerBtns.replaceChildren(...buttons);
   }
   async function timeAction(action, minutes) {
     await act(() => api('POST', `/rounds/${id}/time`, { action, minutes }));

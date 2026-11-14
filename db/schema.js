@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   close_when_ready INTEGER NOT NULL DEFAULT 0,
   ordered_at INTEGER,
   eta_at INTEGER,
+  eta_minutes INTEGER,
   delivered_at INTEGER
 );
 CREATE TABLE IF NOT EXISTS participants (
@@ -64,6 +65,7 @@ export function openDb(file = ':memory:') {
   if (!rcols.includes('close_when_ready')) db.exec('ALTER TABLE rounds ADD COLUMN close_when_ready INTEGER NOT NULL DEFAULT 0');
   if (!rcols.includes('ordered_at')) db.exec('ALTER TABLE rounds ADD COLUMN ordered_at INTEGER');
   if (!rcols.includes('eta_at')) db.exec('ALTER TABLE rounds ADD COLUMN eta_at INTEGER');
+  if (!rcols.includes('eta_minutes')) db.exec('ALTER TABLE rounds ADD COLUMN eta_minutes INTEGER');
   if (!rcols.includes('delivered_at')) db.exec('ALTER TABLE rounds ADD COLUMN delivered_at INTEGER');
   const scols = db.prepare('PRAGMA table_info(restaurants)').all().map((c) => c.name);
   if (!scols.includes('address')) db.exec("ALTER TABLE restaurants ADD COLUMN address TEXT NOT NULL DEFAULT ''");

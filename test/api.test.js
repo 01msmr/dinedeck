@@ -709,3 +709,22 @@ test('Eigene Position, die nach dem Ändern einer anderen gleicht, wird zusammen
     await close();
   }
 });
+
+test('Lieferzeit: eingegebene Minuten werden gespeichert und wieder geliefert', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma', url: '', phone: '' }, paypal: 'alex', minutes: 20 })).body.id;
+    await call('POST', `/api/rounds/${id}/items`, 'alex', { article: 'Cola', price: '2,50', qty: 1 });
+    await call('POST', `/api/rounds/${id}/done`, 'alex', { value: true });
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).body.eta_minutes, null, 'vor Bestellt keine Lieferzeit');
+    assert.equal((await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true, eta_minutes: 40 })).status, 200);
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).body.eta_minutes, 40);
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { eta_minutes: 15 });
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).body.eta_minutes, 15, 'Änderung wird übernommen');
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: false });
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).body.eta_minutes, null, 'nach Zurücknehmen leer');
+  } finally {
+    await close();
+  }
+});
