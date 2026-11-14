@@ -621,9 +621,10 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
   .order-table tfoot tr { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
 }
 .round-main .order-table td.unit-col, .round-main .order-table td.unit-qty, .round-main .order-table .unit-inline { color: var(--pane-soft); }
-.order-table thead th:nth-child(3) { padding-left: 2rem; padding-right: 1.5rem; } /* Einzelpreis: eigene, abgesetzte Spalte (Anzahl + Preis) */
-.order-table td.unit-qty { padding-left: 2rem; padding-right: 0.15rem; }
-.order-table td.unit-col { padding-left: 0; padding-right: 1.5rem; }
+.order-table td.unit-qty, .order-table thead th.unit-q-head { padding-left: 2rem; padding-right: 0.6rem; } /* Anzahl: rechtsbündig, dicht am Preis */
+.order-table td.unit-col, .order-table thead th.unit-head { width: 1%; white-space: nowrap; padding-left: 0; padding-right: 1.5rem; } /* Preisspalte schrumpft auf den Inhalt */
+.order-table thead th.unit-head { position: relative; }
+.order-table .unit-head-lbl { position: absolute; right: 1.5rem; top: 0.375rem; } /* Überschrift ragt nach links, ohne die Spalte zu verbreitern */
 @media (max-width: 30em) { .order-table td.unit-col { padding: 0; } }
 .order-table tbody td:nth-child(5) { font-size: 1.0625rem; } /* Summen je Gericht */
 .order-table tfoot tr:not(:last-child) td { font-size: 1.125rem; font-weight: 400; } /* „Summe Artikel“, nicht fett */
