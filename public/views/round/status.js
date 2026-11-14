@@ -53,7 +53,10 @@ export function createStatus({ banners, toggle, decide }) {
     }
     if (flow) b.push(h('div', { class: 'status-flow' + (unpaid ? ' unpaid' : allPaid ? ' paid' : '') }, ...flow.flatMap((x, n) => (n ? [sep(), x] : [x]))));
     else if (d.ready.total) b.push(h('div', { class: 'banner bad' }, t('Noch nicht alle ready ({done}/{total}): {names}', { done: d.ready.done, total: d.ready.total, names: d.ready.not_ready.join(', ') })));
-    if (unpaid) b.push(h('div', { class: 'banner bad' }, t(d.debts.length === 1 ? '{n} hat noch nicht bezahlt: {names}' : '{n} haben noch nicht bezahlt: {names}', { n: d.debts.length, names: joinList(d.debts.map((x) => x.user), t('und')) })));
+    if (unpaid) {
+      const [before, after] = joinList(d.debts.map((x) => x.user), '\u0001').split('\u0001'); // nur das Wort „und“ in normaler Schrift
+      b.push(h('div', { class: 'banner bad' }, t('{n} unbezahlt:', { n: d.debts.length }), h('span', { class: 'banner-names' }, before, after === undefined ? null : [h('span', { class: 'und' }, t('und')), after])));
+    }
     if (d.ordered_at && d.debts.length) b.push(h('div', { class: 'status-debts' }, ...d.debts.map(debtRow)));
     else if (allPaid) b.push(h('div', { class: 'banner ok' }, t('✓ alles bezahlt')));
     for (const u of d.pending) {

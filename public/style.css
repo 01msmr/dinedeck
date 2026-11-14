@@ -642,3 +642,5 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .round-head { border: 0; } /* keine dünne Linie zwischen dem dicken Rand und dem dunklen Kopfbereich */
 .layout:has(#app.wide) .page { background: var(--surround-bg); min-height: 100lvh; } /* Fläche um den Inhalt reicht bis zum unteren Rand, kein weißer Streifen */
 .copy-btn.done { width: auto; padding: 0 0.75rem; white-space: nowrap; font-weight: 600; }
+.banner-names { margin-left: 0.75rem; }
+.banner-names .und { font-weight: 400; }
