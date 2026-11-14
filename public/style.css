@@ -41,7 +41,7 @@
   --tint-bg: light-dark(color-mix(in srgb, var(--accent) 55%, var(--black)), color-mix(in srgb, var(--accent) 40%, var(--white))); /* Namenspille, Link-Pillen */
   --tint-fg: light-dark(var(--white), var(--ink-dark));
   --head-bg: light-dark(var(--white), color-mix(in srgb, var(--black) 40%, var(--bg))); /* Bestellkopf */
-  --tab-bg: light-dark(color-mix(in srgb, var(--black) 5%, var(--surface)), color-mix(in srgb, var(--white) 13%, var(--bg))); /* inaktive Tabs */
+  --tab-bg: light-dark(color-mix(in srgb, var(--white) 55%, var(--surround-bg)), color-mix(in srgb, var(--white) 22%, var(--bg))); /* inaktive Tabs */
   --band-bg: light-dark(color-mix(in srgb, var(--black) 9%, var(--surface)), color-mix(in srgb, var(--white) 7%, var(--surface))); /* Kopfband der Nutzerkarten */
   --side-muted: color-mix(in srgb, var(--fg) 96%, var(--side-bg)); /* Nebentext in der Seitenleiste, mind. 4,5:1 */
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
@@ -49,7 +49,7 @@
   --head-band-bg: var(--fg); /* dunkler Kopfbereich der Bestellung */
   --head-band-fg: var(--bg);
   --stripe: color-mix(in srgb, var(--fg) 8%, transparent); /* Zebra-Zeilen */
-  --tab-fg: color-mix(in srgb, var(--fg) 90%, var(--tab-bg)); /* Beschriftung inaktiver Tabs */
+  --tab-fg: var(--fg); /* Beschriftung inaktiver Tabs */
   --surround-bg: light-dark(color-mix(in srgb, var(--accent) 12%, color-mix(in srgb, var(--black) 12%, var(--bg))), color-mix(in srgb, var(--white) 9%, var(--bg))); /* Fläche um den Inhalt der Bestellung: Mittelton */
   --pane-bg: light-dark(var(--white), color-mix(in srgb, var(--black) 40%, var(--bg))); /* Inhaltsbereich unter den Tabs: klar vom Seitengrund abgesetzt */
   --pane-muted: color-mix(in srgb, var(--fg) 82%, var(--pane-bg)); /* Nebentext im Inhaltsbereich */
@@ -601,3 +601,4 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .round-head.folded.has-pick > .pay { grid-column: 1 / -1; }
 .head-band .head-contact { margin-left: auto; }
 .head-band .head-contact .row { justify-content: flex-end; }
+.order-table thead th { border-bottom: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); padding-bottom: 0.5rem; }
