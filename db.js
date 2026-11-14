@@ -218,6 +218,7 @@ export function createLogic(db, { admins = [] } = {}) {
     if (!self && !isBuyer(r, user)) throw new HttpError(403, 'Bezahlt setzt nur der User selbst oder der Besteller');
     const value = body.value ? 1 : 0;
     if (flag === 'done' && !value && isLocked(r, Date.now())) throw new HttpError(423, 'Bestellung ist geschlossen');
+    if (flag === 'paid' && value && !q.partGet.get(r.id, target)?.done) throw new HttpError(400, 'Erst ready setzen, dann bezahlen');
     if (r.ordered_at && !q.partGet.get(r.id, target)?.approved) throw new HttpError(423, 'Bestellt – keine neuen User mehr');
     if (self) admit(r, target);
     q.partUpsert.run(r.id, target);

@@ -63,3 +63,20 @@ export function roundStage(r) {
   if (r.delivered) return 'geliefert';
   return r.ordered ? 'bestellt' : 'geschlossen';
 }
+
+/** Breite der Seitenleiste in rem aus einer Zeigerposition (px), begrenzt auf [minRem, maxRem]. */
+export function clampSideWidth(px, remPx, minRem, maxRem) {
+  return Math.min(maxRem, Math.max(minRem, px / remPx));
+}
+
+const nameKey = (x) => String(x ?? '').toLocaleLowerCase('de');
+
+/** Bestellte Runden früherer Tage, in denen `me` noch zahlen muss (und nicht selbst Besteller ist). */
+export function owedByMe(rounds, me, now, nightEndHour) {
+  return rounds.filter((r) => r.ordered && !isToday(r.created_at, now, nightEndHour) && nameKey(r.buyer) !== nameKey(me) && (r.debts_users ?? []).some((u) => nameKey(u) === nameKey(me)));
+}
+
+/** Bestellte Runden früherer Tage, bei denen `me` Besteller ist und noch Zahlungen offen sind. */
+export function owedToMe(rounds, me, now, nightEndHour) {
+  return rounds.filter((r) => r.ordered && !isToday(r.created_at, now, nightEndHour) && nameKey(r.buyer) === nameKey(me) && (r.debts_users ?? []).length > 0);
+}

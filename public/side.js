@@ -19,21 +19,19 @@ export async function loadSide() {
 }
 export function renderSide() {
   const hash = location.hash || '#/';
+  // Einheitlicher Eintrag: Name links, Stand als Pille rechts, darunter Zeit · Ersteller
+  const state = (r) => {
+    if (r.unpaid) return h('span', { class: 'badge off' }, eur(r.debts_total_cents));
+    if (!r.locked) return h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
+    const stage = roundStage(r);
+    return h('span', { class: 'badge ' + (stage === 'alles bezahlt' ? 'on' : 'mid') }, t(stage));
+  };
   const item = (r) =>
     h(
       'a',
       { class: 'side-item' + (hash === `#/r/${r.id}` ? ' active' : ''), href: `#/r/${r.id}` },
-      h('div', null, r.restaurant),
-      h(
-        'div',
-        { class: 'sub' },
-        h('span', null, `${fmtWhen(r.created_at)} · ${r.creator}`),
-        r.unpaid
-          ? h('span', { class: 'badge off' }, eur(r.debts_total_cents))
-          : r.locked
-            ? h('span', { class: roundStage(r) === 'alles bezahlt' ? 'badge on' : null }, t(roundStage(r)))
-            : h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…')
-      )
+      h('div', { class: 'side-head' }, h('span', { class: 'side-name' }, r.restaurant), state(r)),
+      h('div', { class: 'sub' }, `${fmtWhen(r.created_at)} · ${r.creator}`)
     );
   const group = (title, list) => (list.length ? [h('h4', null, title), ...list.map(item)] : []);
   const now = Date.now();
@@ -47,13 +45,13 @@ export function renderSide() {
       ? [
           h(
             'a',
-            { class: 'side-today side-today-link' + (today.some((r) => hash === `#/r/${r.id}`) ? ' active' : ''), href: '#/' },
+            { class: 'side-item side-today-link' + (today.some((r) => hash === `#/r/${r.id}`) ? ' active' : ''), href: '#/' },
             h('h4', null, t('Heute')),
             h('span', { class: 'muted' }, t('{n} Bestellungen', { n: today.length }))
           ),
         ]
       : today.length
-        ? [h('section', { class: 'side-today' + (today.some((r) => hash === `#/r/${r.id}`) ? ' active' : '') }, h('h4', null, t('Heute')), ...today.map(item))]
+        ? [h('section', { class: 'side-today' }, h('h4', null, t('Heute')), ...today.map(item))]
         : []),
     ...group(t('Unbezahlt'), rest.filter((r) => r.unpaid)),
     ...groupHistory(rest.filter((r) => r.locked && !r.unpaid && r.created_at >= since), now, LISTS.historyMonths).flatMap((g) => group(groupTitle(g), g.items)),

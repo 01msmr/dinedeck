@@ -12,6 +12,7 @@
 <body>
   <div class="layout">
     <aside id="side"></aside>
+    <div id="side-resize" role="separator" aria-orientation="vertical" aria-hidden="true"></div>
     <div class="page">
     <header class="top">
       <button id="menu" class="menu-btn" type="button" aria-expanded="false" aria-controls="side" data-i18n-title="Menü"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -31,11 +32,11 @@
           <button type="button" data-lang="en" title="English" aria-label="English">EN</button>
         </div>
         <div class="seg" role="group" data-cycle="theme" data-i18n-title="Farbe">
-          <button type="button" data-theme="mono" data-i18n-title="S/W"><i class="dot" style="--sw:linear-gradient(90deg,#121214 50%,#fff 50%)"></i></button>
-          <button type="button" data-theme="ozean" title="Ozean" aria-label="Ozean"><i class="dot" style="--sw:#1f5fa6"></i></button>
-          <button type="button" data-theme="gruen" data-i18n-title="Grün"><i class="dot" style="--sw:#23794d"></i></button>
-        <button type="button" data-theme="orange" data-i18n-title="Orange"><i class="dot" style="--sw:#e8590c"></i></button>
-        <button type="button" data-theme="mais" data-i18n-title="Mais"><i class="dot" style="--sw:#f2c230"></i></button>
+          <button type="button" data-theme="mono" data-i18n-title="S/W"><i class="dot" style="--sw:var(--swatch-mono)"></i></button>
+          <button type="button" data-theme="ozean" title="Ozean" aria-label="Ozean"><i class="dot" style="--sw:var(--swatch-ozean)"></i></button>
+          <button type="button" data-theme="gruen" data-i18n-title="Grün"><i class="dot" style="--sw:var(--swatch-gruen)"></i></button>
+        <button type="button" data-theme="orange" data-i18n-title="Orange"><i class="dot" style="--sw:var(--swatch-orange)"></i></button>
+        <button type="button" data-theme="mais" data-i18n-title="Mais"><i class="dot" style="--sw:var(--swatch-mais)"></i></button>
         </div>
       </div>
     </header>
@@ -45,6 +46,7 @@
   </div>
   <div id="scrim"></div>
   <div id="toast" role="status" aria-live="polite"></div>
+  <aside id="pay-notice" aria-live="polite"></aside>
   <script type="module" src="/i18n.js?v=__VERSION__"></script>
   <script type="module" src="/app.js?v=__VERSION__"></script>
 </body>

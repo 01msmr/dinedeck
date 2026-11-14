@@ -11,8 +11,9 @@ export function orderText(d) {
 
 export function orderContent(d) {
   const tel = telHref(d.restaurant.phone);
+  const placed = !!d.ordered_at; // nach „Bestellt“ zählt nur noch die Liste: Kopf, Hinweis und Knöpfe stehen oben bzw. sind erledigt
   return [
-    h('div', { class: 'order-head' },
+    placed ? null : h('div', { class: 'order-head' },
       h('h3', { class: 'flush' }, t('Sammelbestellung'), ' ', h('span', { class: 'plain' }, t('bei')), ` ${d.restaurant.name} `, h('span', { class: 'plain' }, t('durch')), ` ${d.buyer}`),
       contactLinks(d.restaurant, { pill: true })),
     d.groups.length
@@ -28,7 +29,7 @@ export function orderContent(d) {
                 'tr',
                 null,
                 h('td', { class: 'num qty-cell' }, `${g.qty}×`),
-                h('td', null, g.article, g.variant ? ` · ${g.variant}` : '', h('div', { class: 'muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')), g.price_differs ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
+                h('td', null, g.article, g.variant ? ` · ${g.variant}` : '', h('div', { class: 'muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
                 h('td', { class: 'num' }, g.qty > 1 ? eur(g.price_cents) : ''), // bei 1× wäre Einzel = Summe: nur rechts
                 h('td', { class: 'num' }, eur(g.sum_cents))
               )
@@ -43,8 +44,8 @@ export function orderContent(d) {
           )
         )
       : h('p', { class: 'muted' }, t('Noch keine Positionen.')),
-    h('div', { class: 'notice mt-4' }, h('strong', null, t('Preise sind Angaben der User und nicht geprüft. ')), t('Vor dem Bestellen mit der Karte abgleichen.')),
-    h(
+    placed ? null : h('div', { class: 'notice mt-4' }, h('strong', null, t('Preise sind nicht geprüft'))),
+    placed ? null : h(
       'div',
       { class: 'row mt-4' },
       h(

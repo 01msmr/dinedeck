@@ -136,8 +136,9 @@ export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   return h(
     'div',
     { class: 'row' },
+    linkPill ? h('strong', { class: 'contact-label' }, t('Bestellen:')) : null, // Kopf: „Bestellen: Telefon · Web“
     telEl,
-    web ? h('a', { class: pill ? 'link-pill' : linkPill ? 'link-pill colored' : null, title: pill || linkPill ? r.url : null, href: web, target: '_blank', rel: 'noopener noreferrer' }, ...(pill ? [] : [extArrow()]), '' + r.url.replace(/^https?:\/\//i, '')) : null
+    web ? h('a', { class: pill ? 'link-pill' : linkPill ? 'link-pill colored' : null, title: pill || linkPill ? r.url : null, href: web, target: '_blank', rel: 'noopener noreferrer' }, ...(pill ? [] : [extArrow()]), linkPill ? t('Web') : '' + r.url.replace(/^https?:\/\//i, '')) : null
   );
 }
 export { fmtRemaining } from '/format.js';

@@ -87,7 +87,10 @@ test('Unbezahlte Runde und Statistik', async () => {
     await call('POST', `/api/rounds/${id}/done`, 'bob', { value: true });
     await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
 
-    const list = (await call('GET', '/api/rounds', 'alex')).body;
+    let list = (await call('GET', '/api/rounds', 'alex')).body;
+    assert.equal(list[0].unpaid, false, 'unbezahlt erst nach „Bestellt“');
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
+    list = (await call('GET', '/api/rounds', 'alex')).body;
     assert.equal(list[0].unpaid, true);
     assert.equal(list[0].all_paid, false);
     assert.deepEqual(list[0].debts_users.sort(), ['anna', 'bob']);
@@ -467,6 +470,7 @@ test('„Bezahlt“ setzt nur der User selbst oder der Besteller – nicht Erste
     assert.equal((await paid('alex', 'anna')).status, 403, 'Ersteller (nicht Besteller) nicht');
     assert.equal((await paid('root', 'anna')).status, 403, 'Admin nicht');
     assert.equal((await paid('clara', 'anna')).status, 403, 'Fremde nicht');
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
     assert.equal((await paid('bob', 'anna')).status, 200, 'Besteller darf');
     assert.equal((await paid('anna', 'anna', false)).status, 200, 'User selbst darf');
     const d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
@@ -489,6 +493,7 @@ test('Ab „Bestellt“: keine Artikeländerung, keine neuen User, Frist nicht n
     await call('POST', `/api/rounds/${id}/items`, 'alex', { article: 'Pizza', price: '8' });
     const wait = await call('POST', `/api/rounds/${id}/items`, 'ben', { article: 'Wasser', price: '1' });
     assert.equal(wait.status, 403, 'ben wartet auf Freigabe');
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
     await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
     assert.equal((await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true })).status, 200);
 
@@ -576,6 +581,31 @@ test('FRAME_ANCESTORS erlaubt das Einbetten nur für die genannten Seiten', asyn
     const res = await fetch(`http://127.0.0.1:${server.address().port}/`);
     assert.equal(res.headers.get('x-frame-options'), null);
     assert.ok((res.headers.get('content-security-policy') ?? '').includes('frame-ancestors https://l.example.org'));
+    await res.arrayBuffer();
+  } finally {
+    await close();
+  }
+});
+
+test('Bezahlt erst nach ready', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma' } })).body.id;
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: 3, qty: 1 });
+    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'anna', { value: true })).status, 400, 'noch nicht ready');
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'anna', { value: true })).status, 200);
+  } finally {
+    await close();
+  }
+});
+
+test('FRAME_ANCESTORS=any erlaubt das Einbetten von jeder Seite', async () => {
+  const { server, close } = await boot({ frameAncestors: ['any'] });
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.address().port}/`);
+    assert.equal(res.headers.get('x-frame-options'), null);
+    assert.ok((res.headers.get('content-security-policy') ?? '').includes('frame-ancestors *'));
     await res.arrayBuffer();
   } finally {
     await close();

@@ -101,7 +101,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isB
       ready: { total: users.length, done: users.length - notReady.length, not_ready: notReady },
       debts,
       debts_total_cents: debts.reduce((a, d) => a + d.amount_cents, 0),
-      unpaid: locked && debts.length > 0,
+      unpaid: locked && !!r.ordered_at && debts.length > 0,
       viewer: viewer
         ? { user: viewer, can_manage: canManage(r, viewer), is_buyer: isBuyer(r, viewer), is_admin: isAdmin(viewer) }
         : { user: '', can_manage: false, is_buyer: false, is_admin: false },

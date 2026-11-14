@@ -22,7 +22,7 @@ function code(text) {
   const m = qrMatrix(text);
   const q = 2;
   const path = m.flatMap((row, y) => row.map((v, x) => (v ? `M${x + q} ${y + q}h1v1h-1z` : ''))).join('');
-  return svg('svg', { viewBox: `0 0 ${m.length + 2 * q} ${m.length + 2 * q}`, class: 'qr-big', role: 'img', 'aria-label': t('QR-Code zum Bezahlen'), 'shape-rendering': 'crispEdges' }, svg('rect', { width: m.length + 2 * q, height: m.length + 2 * q, fill: '#fff' }), svg('path', { d: path, fill: '#000' }));
+  return svg('svg', { viewBox: `0 0 ${m.length + 2 * q} ${m.length + 2 * q}`, class: 'qr-big', role: 'img', 'aria-label': t('QR-Code zum Bezahlen'), 'shape-rendering': 'crispEdges' }, svg('rect', { width: m.length + 2 * q, height: m.length + 2 * q, class: 'qr-bg' }), svg('path', { d: path, class: 'qr-fg' }));
 }
 
 export function qrIcon(text) {

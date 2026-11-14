@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, clampSideWidth, owedByMe, owedToMe } from '../public/format.js';
 import { isCurrentRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -97,4 +97,30 @@ test('roundStage: alles bezahlt vor geliefert vor bestellt vor geschlossen', () 
   assert.equal(roundStage({ locked: true, ordered: true }), 'bestellt');
   assert.equal(roundStage({ locked: true }), 'geschlossen');
   assert.equal(roundStage({ locked: false }), null);
+});
+
+test('clampSideWidth: Pixel in rem, begrenzt auf Min und Max', () => {
+  assert.equal(clampSideWidth(280, 16, 10, 30), 17.5);
+  assert.equal(clampSideWidth(40, 16, 10, 30), 10);
+  assert.equal(clampSideWidth(900, 16, 10, 30), 30);
+});
+
+const DAY = 86400000;
+const NOW = new Date(2026, 10, 14, 12, 0).getTime();
+const rounds = [
+  { id: 1, ordered: true, buyer: 'bob', created_at: NOW - DAY, debts_users: ['Anna', 'clara'] },
+  { id: 2, ordered: false, buyer: 'bob', created_at: NOW - DAY, debts_users: ['anna'] },
+  { id: 3, ordered: true, buyer: 'anna', created_at: NOW - DAY, debts_users: ['clara'] },
+  { id: 4, ordered: true, buyer: 'bob', created_at: NOW - 2 * 3600000, debts_users: ['anna'] },
+  { id: 5, ordered: true, buyer: 'bob', created_at: NOW - 3 * DAY, debts_users: [] },
+];
+
+test('owedByMe: bestellt, nicht heute, ich schulde und bin nicht Besteller', () => {
+  assert.deepEqual(owedByMe(rounds, 'anna', NOW, 4).map((r) => r.id), [1]);
+  assert.deepEqual(owedByMe(rounds, 'nobody', NOW, 4), []);
+});
+
+test('owedToMe: bestellt, nicht heute, ich bin Besteller und es ist etwas offen', () => {
+  assert.deepEqual(owedToMe(rounds, 'anna', NOW, 4).map((r) => r.id), [3]);
+  assert.deepEqual(owedToMe(rounds, 'bob', NOW, 4).map((r) => r.id), [1]);
 });

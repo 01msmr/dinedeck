@@ -29,7 +29,7 @@ export function prepareQueries(db) {
     partUpsert: db.prepare('INSERT OR IGNORE INTO participants (round_id, user) VALUES (?, ?)'),
     partAll: db.prepare('SELECT user, done, paid FROM participants WHERE round_id = ? AND approved = 1 ORDER BY rowid'),
     partPending: db.prepare('SELECT user FROM participants WHERE round_id = ? AND approved = 0 ORDER BY rowid'),
-    partGet: db.prepare('SELECT approved FROM participants WHERE round_id = ? AND user = ?'),
+    partGet: db.prepare('SELECT approved, done FROM participants WHERE round_id = ? AND user = ?'),
     partAskJoin: db.prepare('INSERT OR IGNORE INTO participants (round_id, user, approved) VALUES (?, ?, 0)'),
     partApprove: db.prepare('UPDATE participants SET approved = 1 WHERE round_id = ? AND user = ?'),
     partDrop: db.prepare('DELETE FROM participants WHERE round_id = ? AND user = ? AND approved = 0'),

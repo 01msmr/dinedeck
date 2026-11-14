@@ -5,6 +5,8 @@ import { LIMITS, TIMING } from '/config.js';
 import { app, h, me, setMe, nav, api, isGuest, homeName } from '/util.js';
 import { isCurrentRound } from '/group.js';
 import { loadSide } from '/side.js';
+import { showOpenPayments } from '/notice.js';
+import '/side-resize.js';
 import { homeView } from '/views/home.js';
 import { roundView } from '/views/round.js';
 import { statsView } from '/views/stats.js';
@@ -65,7 +67,7 @@ function askName(overlay = false) {
 
 whoBtn.addEventListener('click', async () => {
   if (whoWrap.querySelector('.name-pop')) return;
-  if (await askName(true)) route();
+  if (await askName(true)) { route(); showOpenPayments(); }
 });
 
 // ---------- Router ----------
@@ -142,3 +144,4 @@ document.addEventListener('keydown', (e) => e.key === 'Escape' && setNav(false))
 // ---------- Start ----------
 setMe(me, { guest: isGuest });
 route();
+showOpenPayments();

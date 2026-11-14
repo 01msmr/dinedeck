@@ -9,6 +9,17 @@ import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views
 import { payRows } from '/views/round/pay.js';
 import { app, eur, fmtWhen, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
 
+// Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
+function disclosureTriangle() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 14 14', class: 'tri', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+  const chevron = document.createElementNS(ns, 'path');
+  for (const [k, v] of Object.entries({ d: 'M4.5 2 9.5 7 4.5 12', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) chevron.setAttribute(k, v);
+  svg.append(chevron);
+  return svg;
+}
+
 export function roundView(id) {
   let d = null;
   let skew = 0;
@@ -20,7 +31,7 @@ export function roundView(id) {
   const timerNum = h('div', { class: 'timer' }, '--:--');
   const timerLabel = h('div', { class: 'muted' });
   const timerBtns = h('div', { class: 'row' });
-  const timerCard = h('section', { class: 'card row between' }, h('div', null, timerLabel, timerNum), timerBtns);
+  const timerCard = h('section', { class: 'card row between fold-item' }, h('div', null, timerLabel, timerNum), timerBtns);
   // Status-Zeilen (nicht ready, unbezahlt, Freigaben) als markante Leiste unter dem Kopf
   const banners = h('div', { class: 'status-lines' });
   document.getElementById('statusbar').replaceChildren(banners);
@@ -33,6 +44,7 @@ export function roundView(id) {
   const etaText = h('div', { class: 'semibold' });
   const orderCard = h('section', { class: 'card order-card hidden' });
   let wasOrdered = null;
+  let foldOpen = false; // ab „Bestellt“ sind die Details zugeklappt, bis man sie öffnet
   let etaPrefilled = false;
 
   // Persistente Eingabezeile (wird bei Live-Updates nicht neu gebaut)
@@ -177,11 +189,17 @@ export function roundView(id) {
   for (const i of editInputs) i.addEventListener('input', () => syncEdit(true));
   const headPick = h('nav', { class: 'head-pick' });
   const headTop = h('div');
-  const headMeta = h('div', { class: 'muted mt-2' });
+  const headBand = h('div', { class: 'head-band' });
+  headBand.addEventListener('click', (e) => {
+    if (!d?.ordered_at || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
+    foldOpen = !foldOpen;
+    renderHead();
+  });
+  const headMeta = h('div', { class: 'muted mt-2 fold-item' });
   const headForm = h(
     'form',
     {
-      class: 'grid2 mt-4',
+      class: 'grid2 mt-4 fold-item',
       onsubmit: async (e) => {
         e.preventDefault();
         const ok = await act(() => api('PATCH', `/rounds/${id}`, { buyer: eBuyer.value, paypal: ePaypal.value, delivery_fee: parseMoney(eFee.value) }));
@@ -198,7 +216,7 @@ export function roundView(id) {
     editBar,
     h('div', { class: 'form-actions' }, saveBtn)
   );
-  head.append(headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm), h('div', { class: 'head-side' }, timerCard, orderCard, payCard));
+  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm), h('div', { class: 'head-side' }, timerCard, orderCard), payCard); // Bezahlen: unten, eigene Zeile, zu- und aufgeklappt gleich
 
   // Wechsel zwischen den heutigen/offenen Bestellungen (nur sichtbar, wenn es mehrere gibt)
   function renderPick(list) {
@@ -214,11 +232,14 @@ export function roundView(id) {
   }
 
   function renderHead() {
-    headTop.replaceChildren(
-      h('h2', { class: 'round-title' }, d.restaurant.name, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
-      contactLinks(d.restaurant, { linkPill: true }),
-      ...(d.restaurant.address ? [h('div', { class: 'muted' }, d.restaurant.address)] : [])
+    headBand.classList.toggle('foldable', !!d.ordered_at);
+    headBand.replaceChildren(
+      ...(d.ordered_at ? [h('button', { class: 'fold-toggle', type: 'button', 'aria-expanded': String(foldOpen), 'aria-label': t('Details ein-/ausklappen'), onclick: () => { foldOpen = !foldOpen; renderHead(); } }, disclosureTriangle())] : []),
+      h('h2', { class: 'round-title' }, d.restaurant.name, d.locked ? h('span', { class: 'round-closed' }, t('Bestellung geschlossen')) : null, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('div', { class: 'head-contact' + (lc(me) === lc(d.buyer) ? '' : ' fold-item') }, contactLinks(d.restaurant, { linkPill: true })) // Kontakt zum Bestellen: beim Besteller immer sichtbar, sonst eingeklappt
     );
+    headTop.replaceChildren(...(d.restaurant.address ? [h('div', { class: 'muted fold-item' }, d.restaurant.address)] : []));
+    head.classList.toggle('folded', !!d.ordered_at && !foldOpen);
     const manage = d.viewer.can_manage;
     headMeta.replaceChildren(...(manage || !d.delivery_fee_cents ? [] : [t('Lieferkosten: {fee}', { fee: eur(d.delivery_fee_cents) })]));
     headForm.classList.toggle('hidden', !manage);
@@ -243,6 +264,7 @@ export function roundView(id) {
       if (d.restaurant.delivery_minutes >= 1) inEta.value = d.restaurant.delivery_minutes;
     }
     orderCard.classList.toggle('hidden', !ordered && !manage);
+    orderCard.classList.toggle('fold-item', !!d.delivered_at); // nach „geliefert“ bleibt nur „Bestellt zurücknehmen“: eingeklappt
     const patch = (body) => act(() => api('PATCH', `/rounds/${id}`, body)).then(() => nav.current.refresh());
     const eta = inEta.value === '' ? {} : { eta_minutes: Number(inEta.value) };
     const kids = [];
@@ -353,10 +375,11 @@ export function roundView(id) {
     const isBuyer = lc(mineU.user) === lc(d.buyer);
     const stp = (cls, txt) => h('span', { class: `step ${cls}` }, txt);
     const roleNote = h('span', { class: 'step role', title: t('Der Besteller zahlt bei der Bestellung und bekommt das Geld von den anderen.') }, `✓ (${t('ist Besteller')})`);
+    const fade = d.ordered_at ? ' faded' : ''; // ab „Bestellt“ ist ready nur noch blass markiert
     const myFlow = mineU.done
       ? isBuyer
-        ? [stp('now ready', t('✓ ready')), roleNote]
-        : [stp(mineU.paid ? 'done' : 'now ready', t('✓ ready')), h('span', { class: 'step-sep' }, '›'), mineU.paid ? stp('now', `✓ ${t('bezahlt')}`) : stp('todo', t('bezahlt'))]
+        ? [stp(`now ready${fade}`, t('✓ ready')), roleNote]
+        : [stp(mineU.paid ? 'done' : `now ready${fade}`, t('✓ ready')), h('span', { class: 'step-sep' }, '›'), mineU.paid ? stp('now', `✓ ${t('bezahlt')}`) : stp('todo', t('bezahlt'))]
       : [t('unready – Artikel zählen nicht'), ...(isBuyer ? [roleNote] : [])];
     const priceCell = (c) => h('div', { class: 'price-in' }, h('span', { class: 'num-box' }, money(c)), h('span', { class: 'eur-box' }, '€'));
     const sumRow = (label, cents, cls = '') => h('div', { class: `sum-row ${cls}` }, h('div', { class: 'c-lbl' }, label), h('div', { class: 'c-amt' }, priceCell(cents)));
@@ -394,7 +417,7 @@ export function roundView(id) {
   }
 
   function renderOrder() {
-    orderPane.replaceChildren(...orderContent(d));
+    orderPane.replaceChildren(...orderContent(d).filter(Boolean));
   }
 
   function renderPay() {

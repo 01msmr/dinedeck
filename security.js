@@ -1,6 +1,6 @@
 // Sicherheits-Header für alle Antworten (Seiten und API); Einbetten nur für die angegebenen Ursprünge
 export function securityHeaders(requested = []) {
-  const frameAncestors = requested.filter((o) => /^https?:\/\/[\w.-]+(:\d+)?$/.test(o)); // nur reine Ursprünge, keine weiteren Direktiven
+  const frameAncestors = requested.includes('any') ? ['*'] : requested.filter((o) => /^https?:\/\/[\w.-]+(:\d+)?$/.test(o)); // „any“ = jede Seite; sonst nur reine Ursprünge
   const embed = frameAncestors.length > 0;
   return {
     'x-content-type-options': 'nosniff',

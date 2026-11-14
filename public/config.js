@@ -59,3 +59,10 @@ export const TIMING = {
   sseHeartbeatMs: 25000,
   sseRetryMs: 2000,
 };
+
+// Seitenleiste: Breite per Ziehen an der Trennlinie
+export const SIDE = {
+  minRem: 10,
+  maxRem: 30,
+  storageKey: 'bb_side_w', // gemerkte Breite (rem) in localStorage
+};
