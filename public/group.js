@@ -1,3 +1,6 @@
+import { DEFAULTS } from './config.js';
+import { isToday } from './format.js';
+
 // Historie bündeln: letzte N Monate je Monat, ältere je Jahr (neueste zuerst).
 export function groupHistory(rounds, now, monthsGrouped) {
   const n = new Date(now);
@@ -13,10 +16,15 @@ export function groupHistory(rounds, now, monthsGrouped) {
   return [...groups.values()];
 }
 
-// „Aktuell“ = noch offen oder heute angelegt.
-export function isCurrentRound(r, now) {
+// „Aktuell“ = noch offen oder heute angelegt; der Abend davor zählt bis nightEndHour (4 Uhr) noch als heute.
+export function isCurrentRound(r, now, nightEndHour = DEFAULTS.nightEndHour) {
   if (!r.locked) return true;
-  return new Date(r.created_at).toDateString() === new Date(now).toDateString();
+  return isToday(r.created_at, now, nightEndHour);
+}
+
+// Welche Bestellung beim Start gezeigt wird: neueste offene, sonst neueste von heute, sonst insgesamt neueste (Liste: neueste zuerst).
+export function startRound(rounds, now, nightEndHour = DEFAULTS.nightEndHour) {
+  return rounds.find((r) => !r.locked) ?? rounds.find((r) => isCurrentRound(r, now, nightEndHour)) ?? rounds[0] ?? null;
 }
 
 // Bestellung desselben Restaurants, die eine neue blockiert (Regel wie db.js createRound).

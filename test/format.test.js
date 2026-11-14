@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, clampSideWidth, owedByMe, owedToMe } from '../public/format.js';
-import { isCurrentRound } from '../public/group.js';
+import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
 
@@ -33,6 +33,25 @@ test('isCurrentRound: offen oder heute angelegt', () => {
   assert.equal(isCurrentRound({ locked: false, created_at: at(1, 9) }, now), true);
   assert.equal(isCurrentRound({ locked: true, created_at: at(7, 9) }, now), true);
   assert.equal(isCurrentRound({ locked: true, created_at: at(6, 23) }, now), false);
+});
+
+test('isCurrentRound: der Abend zählt über Mitternacht bis 4 Uhr noch als heute', () => {
+  const at = (d, h, m = 0) => new Date(2026, 10, d, h, m).getTime();
+  const evening = { locked: true, created_at: at(7, 22, 30) };
+  assert.equal(isCurrentRound(evening, at(8, 0, 30), 4), true, '0:30 Uhr: noch heute');
+  assert.equal(isCurrentRound(evening, at(8, 3, 59), 4), true);
+  assert.equal(isCurrentRound(evening, at(8, 5), 4), false, 'ab 4 Uhr: gestern');
+});
+
+test('startRound: neueste offene, sonst neueste von heute, sonst insgesamt neueste', () => {
+  const at = (d, h) => new Date(2026, 10, d, h).getTime();
+  const now = at(8, 14);
+  const r = (id, day, hour, locked) => ({ id, created_at: at(day, hour), locked });
+  // Liste wie vom Server: neueste zuerst
+  assert.equal(startRound([r(5, 8, 13, false), r(4, 8, 12, false), r(3, 8, 9, true)], now, 4).id, 5, 'neueste offene');
+  assert.equal(startRound([r(4, 8, 13, true), r(3, 8, 9, true), r(2, 5, 9, true)], now, 4).id, 4, 'keine offene: neueste von heute');
+  assert.equal(startRound([r(2, 6, 12, true), r(1, 5, 9, true)], now, 4).id, 2, 'nichts von heute: insgesamt neueste');
+  assert.equal(startRound([], now, 4), null);
 });
 
 import { medianMinutes } from '../public/format.js';

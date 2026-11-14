@@ -56,6 +56,7 @@
   --pane-muted: color-mix(in srgb, var(--fg) 82%, var(--pane-bg)); /* Nebentext im Inhaltsbereich */
   --faded-bg: color-mix(in srgb, var(--fg) 9%, var(--pane-bg)); /* erledigte Zustände: farblos blass (Grau) */
   --faded-fg: var(--pane-muted);
+  --content-max: 75rem; /* größte Breite des Inhalts der Bestellseite auf sehr breiten Bildschirmen */
   --scrim: #0007;
   --shadow-side: #0006;
   --shadow-bar: rgb(0 0 0 / 0.5);
@@ -621,14 +622,14 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
   .order-table tfoot tr { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
 }
 .round-main .order-table td.unit-col, .round-main .order-table td.unit-qty, .round-main .order-table .unit-inline { color: var(--pane-soft); }
-.order-table td.unit-qty, .order-table thead th.unit-q-head { padding-left: 2rem; padding-right: 0.6rem; } /* Anzahl: rechtsbündig, dicht am Preis */
-.order-table td.unit-col, .order-table thead th.unit-head { width: 1%; white-space: nowrap; padding-left: 0; padding-right: 1.5rem; } /* Preisspalte schrumpft auf den Inhalt */
+.order-table td.unit-qty, .order-table thead th.unit-q-head { padding-left: 2.5rem; padding-right: 0.6rem; } /* Anzahl: rechtsbündig, dicht am Preis */
+.order-table td.unit-col, .order-table thead th.unit-head { width: 1%; white-space: nowrap; padding-left: 0; padding-right: 2rem; } /* Preisspalte schrumpft auf den Inhalt */
 .order-table thead th.unit-head { position: relative; }
 .order-table .unit-head-lbl { position: absolute; right: 1.5rem; top: 0.375rem; } /* Überschrift ragt nach links, ohne die Spalte zu verbreitern */
 @media (max-width: 30em) { .order-table td.unit-col { padding: 0; } }
 .order-table tbody td:nth-child(5) { font-size: 1.0625rem; } /* Summen je Gericht */
 .order-table tfoot tr:not(:last-child) td { font-size: 1.125rem; font-weight: 400; } /* „Summe Artikel“, nicht fett */
-.order-table thead th:first-child, .order-table td.qty-cell, .user-items td:first-child { text-align: right; padding-right: 1rem; } /* Anzahl: eigene rechtsbündige Spalte mit mehr Abstand zum Namen */
+.order-table thead th:first-child, .order-table td.qty-cell, .user-items td:first-child { text-align: right; padding-right: 1.25rem; } /* Anzahl: eigene rechtsbündige Spalte mit mehr Abstand zum Namen */
 @media (max-width: 30em) { .order-table tbody tr { column-gap: 0.75rem; } .order-table td.qty-cell { padding-right: 0; } }
 .order-table tfoot td.qty-total { font-weight: 700; color: var(--fg); }
 @media (max-width: 30em) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
@@ -644,3 +645,13 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .copy-btn.done { width: auto; padding: 0 0.75rem; white-space: nowrap; font-weight: 600; }
 .banner-names { margin-left: 0.75rem; }
 .banner-names .und { font-weight: 400; }
+.side-paid { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; font-weight: 600; color: var(--fg); white-space: nowrap; }
+.check-circle { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--ok); color: var(--on-ok); font-size: 0.75rem; font-weight: 700; }
+button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--fg); }
+.round-grid { width: 100%; max-width: var(--content-max); margin-inline: auto; }
+
+/* Sammelbestellung: Tabelle nur so breit wie nötig (bis zum Rand des Blocks); Abstand zwischen den Spalten bleibt */
+.order-table { width: max-content; max-width: 100%; margin-left: auto; } /* rechtsbündig in der Karte */
+@media (max-width: 30em) { .order-table { width: 100%; } }
+.status-flow .now.unready { background: var(--bad); color: var(--on-bad); }
+button.confirm, button.btn.confirm, button.badge.confirm { background: var(--black); color: var(--white); border-color: color-mix(in srgb, var(--white) 35%, var(--black)); } /* Rückfrage „ist bezahlt?“: schwarz */

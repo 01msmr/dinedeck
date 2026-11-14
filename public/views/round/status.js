@@ -41,8 +41,8 @@ export function createStatus({ banners, toggle, decide }) {
       ? [opened, step('done', `✓ ${t('ready')}`), step('done', ordTxt), step('now', `✓ ${t('geliefert')}`, fmtWhen(d.delivered_at))]
       : d.ordered_at
         ? [opened, step('done', `✓ ${t('ready')}`), step('now', ordTxt, fmtWhen(d.ordered_at)), step('todo', t('geliefert'))]
-        : allReady
-          ? [opened, step('now ready', `✓ ${readyTxt}`), step('todo', t('bestellt')), step('todo', t('geliefert'))]
+        : d.ready.total
+          ? [opened, allReady ? step('now ready', `✓ ${readyTxt}`) : Object.assign(step('now unready', readyTxt), { title: t('Noch nicht ready: {names}', { names: d.ready.not_ready.join(', ') }) }), step('todo', t('bestellt')), step('todo', t('geliefert'))] // noch nicht alle ready: derselbe Ablauf, ready rot
           : null;
     const payers = d.users.filter((u) => u.done && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)); // Besteller zahlt nicht an sich selbst
     const paidN = payers.filter((u) => u.paid).length;
@@ -52,7 +52,6 @@ export function createStatus({ banners, toggle, decide }) {
       flow.push(allPaid ? step('now', `✓ ${t('bezahlt')}`) : counting ? step('now ready', t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length })) : step('todo', t('bezahlt')));
     }
     if (flow) b.push(h('div', { class: 'status-flow' + (unpaid ? ' unpaid' : allPaid ? ' paid' : '') }, ...flow.flatMap((x, n) => (n ? [sep(), x] : [x]))));
-    else if (d.ready.total) b.push(h('div', { class: 'banner bad' }, t('Noch nicht alle ready ({done}/{total}): {names}', { done: d.ready.done, total: d.ready.total, names: d.ready.not_ready.join(', ') })));
     if (unpaid) {
       const [before, after] = joinList(d.debts.map((x) => x.user), '\u0001').split('\u0001'); // nur das Wort „und“ in normaler Schrift
       b.push(h('div', { class: 'banner bad' }, t('{n} unbezahlt:', { n: d.debts.length }), h('span', { class: 'banner-names' }, before, after === undefined ? null : [h('span', { class: 'und' }, t('und')), after])));

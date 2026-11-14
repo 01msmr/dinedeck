@@ -24,7 +24,8 @@ export function renderSide() {
     if (r.unpaid) return h('span', { class: 'badge off' }, eur(r.debts_total_cents));
     if (!r.locked) return h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
     const stage = roundStage(r);
-    return h('span', { class: 'badge ' + (stage === 'alles bezahlt' ? 'on' : 'mid') }, t(stage));
+    if (stage === 'alles bezahlt') return h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt')); // Häkchen im grünen Kreis, Text wie der Name
+    return h('span', { class: 'badge mid' }, t(stage));
   };
   const item = (r) =>
     h(

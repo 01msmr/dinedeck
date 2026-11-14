@@ -116,7 +116,7 @@ export function createLogic(db, { admins = [] } = {}) {
     const now = Date.now();
     if (!r.close_when_ready || isLocked(r, now)) return;
     const d = roundDetail(roundId, '', now);
-    const actual = d.users.filter((u) => u.subtotal_cents > 0);
+    const actual = d.users.filter((u) => u.preview_cents > 0); // echte User: mit mindestens einem Artikel
     if (actual.length && actual.every((u) => u.done)) q.roundExpiry.run(now, r.id);
   }
 

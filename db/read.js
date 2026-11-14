@@ -20,9 +20,10 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isB
     const users = [...names.entries()].map(([k, display]) => {
       const mine = items.filter((i) => lower(i.user) === k);
       const st = state.get(k) ?? { done: false, paid: false };
-      // Geschlossen: Artikel nicht fertiger User bleiben sichtbar, zählen aber nicht (Wieder öffnen bringt sie zurück)
-      const excluded = locked && !st.done && mine.length > 0;
-      const subtotal = excluded ? 0 : mine.reduce((a, i) => a + i.price_cents * i.qty, 0);
+      // Nicht ready: Artikel bleiben sichtbar, zählen aber nie (Summen, Sammelbestellung, Lieferanteil, Schulden); preview_cents ist die eigene Vorschau
+      const excluded = !st.done && mine.length > 0;
+      const preview = mine.reduce((a, i) => a + i.price_cents * i.qty, 0);
+      const subtotal = excluded ? 0 : preview;
       return {
         user: display,
         done: st.done,
@@ -30,6 +31,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isB
         excluded,
         items: mine.map((i) => ({ id: i.id, article: i.article, variant: i.variant, price_cents: i.price_cents, qty: i.qty })),
         subtotal_cents: subtotal,
+        preview_cents: preview,
         fee_cents: 0,
         total_cents: subtotal,
       };

@@ -3,7 +3,7 @@
 import { t } from '/i18n.js';
 import { LIMITS, TIMING } from '/config.js';
 import { app, h, me, setMe, nav, api, isGuest, homeName } from '/util.js';
-import { isCurrentRound } from '/group.js';
+import { startRound } from '/group.js';
 import { loadSide } from '/side.js';
 import { showOpenPayments } from '/notice.js';
 import '/side-resize.js';
@@ -82,10 +82,8 @@ function startView() {
       if (view) return view.refresh();
       const rounds = (await api('GET', '/rounds').catch(() => [])) ?? [];
       if ((location.hash || '#/') !== '#/') return;
-      const cur = rounds.filter((r) => isCurrentRound(r, Date.now()));
-      const pick = cur.find((r) => !r.locked) ?? cur[0];
+      const pick = startRound(rounds, Date.now()); // neueste offene, sonst neueste von heute, sonst insgesamt neueste
       if (pick) return location.replace(`#/r/${pick.id}`);
-      if (rounds.length) return location.replace('#/all'); // nichts Aktuelles: Übersicht aller Bestellungen
       view = homeView();
       return view.refresh();
     },

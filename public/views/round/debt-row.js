@@ -7,5 +7,5 @@ export function debtRowEl(x, { asking, onClick }) {
     h('span', null, x.user),
     h('span', { class: 'row' },
       h('strong', null, eur(x.amount_cents)),
-      onClick ? h('button', { class: asking ? 'btn small' : 'btn small ghost', onclick: onClick }, asking ? t('ist bezahlt?') : t('als bezahlt markieren')) : null));
+      onClick ? h('button', { class: asking ? 'btn small confirm' : 'btn small ghost', onclick: onClick }, asking ? t('ist bezahlt?') : t('als bezahlt markieren')) : null));
 }

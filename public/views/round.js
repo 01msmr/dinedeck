@@ -403,15 +403,15 @@ export function roundView(id) {
           )
         : h('div', { class: 'muted' }, t('Noch nichts eingetragen.')),
       h('div', { class: 'mt-4 stack-1' },
-        sumRow(t('Summe Artikel'), mineU.subtotal_cents),
+        sumRow(t('Summe Artikel'), mineU.excluded ? mineU.preview_cents : mineU.subtotal_cents), // nicht ready: Vorschau, zählt noch nicht
         mineU.fee_cents ? sumRow(`${t('Lieferanteil')} (${t('{fee} / {n} Besteller', { fee: eur(d.delivery_fee_cents), n: counted })})`, mineU.fee_cents) : null,
-        sumRow(t('Summe'), mineU.total_cents, 'total')),
+        sumRow(t('Summe'), mineU.excluded ? mineU.preview_cents : mineU.total_cents, 'total')),
       h('div', { class: 'row mt-3' }, h('span', { class: 'muted' }, t('Ready = deine Bestellung ist komplett. Bezahlt = du hast dem Besteller dein Geld gegeben.'))),
       h(
         'div',
         { class: 'ready-bar' + (mineU.done ? ' is-done' : '') },
         mineU.done ? h('span', null, t('✓ Ready')) : null,
-        mineU.done && locked ? null : h('button', { class: 'btn ready', type: 'button', onclick: () => toggle('done', { user: mineU.user, value: !mineU.done }) }, mineU.done ? t('Artikel ändern') : t('✓ Ich bin ready'))
+        mineU.done && locked ? null : h('button', { class: 'btn ready', type: 'button', title: mineU.done ? null : t('Klicken: als ready bestätigen'), onclick: () => toggle('done', { user: mineU.user, value: !mineU.done }) }, mineU.done ? t('Artikel ändern') : t('○ unready'))
       )
     );
   }

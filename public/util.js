@@ -142,7 +142,7 @@ function extArrow() {
 export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   const tel = telHref(r.phone);
   const web = webHref(r.url);
-  const noTel = h('span', { class: 'muted' }, pill ? `(${t('keine Telefonnummer')})` : t('keine Telefonnummer'));
+  const noTel = h('span', { class: 'muted' }, pill ? `(${t('keine Telefon')})` : t('keine Telefon'));
   const telEl = tel ? (pill ? h('span', null, '(', h('a', { href: tel }, '' + r.phone), ')') : h('a', { href: tel }, '' + r.phone)) : noTel;
   return h(
     'div',

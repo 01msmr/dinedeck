@@ -34,12 +34,16 @@ test('Runde: Gruppierung, Liefergebühr, Schulden, Rechte', async () => {
     await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2,50', qty: 1 });
 
     let d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.ready.done, 0);
+    assert.deepEqual(d.ready.not_ready.sort(), ['alex', 'anna']);
+    assert.equal(d.items_total_cents, 0, 'nicht ready: zählt nicht');
+    await call('POST', `/api/rounds/${id}/done`, 'alex', { value: true });
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
     const g = d.groups.find((x) => x.article.toLowerCase().trim() === 'margherita');
     assert.equal(g.qty, 3, 'gleiche Artikel gruppiert');
     assert.equal(d.items_total_cents, 3 * 850 + 250);
     assert.equal(d.users.reduce((a, u) => a + u.fee_cents, 0), 300, 'Liefergebühr komplett verteilt');
-    assert.equal(d.ready.done, 0);
-    assert.deepEqual(d.ready.not_ready.sort(), ['alex', 'anna']);
 
     // Fremde Position nicht änderbar
     const annaItem = d.users.find((u) => u.user === 'anna').items[0].id;
@@ -139,7 +143,8 @@ test('Katalog, Varianten, Preishinweis', async () => {
     assert.equal(v26.count, 2);
     assert.equal(v26.last_price_cents, 850);
 
-    // Gruppierung: gleicher Name + gleiche Variante + gleicher Preis. 26 ≠ 32 cm, Margherita ≠ Margarita.
+    // Gruppierung: gleicher Name + gleiche Variante + gleicher Preis. 26 ≠ 32 cm, Margherita ≠ Margarita. (Nur ready zählt.)
+    for (const u of ['alex', 'anna', 'bob', 'clara']) await call('POST', `/api/rounds/${r1}/done`, u, { value: true });
     const d = (await call('GET', `/api/rounds/${r1}`, 'alex')).body;
     assert.equal(d.groups.length, 3);
     assert.equal(d.groups.find((g) => g.variant.toLowerCase() === '26 cm').qty, 2);
@@ -150,6 +155,7 @@ test('Katalog, Varianten, Preishinweis', async () => {
     const r2 = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'roma' } })).body.id;
     await add(r2, 'alex', 'Pizza Margherita', '9,00', '26 cm');
     await add(r2, 'anna', 'Pizza Margherita', '8,50', '26 cm');
+    for (const u of ['alex', 'anna']) await call('POST', `/api/rounds/${r2}/done`, u, { value: true }); // nur ready zählt
     const d2 = (await call('GET', `/api/rounds/${r2}`, 'alex')).body;
     const g9 = d2.groups.find((g) => g.price_cents === 900);
     const g85 = d2.groups.find((g) => g.price_cents === 850);
@@ -230,7 +236,7 @@ test('Schließen-wenn-fertig: neue User brauchen Freigabe', async () => {
   } finally { await close(); }
 });
 
-test('Geschlossene Runde: Artikel nicht fertiger User zählen nicht, Wieder öffnen bringt sie zurück', async () => {
+test('Geschlossene Runde: Artikel nicht fertiger User zählen nicht, erst mit ready zählen sie wieder', async () => {
   const { call, close } = await boot();
   try {
     const { id } = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza' }, buyer: 'alex', paypal: '', delivery_fee: '0', minutes: 20 })).body;
@@ -247,7 +253,10 @@ test('Geschlossene Runde: Artikel nicht fertiger User zählen nicht, Wieder öff
     assert.equal(bob.items.length, 1, 'Artikel bleiben sichtbar');
     await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'reopen', minutes: 5 });
     d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
-    assert.equal(d.items_total_cents, 1150);
+    assert.equal(d.items_total_cents, 250, 'Wieder öffnen: bob ist weiter nicht ready und zählt nicht');
+    await call('POST', `/api/rounds/${id}/done`, 'bob', { value: true });
+    d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.items_total_cents, 1150, 'bob ready: zählt');
   } finally {
     await close();
   }
@@ -428,6 +437,8 @@ test('Eigene Position inhaltlich ändern: Name, Beigabe, Preis; Fremde/Ungültig
     d = (await call('GET', `/api/rounds/${id}`, 'anna')).body;
     const changed = d.users.find((u) => u.user === 'anna').items[0];
     assert.deepEqual([changed.article, changed.variant, changed.price_cents, changed.qty], ['Diavola', '32 cm', 950, 2]);
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    d = (await call('GET', `/api/rounds/${id}`, 'anna')).body;
     assert.equal(d.items_total_cents, 1900);
     assert.equal((await call('PATCH', `/api/items/${item.id}`, 'alex', { article: 'X' })).status, 403);
     assert.equal((await call('PATCH', `/api/items/${item.id}`, 'anna', { article: '' })).status, 400);
@@ -445,6 +456,7 @@ test('Lieferkosten werden gleichmäßig auf alle Besteller verteilt, nicht nach 
     await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2', qty: 1 });
     await call('POST', `/api/rounds/${id}/items`, 'bob', { article: 'Pizza', price: '10', qty: 1 });
     await call('POST', `/api/rounds/${id}/items`, 'clara', { article: 'Tiramisu', price: '5', qty: 1 });
+    for (const u of ['alex', 'anna', 'bob', 'clara']) await call('POST', `/api/rounds/${id}/done`, u, { value: true }); // nur ready zählt
     let d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
     assert.deepEqual(d.users.map((u) => u.fee_cents), [75, 75, 75, 75], '3,00 € / 4 = 0,75 €');
     assert.equal(d.users.find((u) => u.user === 'anna').total_cents, 275);
@@ -570,6 +582,30 @@ test('Sicherheits- und Cache-Header auf Seiten und API', async () => {
       await res.arrayBuffer();
     }
     assert.equal((await fetch(base + '/style.css')).headers.get('cache-control'), 'no-cache');
+  } finally {
+    await close();
+  }
+});
+
+test('Nicht ready: Artikel zählen nie, auch nicht in der offenen Bestellung', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma' }, delivery_fee: '2,00', minutes: 20 })).body.id;
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: 3, qty: 2 });
+    let d = (await call('GET', `/api/rounds/${id}`, 'anna')).body;
+    assert.equal(d.locked, false);
+    assert.equal(d.groups.length, 0, 'nicht ready: nicht in der Sammelbestellung');
+    assert.equal(d.items_total_cents, 0);
+    const anna = d.users.find((u) => u.user === 'anna');
+    assert.equal(anna.excluded, true);
+    assert.equal(anna.subtotal_cents, 0);
+    assert.equal(anna.preview_cents, 600, 'eigene Summe bleibt als Vorschau');
+    assert.equal(d.debts.length, 0);
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    d = (await call('GET', `/api/rounds/${id}`, 'anna')).body;
+    assert.equal(d.groups[0].qty, 2, 'ready: zählt');
+    assert.equal(d.items_total_cents, 600);
+    assert.equal(d.users.find((u) => u.user === 'anna').excluded, false);
   } finally {
     await close();
   }
