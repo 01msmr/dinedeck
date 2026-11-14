@@ -1,4 +1,4 @@
-// Sidebar: offene/unbezahlte und letzte 12 Wochen abgeschlossener Bestellungen, Links „Alle“ und „Statistik“ (ab 700 px sichtbar) und globale Countdown-Badges.
+// Sidebar: offene/unbezahlte und letzte 12 Wochen abgeschlossener Bestellungen, Links „Alle“ und „Statistik“ (ab 1280 px angedockt, darunter als Drawer) und globale Countdown-Badges.
 import { t, locale } from '/i18n.js';
 import { LISTS, TIMING } from '/config.js';
 import { groupHistory, isCurrentRound } from '/group.js';
@@ -38,6 +38,8 @@ export function renderSide() {
   const now = Date.now();
   const since = now - LISTS.sideWeeks * 7 * 864e5;
   const link = (href, label) => h('a', { class: 'side-item' + (hash === href ? ' active' : ''), href }, label);
+  const unpaidCount = sideRounds.filter((r) => r.unpaid).length;
+  const allLabel = unpaidCount ? [h('span', null, t('Alle Bestellungen')), h('span', { class: 'count-dot', title: t('Bestellungen mit unbezahlten Artikeln') }, String(unpaidCount))] : t('Alle Bestellungen');
   const today = sideRounds.filter((r) => isCurrentRound(r, now));
   const rest = sideRounds.filter((r) => !isCurrentRound(r, now));
   sideEl.replaceChildren(
@@ -56,7 +58,7 @@ export function renderSide() {
         : []),
     ...group(t('Unbezahlt'), rest.filter((r) => r.unpaid)),
     ...groupHistory(rest.filter((r) => r.locked && !r.unpaid && r.created_at >= since), now, LISTS.historyMonths).flatMap((g) => group(groupTitle(g), g.items)),
-    h('div', { class: 'side-foot' }, link('#/all', t('Alle Bestellungen')), link('#/stats', t('Statistik')), h('a', { class: 'btn side-new', href: '#/new' }, t('+ Neue Bestellung')))
+    h('div', { class: 'side-foot' }, link('#/all', allLabel), link('#/stats', t('Statistik')), h('a', { class: 'btn side-new', href: '#/new' }, t('+ Neue Bestellung')))
   );
   tickCountdowns();
 }
@@ -64,7 +66,7 @@ export function renderSide() {
 export function tickCountdowns() {
   for (const el of document.querySelectorAll('[data-expires]')) {
     const left = Number(el.dataset.expires) - Date.now();
-    el.textContent = left > 0 ? `${t('noch')} ${fmtRemaining(left)}` : t('abgelaufen');
+    el.textContent = left > 0 ? fmtRemaining(left) : t('abgelaufen');
     el.className = 'badge ' + (left > 0 ? (left < TIMING.lowTimeMs ? 'off' : 'on') : 'mid');
   }
 }

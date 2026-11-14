@@ -12,8 +12,6 @@ const EN = {
   'ist Besteller': 'is the buyer',
   '{n} Artikel': '{n} items',
   'Der Besteller zahlt bei der Bestellung und bekommt das Geld von den anderen.': 'The buyer pays when ordering and receives the money from the others.',
-  'bei': 'at',
-  'durch': 'by',
   'z. B. Pizza Roma': 'e.g. Pizza Roma',
   'paypal.me/name oder E-Mail': 'paypal.me/name or email',
   'Telefon': 'Phone',
@@ -152,7 +150,8 @@ const EN = {
   'Ready = deine Bestellung ist komplett. Bezahlt = du hast dem Besteller dein Geld gegeben.':
     'Ready = your order is complete. Paid = you have given the buyer your money.',
   // Bestellen
-  'Sammelbestellung': 'Combined order',
+  'Bestellliste': 'Order list',
+  'Artikel hinzufügen': 'Add item',
   'Einzelpreis': 'Unit price',
   'Summe': 'Total',
   'Bestellung': 'Order',
@@ -184,6 +183,7 @@ const EN = {
   'Letzte 30 Bestellungen': 'Last 30 orders',
   'Alle': 'All',
   'Alle Bestellungen': 'All orders',
+  'Bestellungen mit unbezahlten Artikeln': 'Orders with unpaid items',
   'Noch keine Daten.': 'No data yet.',
   'Bestellungen': 'Orders',
   'Ø Preis Artikel': 'Ø item price',

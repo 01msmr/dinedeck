@@ -31,6 +31,12 @@ export const DEFAULTS = {
   nightEndHour: 4, // bis zu dieser Uhrzeit zählt der Abend davor noch als „heute“
 };
 
+/** Kürzung der Variante in der Bestellliste (nur Anzeige). */
+export const VARIANT_SHORT = {
+  filler: ['mit', 'zusätzlich'], // fallen weg
+  joiners: ['und'], // werden zu Komma
+};
+
 /** Listen und Auswertungen. */
 export const LISTS = {
   rounds: 60, // Bestellungen in Sidebar/Startseite
@@ -60,9 +66,3 @@ export const TIMING = {
   sseRetryMs: 2000,
 };
 
-// Seitenleiste: Breite per Ziehen an der Trennlinie
-export const SIDE = {
-  minRem: 10,
-  maxRem: 30,
-  storageKey: 'bb_side_w', // gemerkte Breite (rem) in localStorage
-};

@@ -6,10 +6,15 @@ import { roundStage } from '/format.js';
 import { tickCountdowns } from '/side.js';
 import { app, eur, fmtDate, lc, h, api, act, me, parseMoney, money } from '/util.js';
 
+// „abc, def und xyz“ mit fetten Namen
+const boldNames = (names) => names.flatMap((n, i) => [i === 0 ? null : i === names.length - 1 ? ` ${t('und')} ` : ', ', h('strong', null, n)]).filter(Boolean);
+
 export const roundItem = (r, highlight = false) => {
   const stage = roundStage(r);
-  const status = stage
-    ? h('span', { class: 'badge ' + (stage === 'alles bezahlt' ? 'on' : 'mid') }, t(stage))
+  const status = stage === 'alles bezahlt'
+    ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt')) // wie in der Seitenleiste
+    : stage
+    ? h('span', { class: 'badge mid' }, t(stage))
     : h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
   return h(
     'a',
@@ -23,7 +28,7 @@ export const roundItem = (r, highlight = false) => {
         'div',
         { class: 'row between' },
         h('span', null, `${r.done}/${r.users} ${t('ready')} · ${eur(r.total_cents)}`),
-        r.unpaid ? h('span', { class: 'badge off' }, `${t('unbezahlt')}: ${eur(r.debts_total_cents)}`) : null
+        r.unpaid ? h('span', { class: 'unpaid-line' }, h('span', null, ...boldNames(r.debts_users ?? []), ' — '), h('span', { class: 'badge off' }, `${t('unbezahlt')}: ${eur(r.debts_total_cents)}`)) : null
       )
     )
   );

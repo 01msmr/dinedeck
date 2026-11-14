@@ -594,7 +594,7 @@ test('Nicht ready: Artikel zählen nie, auch nicht in der offenen Bestellung', a
     await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: 3, qty: 2 });
     let d = (await call('GET', `/api/rounds/${id}`, 'anna')).body;
     assert.equal(d.locked, false);
-    assert.equal(d.groups.length, 0, 'nicht ready: nicht in der Sammelbestellung');
+    assert.equal(d.groups.length, 0, 'nicht ready: nicht in der Bestellliste');
     assert.equal(d.items_total_cents, 0);
     const anna = d.users.find((u) => u.user === 'anna');
     assert.equal(anna.excluded, true);
@@ -666,6 +666,45 @@ test('index.html: Cache-Version (?v=) an Stylesheet und Skripten', async () => {
     const html = await (await fetch(`http://127.0.0.1:${server.address().port}/`)).text();
     for (const f of ['style.css', 'theme.js', 'i18n.js', 'app.js']) assert.match(html, new RegExp(`/${f.replace('.', '\\.')}\\?v=\\d+`), f);
     assert.ok(!html.includes('__VERSION__'));
+  } finally {
+    await close();
+  }
+});
+
+test('Doppelte eigene Position (gleich bis auf Schreibweise) wird zu einer mit größerer Menge', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma', url: '', phone: '' }, paypal: 'alex', minutes: 20 })).body.id;
+    const a = await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Pizza Purgatorio', price: '11,00', qty: 1 });
+    const b = await call('POST', `/api/rounds/${id}/items`, 'anna', { article: ' pizza  purgatorio ', price: 11, qty: 2 });
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Pizza Purgatorio', variant: 'scharf', price: '11,00', qty: 1 }); // andere Variante
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Pizza Purgatorio', price: '12,00', qty: 1 }); // anderer Preis
+    await call('POST', `/api/rounds/${id}/items`, 'alex', { article: 'Pizza Purgatorio', price: '11,00', qty: 1 }); // anderer Nutzer
+    assert.equal(b.body.id, a.body.id, 'gleiche Position');
+    const d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    const items = d.users.find((u) => u.user === 'anna').items;
+    assert.equal(items.length, 3);
+    assert.equal(items.find((i) => !i.variant && i.price_cents === 1100).qty, 3);
+    assert.equal(d.users.find((u) => u.user === 'alex').items.length, 1);
+    // Summe über Obergrenze: eigene Zeile statt Fehler
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Pizza Purgatorio', price: '11,00', qty: 9 });
+    const again = (await call('GET', `/api/rounds/${id}`, 'alex')).body.users.find((u) => u.user === 'anna').items;
+    assert.equal(again.filter((i) => !i.variant && i.price_cents === 1100).length, 2);
+  } finally {
+    await close();
+  }
+});
+
+test('Eigene Position, die nach dem Ändern einer anderen gleicht, wird zusammengeführt', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma', url: '', phone: '' }, paypal: 'alex', minutes: 20 })).body.id;
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2,50', qty: 1 });
+    const b = await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Fanta', price: '2,50', qty: 1 });
+    await call('PATCH', `/api/items/${b.body.id}`, 'anna', { article: 'cola' });
+    const items = (await call('GET', `/api/rounds/${id}`, 'alex')).body.users.find((u) => u.user === 'anna').items;
+    assert.equal(items.length, 1);
+    assert.equal(items[0].qty, 2);
   } finally {
     await close();
   }

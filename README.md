@@ -8,13 +8,13 @@ Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live
 
 - **Items:** article, variant, price, quantity. Own rows are editable until ready; deleting offers a 15 s undo. Items are grouped by name + variant + price, ignoring case, spacing, punctuation and umlaut spelling.
 - **Catalog per restaurant:** names and variants from earlier orders are suggested. Prices are never prefilled; the last price is offered as an unchecked chip. Price deviations are flagged.
-- **Tabs:** own items, everyone (one card per user), combined order (for phoning or copying, with menu link).
+- **Tabs:** own items, everyone (one card per user), order list (for phoning or copying, with menu link). On wide screens the order list stays visible in a pane to the right of the tabs.
 - **Status line:** `opened › ready › ordered › delivered › paid` with times; the latest step is highlighted. Banners for users not yet ready and for open amounts.
 - **Ready and paid** are independent per-user flags. Any change to your items resets your ready flag. Only the user or the buyer can set paid. Ready is yellow, unready red, paid green.
 - **Deadline** (default 20 min, `+5 min`). When it expires or an admin/creator/buyer closes the order, items of unready users stay visible but do not count. Optional auto-close once everyone is ready; new users then need approval.
 - **Locked from "ordered":** no item or user changes, deadline and buyer data frozen; "take back ordered" reopens.
 - **Buyer and payment:** buyer, PayPal address and delivery fee (split equally among users with items). PayPal address (per buyer) and fee (per restaurant) are remembered. The pay block offers a link with the user's amount and a QR code of it. The address is visible only to participants, buyer, creator and admins.
-- **Navigation:** sidebar (open / unpaid / closed, live) from 700 px, list on the start page on phones. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
+- **Navigation:** sidebar (open / unpaid / closed, live) docked from 1280 px and as a drawer with a menu button below, the list also appears on the start page then. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
 - **Statistics:** top restaurant, favourite dish per restaurant, average item price and order total. No per-user statistics. Admins can export all item rows as JSON.
 - **Appearance:** light/dark/auto, colour themes, German/English.
 
@@ -44,7 +44,7 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 |---|---|
 | ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
 | **Combined order** | **All orders** |
-| ![Combined order](docs/screenshots/combined-order.png) | ![All orders](docs/screenshots/all-orders.png) |
+| ![Order list](docs/screenshots/combined-order.png) | ![All orders](docs/screenshots/all-orders.png) |
 
 ## Hosting with Docker Compose
 

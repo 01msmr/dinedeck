@@ -37,6 +37,8 @@ export function prepareQueries(db) {
     partSetPaid: db.prepare('UPDATE participants SET paid = ? WHERE round_id = ? AND user = ?'),
     itemAll: db.prepare('SELECT * FROM items WHERE round_id = ? ORDER BY id'),
     itemGet: db.prepare('SELECT * FROM items WHERE id = ?'),
+    itemSame: db.prepare('SELECT * FROM items WHERE round_id = ? AND lower(user) = ? AND akey = ? AND vkey = ? AND price_cents = ? AND id != ? ORDER BY id LIMIT 1'),
+    itemQty: db.prepare('UPDATE items SET qty = ? WHERE id = ?'),
     itemInsert: db.prepare(
       'INSERT INTO items (round_id, user, article, akey, variant, vkey, price_cents, qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ),

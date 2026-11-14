@@ -1,5 +1,5 @@
 // Reine Format-Helfer (ohne DOM, testbar).
-import { TIMING } from './config.js';
+import { TIMING, VARIANT_SHORT } from './config.js';
 
 const p2 = (n) => String(n).padStart(2, '0');
 
@@ -64,11 +64,6 @@ export function roundStage(r) {
   return r.ordered ? 'bestellt' : 'geschlossen';
 }
 
-/** Breite der Seitenleiste in rem aus einer Zeigerposition (px), begrenzt auf [minRem, maxRem]. */
-export function clampSideWidth(px, remPx, minRem, maxRem) {
-  return Math.min(maxRem, Math.max(minRem, px / remPx));
-}
-
 const nameKey = (x) => String(x ?? '').toLocaleLowerCase('de');
 
 /** Bestellte Runden früherer Tage, in denen `me` noch zahlen muss (und nicht selbst Besteller ist). */
@@ -79,4 +74,17 @@ export function owedByMe(rounds, me, now, nightEndHour) {
 /** Bestellte Runden früherer Tage, bei denen `me` Besteller ist und noch Zahlungen offen sind. */
 export function owedToMe(rounds, me, now, nightEndHour) {
   return rounds.filter((r) => r.ordered && !isToday(r.created_at, now, nightEndHour) && nameKey(r.buyer) === nameKey(me) && (r.debts_users ?? []).length > 0);
+}
+
+const wordRe = (words) => new RegExp(`(?<![\\p{L}\\p{N}])(?:${words.join('|')})(?![\\p{L}\\p{N}])`, 'giu');
+
+/** Variante für die Bestellliste kürzen: Füllwörter weg, Bindewörter zu Komma. */
+export function shortVariant(text) {
+  return String(text ?? '')
+    .replace(wordRe(VARIANT_SHORT.joiners), ',')
+    .replace(wordRe(VARIANT_SHORT.filler), '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+,/g, ',')
+    .replace(/,(\s*,)+/g, ',')
+    .replace(/^[\s,]+|[\s,]+$/g, '');
 }

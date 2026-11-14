@@ -46,6 +46,7 @@
   --side-muted: color-mix(in srgb, var(--fg) 96%, var(--side-bg)); /* Nebentext in der Seitenleiste, mind. 4,5:1 */
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
   --side-item-hover: color-mix(in srgb, var(--fg) 10%, var(--side-bg));
+  --head-outline: 0.5rem; /* dicker Rand um den Bestellkopf */
   --head-band-bg: var(--fg); /* dunkler Kopfbereich der Bestellung */
   --head-band-fg: var(--bg);
   --stripe: color-mix(in srgb, var(--fg) 8%, transparent); /* Zebra-Zeilen */
@@ -56,6 +57,7 @@
   --pane-muted: color-mix(in srgb, var(--fg) 82%, var(--pane-bg)); /* Nebentext im Inhaltsbereich */
   --faded-bg: color-mix(in srgb, var(--fg) 9%, var(--pane-bg)); /* erledigte Zustände: farblos blass (Grau) */
   --faded-fg: var(--pane-muted);
+  --content-max-wide: 86rem; /* mehr Breite, wenn die Bestellliste rechts steht und der Platz da ist */
   --content-max: 75rem; /* größte Breite des Inhalts der Bestellseite auf sehr breiten Bildschirmen */
   --scrim: #0007;
   --shadow-side: #0006;
@@ -146,7 +148,7 @@ button.btn.small { padding: 0.25rem 0.8125rem; font-size: 0.875rem; }
 button:disabled { opacity: .4; cursor: not-allowed; }
 
 /* Status */
-.badge { display: inline-block; padding: 1px 0.5625rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; border: 1px solid transparent; }
+.badge { display: inline-block; white-space: nowrap; padding: 1px 0.5625rem; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; border: 1px solid transparent; }
 .badge.on { background: var(--ok); color: var(--on-ok); }
 .badge.off { background: var(--bad); color: var(--on-bad); }
 .badge.mid { background: var(--warn); color: var(--on-warn); }
@@ -256,17 +258,20 @@ a.btn { text-decoration: none; text-align: center; }
 .side-item { display: block; padding: 0.5rem 0.625rem; border: 1px solid transparent; border-radius: var(--radius); background: var(--side-item-bg); color: var(--fg); text-decoration: none; }
 .side-item:hover { background: var(--side-item-hover); }
 .side-item.active { background: var(--bg); border-color: var(--accent); font-weight: 600; }
+.side-foot .side-item:has(.count-dot) { display: flex; align-items: center; justify-content: space-between; }
+.count-dot { display: inline-grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem; border-radius: 1rem; background: var(--bad); color: var(--on-bad); font-size: 0.75rem; font-weight: 700; }
 .side-foot { display: grid; gap: 0.125rem; margin-top: auto; padding-top: 0.875rem; }
+.side-head .badge, .side-head .side-paid { flex: none; }
 .side-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .side-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .side-item .sub { margin-top: 0.125rem; font-size: 0.8125rem; font-weight: 400; color: var(--side-muted); }
-@media (min-width: 43.75em) {
-  :root { --side-w: 13.125rem; }
+/* Seitenleiste angedockt ab 80 em (Platz für 17,5 rem Leiste + 60 rem Inhalt); darunter als Drawer mit Menü-Knopf */
+@media (min-width: 80em) {
+  :root { --side-w: 17rem; }
   .layout { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); }
   #side { display: flex; flex-direction: column; position: sticky; top: 0; height: 100lvh; overflow: auto; padding: 0.75rem; background: var(--side-bg); }
   .home-lists { display: none; }
 }
-@media (min-width: 62.5em) { :root { --side-w: 17.5rem; } }
 
 .hist h3 { margin: 0.75rem 0 0.5rem; font-size: 0.875rem; font-weight: 650; text-transform: capitalize; color: var(--muted); }
 
@@ -349,11 +354,11 @@ button.btn.ready { margin-left: 0; padding: 0.6875rem 1.625rem; font-size: 1.062
 
 .side-today-link h4 { margin: 0 0 0.125rem !important; }
 
-/* Handy: Sidebar als Drawer mit Hamburger-Button */
+/* Schmal (unter 80 em): Sidebar als Drawer mit Hamburger-Button */
 .menu-btn { display: none; position: absolute; left: 0.625rem; top: 0.625rem; width: 2.75rem; height: 2.75rem; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: transparent; color: var(--fg); cursor: pointer; }
 .menu-btn:hover { background: var(--wash); }
 #scrim { display: none; }
-@media (max-width: 43.6875em) {
+@media (max-width: 79.9375em) {
   .menu-btn { display: flex; }
   #side { display: flex; flex-direction: column; position: fixed; z-index: 30; left: 0; top: 0; bottom: 0; width: min(18.75rem, 85vw); padding: 0.75rem; overflow: auto; background: var(--side-bg); transform: translateX(-100%); transition: transform .2s ease; }
   body.nav-open #side { transform: none; box-shadow: 0 0 1.875rem var(--shadow-side); }
@@ -406,7 +411,7 @@ input[type="checkbox"] { width: auto; flex: none; }
 /* Heute-Bestellungen in „Alle Bestellungen“: hervorgehoben, vor der Monatsliste */
 .round-link.today .card { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color: var(--accent); }
 
-/* Summenzeilen der Sammelbestellung: Bezeichnung rechtsbündig mit Abstand vor dem Wert */
+/* Summenzeilen der Bestellliste: Bezeichnung rechtsbündig mit Abstand vor dem Wert */
 tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 
 /* Offene Beträge direkt unter dem Unbezahlt-Hinweis, ohne Karte; zweispaltig wenn breit genug */
@@ -415,7 +420,7 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 @media (min-width: 56.25em) { .status-debts { grid-template-columns: 1fr 1fr; } }
 
 /* Restaurant-Kopf: kräftig abgesetzt */
-.round-head { outline: 0.5rem solid var(--fg); outline-offset: 0; margin: 0.5rem; background: var(--head-bg); }
+.round-head { outline: var(--head-outline) solid var(--fg); outline-offset: 0; margin: var(--head-outline); background: var(--head-bg); }
 .round-head .round-title { margin: 0; font-size: 1.75rem; line-height: 1.2; }
 .round-buyer { margin-left: 0.75rem; font-size: 1.125rem; font-weight: 400; color: var(--muted); }
 
@@ -455,12 +460,6 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 
 /* Webseiten-Link als Pille: Schriftfarbe = Hintergrund, Hintergrund = Schriftfarbe */
 .link-pill { display: inline-block; padding: 1px 0.625rem; border-radius: 999px; background: var(--fg); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 0.85em; }
-.order-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.25rem 0.875rem; }
-.order-head > h3 { flex: none; }
-.order-head > .row { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; margin-left: auto; justify-content: flex-end; }
-.order-head > .row > span { flex: none; white-space: nowrap; }
-.order-head .link-pill { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 43.6875em) { .order-head { flex-wrap: wrap; } }
 .plain { font-weight: 400; }
 .ext-arrow { display: inline-block; vertical-align: -0.12em; margin-right: 0.25rem; }
 
@@ -538,14 +537,11 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .ready-strip.flow.unready { background: var(--bad); color: var(--on-bad); border-bottom: 0; }
 .ready-strip .now.ready { background: var(--warn); color: var(--on-warn); }
 .ready-strip .role { font-weight: 400; }
-#side-resize { display: none; }
-@media (min-width: 43.75em) {
-  #side-resize { display: block; position: fixed; top: 0; bottom: 0; left: calc(var(--side-w) - 0.25rem); width: 0.5rem; z-index: 6; cursor: col-resize; touch-action: none; }
-  #side-resize::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0.1875rem; width: 0.125rem; background: transparent; }
-  #side-resize:hover::after, body.side-resizing #side-resize::after { background: var(--accent); }
-  body.side-resizing { cursor: col-resize; user-select: none; }
-}
-.filter-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; cursor: pointer; }
+.all-head { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; }
+.all-head h2 { margin: 0; }
+.unpaid-line { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.25rem; }
+.add-title { margin: 0 0 0.5rem; font-size: 1rem; }
+.filter-bar { font-size: 1.0625rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; cursor: pointer; }
 #pay-notice { position: fixed; right: 1rem; bottom: 1rem; z-index: 40; width: min(22rem, calc(100vw - 2rem)); }
 #pay-notice:empty { display: none; }
 .pay-notice-card { display: grid; gap: 0.5rem; background: var(--surface); box-shadow: 0 0.5rem 1.5rem var(--shadow-notice); border-left: 0.375rem solid var(--bad); }
@@ -555,7 +551,7 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .qr-fg { fill: var(--qr-dark); }
 .round-head.folded .fold-item { display: none; }
 
-.round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: -0.875rem -0.875rem 0; padding: 0.75rem 0.875rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
+.round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: -0.875rem -0.875rem 0; padding: calc(0.75rem - var(--head-outline)) 0.875rem 0.75rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
 .head-band.foldable { cursor: pointer; }
 .head-band .round-buyer, .head-band .muted { color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); }
 .head-band a { color: inherit; }
@@ -576,8 +572,6 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .debts-overview { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
 .debts-overview:empty { display: none; }
 .debts-overview .banner { background: var(--bad); color: var(--on-bad); border: 0; text-align: center; font-weight: 700; }
-.debt-round { color: var(--fg); font-weight: 600; text-decoration: none; padding: 0 0.75rem; }
-.debt-round:hover { text-decoration: underline; }
 
 .round-main > .tabs ~ * > .card, .round-main > .tabs ~ .card { background: var(--pane-bg); border-color: color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); }
 .round-main > .tabs button[aria-selected="true"] { background: var(--pane-bg); }
@@ -595,18 +589,30 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .round-head.folded .head-main { display: none; }
 .round-head.folded { grid-template-columns: minmax(0, 1fr); }
 .round-head.folded.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr); }
+@media (min-width: 43.75em) { /* eingeklappt, breit: Lieferzeit/Knöpfe und Bezahlen in einer Zeile */
+  .round-head.folded { grid-template-columns: minmax(0, 1fr) auto; }
+  .round-head.folded.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr) auto; }
+  .round-head.folded > .pay { order: 1; align-self: center; }
+  .round-head.folded > .head-side { order: 2; align-self: center; }
+  .round-head.folded .head-side:not(:has(> :not(.hidden):not(.fold-item))) { display: none; }
+  .round-head.folded > .pay, .round-head.folded.has-pick > .pay { grid-column: auto; }
+}
 @media (max-width: 30em) { .pay-who { display: none; } /* auf dem Handy: „Bezahlen an“ + Adresse; der Name steht oben im Kopf */ .pay-info { gap: 0.5rem; } .pay-info .btn.small { padding: 0.25rem 0.625rem; font-size: 0.8125rem; } .pay-info .payaddr { font-size: 0.9375rem; } }
 .copy-btn { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; }
 
+/* Eingeklappt: Lieferzeit und Knöpfe in einer Zeile (Umbruch erst bei Platzmangel) */
+.round-head.folded .order-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+.round-head.folded .order-card > label { margin-left: auto; } /* Lieferzeit rechts, direkt vor den Knöpfen */
+
 /* Bezahlbereich: eigene Zeile über die volle Breite, unabhängig vom Zustand des Kopfs */
 .round-head > .pay { grid-column: 1 / -1; background: transparent; border: 0; padding: 0; }
-.round-head.folded.has-pick > .pay { grid-column: 1 / -1; }
 .head-band .head-contact { margin-left: auto; }
 .head-band .head-contact .row { justify-content: flex-end; }
 .order-table thead th { border-bottom: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); padding-bottom: 0.5rem; }
 .order-table tfoot tr:last-child td { font-size: 1.25rem; font-weight: 700; padding-top: 0.5rem; } /* „Gesamt“ größer */
 .order-table tfoot tr:last-child td { border-top: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); }
 .order-table td .who { margin-left: 0.625rem; } /* Namen in derselben Zeile wie das Gericht */
+.order-table .who-line { display: block; } /* Variante und Namen mehrerer Nutzer in der Zeile darunter */
 .order-table .lbl-short { display: none; }
 .order-table .unit-inline { display: none; }
 @media (max-width: 30em) {
@@ -635,11 +641,11 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 @media (max-width: 30em) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
 .order-table tfoot tr:not(:last-child) td:last-child, .order-table tfoot tr:not(:last-child) td.qty-total { font-weight: 700; } /* Betrag und Gesamtzahl fett, nur das Wort „Summe Artikel“ normal */
 /* Dunkler Kopfbereich: alle Texte auf einer gemeinsamen Grundlinie */
-.round-head .head-band { align-items: baseline; }
+.round-head .head-band { align-items: center; }
 .head-band .fold-toggle { align-self: center; }
-.head-band .round-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.625rem; }
-.head-band .round-closed { align-self: baseline; margin-left: 0; vertical-align: baseline; }
-.head-band .head-contact .row { align-items: baseline; }
+.head-band .round-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.625rem; }
+.head-band .round-closed { align-self: center; margin-left: 0; }
+.head-band .head-contact .row { align-items: center; }
 .round-head { border: 0; } /* keine dünne Linie zwischen dem dicken Rand und dem dunklen Kopfbereich */
 .layout:has(#app.wide) .page { background: var(--surround-bg); min-height: 100lvh; } /* Fläche um den Inhalt reicht bis zum unteren Rand, kein weißer Streifen */
 .copy-btn.done { width: auto; padding: 0 0.75rem; white-space: nowrap; font-weight: 600; }
@@ -648,9 +654,20 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .side-paid { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; font-weight: 600; color: var(--fg); white-space: nowrap; }
 .check-circle { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--ok); color: var(--on-ok); font-size: 0.75rem; font-weight: 700; }
 button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--fg); }
-.round-grid { width: 100%; max-width: var(--content-max); margin-inline: auto; }
+.round-grid { width: 100%; max-width: var(--content-max); margin-inline: auto; container: roundgrid / inline-size; }
 
-/* Sammelbestellung: Tabelle nur so breit wie nötig (bis zum Rand des Blocks); Abstand zwischen den Spalten bleibt */
+@media (min-width: 100rem) { .round-grid { max-width: var(--content-max-wide); } }
+
+/* Breit: links Tabs „Meine“/„Alle“, rechts dauerhaft die Bestellliste (bleibt beim Scrollen sichtbar) */
+@container roundgrid (min-width: 60rem) {
+  .round-main { grid-template-columns: minmax(28rem, 1fr) minmax(31rem, 40rem); column-gap: 1rem; } /* Bestellliste wächst bis 40 rem, links bleiben mindestens 28 rem */
+  .round-main > :not(.order-pane) { grid-column: 1; }
+  .round-main > .order-pane { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: sticky; top: calc(var(--top-h) + var(--flow-h)); display: block !important; border-radius: var(--radius); }
+  .round-main > .tabs button[data-tab="order"] { display: none; }
+  .round-main[data-tab="order"] > .mine-pane { display: grid !important; } /* gemerkter Tab „Bestellliste“ aus schmaler Ansicht: links „Meine“ zeigen */
+}
+
+/* Bestellliste: Tabelle nur so breit wie nötig (bis zum Rand des Blocks); Abstand zwischen den Spalten bleibt */
 .order-table { width: max-content; max-width: 100%; margin-left: auto; } /* rechtsbündig in der Karte */
 @media (max-width: 30em) { .order-table { width: 100%; } }
 .status-flow .now.unready { background: var(--bad); color: var(--on-bad); }

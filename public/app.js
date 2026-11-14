@@ -6,7 +6,6 @@ import { app, h, me, setMe, nav, api, isGuest, homeName } from '/util.js';
 import { startRound } from '/group.js';
 import { loadSide } from '/side.js';
 import { showOpenPayments } from '/notice.js';
-import '/side-resize.js';
 import { homeView } from '/views/home.js';
 import { roundView } from '/views/round.js';
 import { statsView } from '/views/stats.js';

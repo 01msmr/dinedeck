@@ -176,6 +176,11 @@ export function createLogic(db, { admins = [] } = {}) {
     admit(r, user);
     q.partUpsert.run(r.id, user);
     q.partSetDone.run(0, r.id, user);
+    const same = q.itemSame.get(r.id, lower(user), it.akey, it.vkey, it.price, 0);
+    if (same && same.qty + it.qty <= LIMITS.qtyMax) { // identische eigene Position: Menge erhöhen statt zweiter Zeile
+      q.itemQty.run(same.qty + it.qty, same.id);
+      return same.id;
+    }
     return Number(q.itemInsert.run(r.id, user, it.article, it.akey, it.variant, it.vkey, it.price, it.qty).lastInsertRowid);
   }
 
@@ -197,7 +202,13 @@ export function createLogic(db, { admins = [] } = {}) {
       price: body.price ?? item.price_cents / 100,
       qty: body.qty ?? item.qty,
     });
-    q.itemUpdate.run(it.article, it.akey, it.variant, it.vkey, it.price, it.qty, item.id);
+    const same = q.itemSame.get(item.round_id, lower(item.user), it.akey, it.vkey, it.price, item.id);
+    if (same && same.qty + it.qty <= LIMITS.qtyMax) { // wird identisch mit einer anderen eigenen Position: zusammenführen
+      q.itemQty.run(same.qty + it.qty, same.id);
+      q.itemDelete.run(item.id);
+    } else {
+      q.itemUpdate.run(it.article, it.akey, it.variant, it.vkey, it.price, it.qty, item.id);
+    }
     q.partSetDone.run(0, item.round_id, item.user);
     return item.round_id;
   }

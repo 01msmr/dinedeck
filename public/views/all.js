@@ -2,66 +2,49 @@
 import { t } from '/i18n.js';
 import { LISTS } from '/config.js';
 import { groupHistory, isCurrentRound } from '/group.js';
-import { TIMING } from '/config.js';
-import { app, h, api, act, fmtDate, lc, me } from '/util.js';
-import { debtRowEl } from '/views/round/debt-row.js';
+import { app, h, api } from '/util.js';
 import { roundItem } from '/views/home.js';
 import { groupTitle } from '/side.js';
 
 export function allView() {
   const overview = h('div', { class: 'debts-overview' });
   const body = h('div', { class: 'hist' });
-  app.replaceChildren(h('h2', null, t('Alle Bestellungen')), overview, body);
-  let open = []; // Details der Bestellungen mit offenen Zahlungen
-  let ask = null; // { key, timer }: Rückfrage „ist bezahlt?“
-
-  // Offene Zahlungen über alle Bestellungen, wie in der einzelnen Bestellung
-  function drawOverview() {
-    const n = open.reduce((a, d) => a + d.debts.length, 0);
-    if (!n) return overview.replaceChildren();
-    overview.replaceChildren(
-      h('div', { class: 'banner bad' }, t(n === 1 ? '1 offene Zahlung' : '{n} offene Zahlungen', { n })),
-      ...open.flatMap((d) => [
-        h('a', { class: 'debt-round', href: `#/r/${d.id}` }, `${d.restaurant.name} · ${fmtDate(d.created_at)} · ${t('bestellt von')} ${d.buyer}`),
-        h('div', { class: 'status-debts' }, ...d.debts.map((x) => {
-          const key = `${d.id}:${lc(x.user)}`;
-          return debtRowEl(x, {
-            asking: ask?.key === key,
-            onClick: lc(x.user) === lc(me) || d.viewer.is_buyer
-              ? async () => {
-                  if (ask?.key === key) {
-                    clearTimeout(ask.timer);
-                    ask = null;
-                    await act(() => api('POST', `/rounds/${d.id}/paid`, { user: x.user, value: true }));
-                    return view.refresh();
-                  }
-                  clearTimeout(ask?.timer);
-                  ask = { key, timer: setTimeout(() => { ask = null; drawOverview(); }, TIMING.confirmMs) };
-                  drawOverview();
-                }
-              : null,
-          });
-        })),
-      ])
-    );
+  const filterKey = 'bb_all_filter';
+  let onlyUnpaid = false;
+  try { onlyUnpaid = sessionStorage.getItem(filterKey) === 'unpaid'; } catch {}
+  let rounds = [];
+  const box = h('input', { type: 'checkbox', checked: onlyUnpaid, onchange: (e) => { onlyUnpaid = e.target.checked; try { sessionStorage.setItem(filterKey, onlyUnpaid ? 'unpaid' : 'all'); } catch {} drawList(); } });
+  // Aus der gefilterten Liste geöffnet: dieselbe Auswahl im Tab „Alle“ der Bestellung
+  body.addEventListener('click', (e) => {
+    if (onlyUnpaid && e.target.closest('a.round-link')) { try { sessionStorage.setItem('bb_user_filter', 'unpaid'); } catch {} }
+  });
+  app.replaceChildren(h('div', { class: 'all-head' }, h('h2', null, t('Alle Bestellungen')), h('label', { class: 'card filter-bar' }, box, t('Nur Unbezahlte'))), overview, body);
+  // Nur die Anzahl offener Zahlungen; Namen und Beträge stehen in der Bestellzeile
+  function drawOverview(rounds) {
+    const n = rounds.filter((r) => r.ordered).reduce((a, r) => a + (r.debts_users ?? []).length, 0);
+    overview.replaceChildren(...(n ? [h('div', { class: 'banner bad' }, t(n === 1 ? '1 offene Zahlung' : '{n} offene Zahlungen', { n }))] : []));
   }
 
   const view = {
     async refresh() {
-      const rounds = await api('GET', '/rounds?all=1').catch(() => null);
-      if (!rounds) return;
-      open = (await Promise.all(rounds.filter((r) => r.ordered && (r.debts_users ?? []).length).map((r) => api('GET', `/rounds/${r.id}`).catch(() => null)))).filter((d) => d && d.debts.length);
-      drawOverview();
+      const list = await api('GET', '/rounds?all=1').catch(() => null);
+      if (!list) return;
+      rounds = list;
+      drawOverview(rounds);
+      drawList();
+    },
+    destroy() {},
+  };
+  function drawList() {
+      const shown = onlyUnpaid ? rounds.filter((r) => r.unpaid) : rounds;
       const now = Date.now();
-      const today = rounds.filter((r) => isCurrentRound(r, now));
-      const rest = rounds.filter((r) => !isCurrentRound(r, now));
+      const today = shown.filter((r) => isCurrentRound(r, now));
+      const rest = shown.filter((r) => !isCurrentRound(r, now));
       body.replaceChildren(
         ...(today.length ? [h('h3', null, t('Heute')), h('div', { class: 'list' }, ...today.map((r) => roundItem(r, true)))] : []),
         ...(rest.length ? groupHistory(rest, now, LISTS.historyMonths).flatMap((g) => [h('h3', null, groupTitle(g)), h('div', { class: 'list' }, ...g.items.map((r) => roundItem(r)))]) : []),
-        ...(rounds.length ? [] : [h('span', { class: 'muted' }, t('Noch nichts abgeschlossen.'))])
+        ...(shown.length ? [] : [h('span', { class: 'muted' }, t(rounds.length ? 'Keine passenden Bestellungen.' : 'Noch nichts abgeschlossen.'))])
       );
-    },
-    destroy() { clearTimeout(ask?.timer); },
-  };
+  }
   return view;
 }

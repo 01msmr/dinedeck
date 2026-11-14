@@ -2,7 +2,6 @@
 import { t, lang } from '/i18n.js';
 import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
 import { isCurrentRound } from '/group.js';
-import { genitive } from '/format.js';
 import { orderContent } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
@@ -37,14 +36,17 @@ export function roundView(id) {
   document.getElementById('statusbar').replaceChildren(banners);
   const tabsEl = h('div', { class: 'tabs', role: 'tablist' });
   const usersPane = h('div', { class: 'users-pane' });
-  const minePane = h('div', { class: 'stack-4' });
-  const orderPane = h('div', { class: 'card' });
+  const minePane = h('div', { class: 'stack-4 mine-pane' });
+  const orderPane = h('div', { class: 'card order-pane' });
   const payCard = h('section', { class: 'card pay hidden' });
   const inEta = h('input', { type: 'number', min: 1, max: LIMITS.etaMaxMinutes, value: DEFAULTS.etaMinutes, inputmode: 'numeric', class: 'w-eta' });
   const etaText = h('div', { class: 'semibold' });
   const orderCard = h('section', { class: 'card order-card hidden' });
   let wasOrdered = null;
-  let foldOpen = false; // ab „Bestellt“ sind die Details zugeklappt, bis man sie öffnet
+  const foldKey = `bb_fold_${id}`;
+  let foldOpen = false; // Details sind standardmäßig zugeklappt; die Wahl gilt je Bestellung für die Sitzung
+  try { foldOpen = sessionStorage.getItem(foldKey) === 'open'; } catch {}
+  const setFold = (open) => { foldOpen = open; try { sessionStorage.setItem(foldKey, open ? 'open' : 'closed'); } catch {} renderHead(); };
   let etaPrefilled = false;
 
   // Persistente Eingabezeile (wird bei Live-Updates nicht neu gebaut)
@@ -110,6 +112,7 @@ export function roundView(id) {
         }
       },
     },
+    h('h3', { class: 'add-title' }, t('Artikel hinzufügen')),
     h('div', { class: 'item-row item-labels muted' }, col('qty', t('Menge')), col('art', t('Artikel')), col('var', t('Variante (optional)')), col('price', t('Preis')), col('act')),
     h('div', { class: 'item-row' }, col('qty', inQty), col('art', inArticle), col('var', inVariant), col('price', h('div', { class: 'price-in' }, inPrice, h('span', { class: 'eur-box' }, '€'))), col('act', addBtn)),
     sugBox,
@@ -121,13 +124,14 @@ export function roundView(id) {
 
   const panes = { users: usersPane, mine: minePane, order: orderPane };
   const tabDefs = [
-    ['mine', [me, h('span', { class: 'extralight' }, genitive(me, lang).slice(me.length)), lang === 'de' ? ' Artikel' : ' items']],
+    ['mine', me],
     ['users', t('Alle')],
-    ['order', t('Sammelbestellung')],
+    ['order', t('Bestellliste')],
   ];
   function showTab(t) {
     tab = t;
     sessionStorage.setItem('bb_tab', t);
+    roundMain.dataset.tab = t;
     for (const [k, p] of Object.entries(panes)) p.classList.toggle('hidden', k !== t);
     for (const b of tabsEl.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   }
@@ -191,9 +195,8 @@ export function roundView(id) {
   const headTop = h('div');
   const headBand = h('div', { class: 'head-band' });
   headBand.addEventListener('click', (e) => {
-    if (!d?.ordered_at || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
-    foldOpen = !foldOpen;
-    renderHead();
+    if (!d || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
+    setFold(!foldOpen);
   });
   const headMeta = h('div', { class: 'muted mt-2 fold-item' });
   const headForm = h(
@@ -232,14 +235,14 @@ export function roundView(id) {
   }
 
   function renderHead() {
-    headBand.classList.toggle('foldable', !!d.ordered_at);
+    headBand.classList.add('foldable');
     headBand.replaceChildren(
-      ...(d.ordered_at ? [h('button', { class: 'fold-toggle', type: 'button', 'aria-expanded': String(foldOpen), 'aria-label': t('Details ein-/ausklappen'), onclick: () => { foldOpen = !foldOpen; renderHead(); } }, disclosureTriangle())] : []),
+      h('button', { class: 'fold-toggle', type: 'button', 'aria-expanded': String(foldOpen), 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()),
       h('h2', { class: 'round-title' }, d.restaurant.name, d.locked ? h('span', { class: 'round-closed' }, t('Bestellung geschlossen')) : null, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' + (lc(me) === lc(d.buyer) ? '' : ' fold-item') }, contactLinks(d.restaurant, { linkPill: true })) // Kontakt zum Bestellen: beim Besteller immer sichtbar, sonst eingeklappt
     );
     headTop.replaceChildren(...(d.restaurant.address ? [h('div', { class: 'muted fold-item' }, d.restaurant.address)] : []));
-    head.classList.toggle('folded', !!d.ordered_at && !foldOpen);
+    head.classList.toggle('folded', !foldOpen);
     const manage = d.viewer.can_manage;
     headMeta.replaceChildren(...(manage || !d.delivery_fee_cents ? [] : [t('Lieferkosten: {fee}', { fee: eur(d.delivery_fee_cents) })]));
     headForm.classList.toggle('hidden', !manage);

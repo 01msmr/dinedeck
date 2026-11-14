@@ -1,5 +1,6 @@
 // Datenbankschema, Öffnen und Migration älterer Datenbanken
 import { DatabaseSync } from 'node:sqlite';
+import { LIMITS } from '../public/config.js';
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS restaurants (
@@ -68,5 +69,21 @@ export function openDb(file = ':memory:') {
   if (!scols.includes('address')) db.exec("ALTER TABLE restaurants ADD COLUMN address TEXT NOT NULL DEFAULT ''");
   const pcols = db.prepare('PRAGMA table_info(participants)').all().map((c) => c.name);
   if (!pcols.includes('approved')) db.exec('ALTER TABLE participants ADD COLUMN approved INTEGER NOT NULL DEFAULT 1');
+  mergeDuplicateItems(db);
   return db;
+}
+
+/** Noch nicht bestellte Runden: gleiche Positionen eines Nutzers (Artikel, Variante, Preis) zu einer mit größerer Menge zusammenführen. */
+export function mergeDuplicateItems(db) {
+  const rows = db.prepare(`SELECT i.* FROM items i JOIN rounds r ON r.id = i.round_id WHERE r.ordered_at IS NULL ORDER BY i.id`).all();
+  const keep = new Map();
+  for (const it of rows) {
+    const key = [it.round_id, it.user.toLocaleLowerCase('de'), it.akey, it.vkey, it.price_cents].join('\u0001');
+    const first = keep.get(key);
+    if (first && first.qty + it.qty <= LIMITS.qtyMax) {
+      first.qty += it.qty;
+      db.prepare('UPDATE items SET qty = ? WHERE id = ?').run(first.qty, first.id);
+      db.prepare('DELETE FROM items WHERE id = ?').run(it.id);
+    } else if (!first) keep.set(key, { id: it.id, qty: it.qty });
+  }
 }

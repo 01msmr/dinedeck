@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, clampSideWidth, owedByMe, owedToMe } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -118,12 +118,6 @@ test('roundStage: alles bezahlt vor geliefert vor bestellt vor geschlossen', () 
   assert.equal(roundStage({ locked: false }), null);
 });
 
-test('clampSideWidth: Pixel in rem, begrenzt auf Min und Max', () => {
-  assert.equal(clampSideWidth(280, 16, 10, 30), 17.5);
-  assert.equal(clampSideWidth(40, 16, 10, 30), 10);
-  assert.equal(clampSideWidth(900, 16, 10, 30), 30);
-});
-
 const DAY = 86400000;
 const NOW = new Date(2026, 10, 14, 12, 0).getTime();
 const rounds = [
@@ -142,4 +136,15 @@ test('owedByMe: bestellt, nicht heute, ich schulde und bin nicht Besteller', () 
 test('owedToMe: bestellt, nicht heute, ich bin Besteller und es ist etwas offen', () => {
   assert.deepEqual(owedToMe(rounds, 'anna', NOW, 4).map((r) => r.id), [3]);
   assert.deepEqual(owedToMe(rounds, 'bob', NOW, 4).map((r) => r.id), [1]);
+});
+
+test('shortVariant: Füllwörter weg, „und“ wird Komma, nichts übrig bleibt leer', () => {
+  assert.equal(shortVariant('Mit extra Schinken'), 'extra Schinken');
+  assert.equal(shortVariant('Schinken und Pilze'), 'Schinken, Pilze');
+  assert.equal(shortVariant('zusätzlich Käse'), 'Käse');
+  assert.equal(shortVariant('mit Zwiebeln und zusätzlich Käse'), 'Zwiebeln, Käse');
+  assert.equal(shortVariant('Mitte'), 'Mitte'); // nur ganze Wörter
+  assert.equal(shortVariant('26 cm, Fladenbrot'), '26 cm, Fladenbrot');
+  assert.equal(shortVariant(''), '');
+  assert.equal(shortVariant('mit'), '');
 });
