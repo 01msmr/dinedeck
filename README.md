@@ -34,9 +34,45 @@ npm test
 | `ADMINS`  | empty                 | Comma-separated usernames |
 | `FRAME_ANCESTORS` | empty | Space/comma-separated origins (e.g. `https://l.example.org`) allowed to embed the app in an iframe; `any` = every site; empty = embedding blocked |
 
-Docker: `docker compose up -d` (data in volume `dinedeck-data`). The image copies `server.js`, `db.js`, `db/`, `security.js` and `public/`; add new source files in the `Dockerfile`.
-
 Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
+
+## Demo
+
+`npm run demo` fills an empty database (`./data/demo.db`, or `DB_FILE`) with four invented orders and invented names (Alex, Sam, Jo, Kim, Robin, Lee). A database that already has orders is never touched. Try it: `DB_FILE=data/demo.db npm start`, then enter one of the names. With Docker Compose, `DEMO=1 docker compose up -d --build` seeds the empty volume on start.
+
+| Open order | Delivered, partly paid |
+|---|---|
+| ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
+| **Combined order** | **All orders** |
+| ![Combined order](docs/screenshots/combined-order.png) | ![All orders](docs/screenshots/all-orders.png) |
+
+## Hosting with Docker Compose
+
+```sh
+git clone https://github.com/01msmr/dinedeck && cd dinedeck
+echo 'ADMINS=anna,ben' > .env         # optional settings, see below
+docker compose up -d --build           # builds the image, starts it in the background
+```
+
+- **Settings:** `compose.yaml` reads `ADMINS` and `FRAME_ANCESTORS` from the shell or from a `.env` file next to it (`ADMINS=anna,ben`). `HOST`, `PORT` and `DB_FILE` are set in the image (`0.0.0.0`, `3000`, `/data/dinedeck.db`).
+- **Port:** The default publishes `127.0.0.1:3000` only. For a local network change it to `"3000:3000"`. For the internet put a reverse proxy with HTTPS in front and keep the default.
+- **HTTPS:** The browser only copies to the clipboard (copy buttons) and an embedding site only accepts an iframe over HTTPS. Example with Caddy: `dinedeck.example.org { reverse_proxy 127.0.0.1:3000 }`. Live updates use server-sent events; the proxy must not buffer them (Caddy does not, with nginx set `proxy_buffering off` for `/api/events`).
+- **Data:** The SQLite file lives in the named volume `dinedeck-data` and survives rebuilds. There is no login, see Security below.
+- **Update:** `git pull && docker compose up -d --build`. New source files must be added to the `COPY` lines in the `Dockerfile`.
+- **Logs and stop:** `docker compose logs -f`, `docker compose down` (the volume stays; `down -v` deletes the data).
+- **Backup:** Stop the container, copy the file out, start it again:
+  ```sh
+  docker compose stop
+  docker run --rm -v dinedeck-data:/data -v "$PWD":/backup alpine cp /data/dinedeck.db /backup/
+  docker compose start
+  ```
+- **Restore or import** an existing database (same steps, other direction, container stopped):
+  ```sh
+  docker compose stop
+  docker run --rm -v dinedeck-data:/data -v "$PWD":/backup alpine sh -c 'rm -f /data/dinedeck.db-* && cp /backup/dinedeck.db /data/dinedeck.db && chown 1000:1000 /data/dinedeck.db'
+  docker compose start
+  ```
+  The `rm` removes old `-wal`/`-shm` files that could overlay the imported file, the `chown` gives the file to the image's `node` user (uid 1000).
 
 ## Structure
 

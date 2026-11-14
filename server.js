@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openDb, createLogic, HttpError } from './db.js';
 import { securityHeaders } from './security.js';
+import { seedDemoFile } from './demo.js';
 import { LIMITS, TIMING } from './public/config.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -190,6 +191,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const frameAncestors = (process.env.FRAME_ANCESTORS ?? '').split(/[\s,]+/).filter(Boolean);
   const dbFile = process.env.DB_FILE ?? './data/dinedeck.db';
   if (dbFile !== ':memory:') mkdirSync(path.dirname(path.resolve(dbFile)), { recursive: true });
+  if (process.env.DEMO) seedDemoFile(dbFile); // DEMO=1: leere Datenbank mit erfundenen Demo-Bestellungen füllen
   const server = createApp({ dbFile, admins, frameAncestors });
   server.listen(port, host, () => console.log(`dinedeck läuft auf http://${host}:${port}`));
   const stop = () => {

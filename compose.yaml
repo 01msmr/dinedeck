@@ -3,9 +3,11 @@ services:
     build: .
     restart: unless-stopped
     environment:
-      ADMINS: "${ADMINS:-}"      # kommagetrennt (z. B. per .env); dürfen jede Runde verwalten
+      ADMINS: "${ADMINS:-}"                        # comma-separated usernames, may manage every order
+      DEMO: "${DEMO:-}"                            # 1 = fill an empty database with fictional demo orders
+      FRAME_ANCESTORS: "${FRAME_ANCESTORS:-}"      # origins allowed to embed the app in an iframe (empty = blocked)
     ports:
-      - "127.0.0.1:3000:3000"  # lokal; im lokalen Netz auf 0.0.0.0 oder Reverse-Proxy ändern
+      - "127.0.0.1:3000:3000"  # local only; for a LAN use "3000:3000", or keep it and put a reverse proxy in front
     volumes:
       - dinedeck-data:/data
 volumes:
