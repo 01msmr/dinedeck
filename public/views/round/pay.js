@@ -1,11 +1,11 @@
 // Bezahlbereich: Adresse des Bestellers, Betrag, Link
 import { t } from '/i18n.js';
-import { eur, h, toast, lc, me } from '/util.js';
+import { eur, h, lc, me, flashButton } from '/util.js';
 import { payHref } from '/format.js';
 import { qrIcon } from './qr-icon.js';
 
 // Standard-Kopiersymbol (zwei überlappende Rechtecke) als Knopf mit Hinweistext
-function copyButton(text, hint, doneMsg) {
+function copyButton(text, hint) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1.5rem', height: '1.5rem', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
@@ -16,12 +16,13 @@ function copyButton(text, hint, doneMsg) {
   svg.append(back, front);
   return h('button', {
     class: 'btn small ghost copy-btn', type: 'button', title: hint, 'aria-label': hint,
-    onclick: async () => {
+    onclick: async (e) => {
+      const btn = e.currentTarget; // nach dem await ist currentTarget leer
       try {
         await navigator.clipboard.writeText(text);
-        toast(doneMsg);
+        flashButton(btn, `✓ ${t('Kopiert')}`);
       } catch {
-        toast(t('Kopieren nicht möglich'));
+        flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
       }
     },
   }, svg);
@@ -50,7 +51,7 @@ export function payRows(d) {
         payLink
           ? h('a', { class: 'payaddr', href: payLink, target: '_blank', rel: 'noopener noreferrer' }, d.paypal)
           : h('strong', { class: 'payaddr' }, d.paypal),
-        copyButton(payLink ?? d.paypal, payLink ? t('Bezahl-Link kopieren') : t('Adresse kopieren'), payLink ? t('Link kopiert') : t('Adresse kopiert'))
+        copyButton(payLink ?? d.paypal, payLink ? t('Bezahl-Link kopieren') : t('Adresse kopieren'))
       ))
     );
   }

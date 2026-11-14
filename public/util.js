@@ -42,6 +42,17 @@ export function h(tag, props, ...kids) {
 }
 
 let toastTimer;
+// Rückmeldung direkt am Knopf: Inhalt kurz durch den Text ersetzen
+export function flashButton(btn, text, ms = 1500) {
+  const old = [...btn.childNodes];
+  btn.classList.add('done');
+  btn.replaceChildren(text);
+  setTimeout(() => {
+    btn.classList.remove('done');
+    btn.replaceChildren(...old);
+  }, ms);
+}
+
 export function toast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('show');

@@ -1,6 +1,6 @@
 // Sammelbestellung: Gruppentabelle, Summen und Text zum Kopieren
 import { t } from '/i18n.js';
-import { eur, h, toast, telHref, contactLinks } from '/util.js';
+import { eur, h, telHref, contactLinks, flashButton } from '/util.js';
 
 export function orderText(d) {
   const lines = [`${t('Bestellung')} ${d.restaurant.name}`];
@@ -52,12 +52,13 @@ export function orderContent(d) {
         'button',
         {
           class: 'btn small',
-          onclick: async () => {
+          onclick: async (e) => {
+            const btn = e.currentTarget; // nach dem await ist currentTarget leer
             try {
               await navigator.clipboard.writeText(orderText(d));
-              toast(t('Bestelltext kopiert'));
+              flashButton(btn, `✓ ${t('Kopiert')}`);
             } catch {
-              toast(t('Kopieren nicht möglich'));
+              flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
             }
           },
         },
