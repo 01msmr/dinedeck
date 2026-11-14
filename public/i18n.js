@@ -33,6 +33,7 @@ const EN = {
   'geschlossen': 'closed',
   'Bestellung geschlossen': 'Order closed',
   'Bestellen:': 'Order:',
+  'Anzahl aller Artikel': 'Total number of items',
   'Web': 'Web',
   'Start': 'Home',
   '✓ Ready': '✓ Ready',

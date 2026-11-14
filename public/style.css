@@ -30,7 +30,7 @@
   --surface: color-mix(in srgb, var(--accent) 8%, var(--bg));
   --line: color-mix(in srgb, var(--accent) 16%, var(--bg));
   --wash: color-mix(in srgb, var(--accent) 12%, var(--bg));
-  --side-bg: light-dark(color-mix(in srgb, var(--accent) 16%, color-mix(in srgb, var(--bg) 93%, #000)), color-mix(in srgb, var(--bg) 80%, #d4dae6));
+  --side-bg: light-dark(color-mix(in srgb, var(--accent) 6%, var(--bg)), color-mix(in srgb, var(--bg) 80%, #d4dae6)); /* Seitenleiste im hellen Modus: klar heller als der Mittelton um den Inhalt */
 
   /* Alle weiteren Farben der Oberfläche: nur hier definieren, im Rest des CSS nur per var() nutzen */
   --white: #ffffff;
@@ -52,6 +52,7 @@
   --tab-fg: var(--fg); /* Beschriftung inaktiver Tabs */
   --surround-bg: light-dark(color-mix(in srgb, var(--accent) 12%, color-mix(in srgb, var(--black) 12%, var(--bg))), color-mix(in srgb, var(--white) 9%, var(--bg))); /* Fläche um den Inhalt der Bestellung: Mittelton */
   --pane-bg: light-dark(var(--white), color-mix(in srgb, var(--black) 40%, var(--bg))); /* Inhaltsbereich unter den Tabs: klar vom Seitengrund abgesetzt */
+  --pane-soft: color-mix(in srgb, var(--fg) 58%, var(--pane-bg)); /* Einzelpreise: leicht zurückgenommen */
   --pane-muted: color-mix(in srgb, var(--fg) 82%, var(--pane-bg)); /* Nebentext im Inhaltsbereich */
   --faded-bg: color-mix(in srgb, var(--fg) 9%, var(--pane-bg)); /* erledigte Zustände: farblos blass (Grau) */
   --faded-fg: var(--pane-muted);
@@ -602,3 +603,40 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .head-band .head-contact { margin-left: auto; }
 .head-band .head-contact .row { justify-content: flex-end; }
 .order-table thead th { border-bottom: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); padding-bottom: 0.5rem; }
+.order-table tfoot tr:last-child td { font-size: 1.25rem; font-weight: 700; padding-top: 0.5rem; } /* „Gesamt“ größer */
+.order-table tfoot tr:last-child td { border-top: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); }
+.order-table td .who { margin-left: 0.625rem; } /* Namen in derselben Zeile wie das Gericht */
+.order-table .lbl-short { display: none; }
+.order-table .unit-inline { display: none; }
+@media (max-width: 30em) {
+  /* Handy: jede Zeile als Raster – Menge | Gericht mit Namenszeile darunter | Summe unten rechts auf Höhe der Namenszeile */
+  .order-table, .order-table tbody, .order-table tfoot, .order-table tbody tr { display: block; }
+  .order-table thead { display: none; }
+  .order-table tbody tr { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; column-gap: 0.5rem; border-bottom: 1px solid var(--line); }
+  .order-table tbody td { display: block; border-bottom: 0; }
+  .order-table tbody td:nth-child(3), .order-table tbody td:nth-child(4) { display: none; }
+  .order-table tbody td:nth-child(5) { align-self: end; }
+  .order-table .who-line { display: block; }
+  .order-table .unit-inline { display: inline; white-space: nowrap; margin-left: 0.625rem; }
+  .order-table tfoot tr { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+}
+.round-main .order-table td.unit-col, .round-main .order-table td.unit-qty, .round-main .order-table .unit-inline { color: var(--pane-soft); }
+.order-table thead th:nth-child(3) { padding-left: 2rem; padding-right: 1.5rem; } /* Einzelpreis: eigene, abgesetzte Spalte (Anzahl + Preis) */
+.order-table td.unit-qty { padding-left: 2rem; padding-right: 0.15rem; }
+.order-table td.unit-col { padding-left: 0; padding-right: 1.5rem; }
+@media (max-width: 30em) { .order-table td.unit-col { padding: 0; } }
+.order-table tbody td:nth-child(5) { font-size: 1.0625rem; } /* Summen je Gericht */
+.order-table tfoot tr:not(:last-child) td { font-size: 1.125rem; font-weight: 400; } /* „Summe Artikel“, nicht fett */
+.order-table thead th:first-child, .order-table td.qty-cell, .user-items td:first-child { text-align: right; padding-right: 1rem; } /* Anzahl: eigene rechtsbündige Spalte mit mehr Abstand zum Namen */
+@media (max-width: 30em) { .order-table tbody tr { column-gap: 0.75rem; } .order-table td.qty-cell { padding-right: 0; } }
+.order-table tfoot td.qty-total { font-weight: 700; color: var(--fg); }
+@media (max-width: 30em) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
+.order-table tfoot tr:not(:last-child) td:last-child, .order-table tfoot tr:not(:last-child) td.qty-total { font-weight: 700; } /* Betrag und Gesamtzahl fett, nur das Wort „Summe Artikel“ normal */
+/* Dunkler Kopfbereich: alle Texte auf einer gemeinsamen Grundlinie */
+.round-head .head-band { align-items: baseline; }
+.head-band .fold-toggle { align-self: center; }
+.head-band .round-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.625rem; }
+.head-band .round-closed { align-self: baseline; margin-left: 0; vertical-align: baseline; }
+.head-band .head-contact .row { align-items: baseline; }
+.round-head { border: 0; } /* keine dünne Linie zwischen dem dicken Rand und dem dunklen Kopfbereich */
+.layout:has(#app.wide) .page { background: var(--surround-bg); min-height: 100lvh; } /* Fläche um den Inhalt reicht bis zum unteren Rand, kein weißer Streifen */

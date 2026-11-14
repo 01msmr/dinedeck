@@ -20,7 +20,7 @@ export function orderContent(d) {
       ? h(
           'table',
           { class: 'order-table mt-3' },
-          h('thead', null, h('tr', null, h('th', { class: 'num' }, t('Menge')), h('th', null, t('Artikel')), h('th', { class: 'num' }, t('Einzelpreis')), h('th', { class: 'num' }, t('Summe')))),
+          h('thead', null, h('tr', null, h('th', { class: 'num' }, t('Menge')), h('th', null, t('Artikel')), h('th', { class: 'num', colspan: 2 }, t('Einzelpreis')), h('th', { class: 'num' }, t('Summe')))),
           h(
             'tbody',
             null,
@@ -29,8 +29,8 @@ export function orderContent(d) {
                 'tr',
                 null,
                 h('td', { class: 'num qty-cell' }, `${g.qty}×`),
-                h('td', null, g.article, g.variant ? ` · ${g.variant}` : '', h('div', { class: 'muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
-                h('td', { class: 'num' }, g.qty > 1 ? eur(g.price_cents) : ''), // bei 1× wäre Einzel = Summe: nur rechts
+                h('td', null, h('strong', null, g.article), g.variant ? ` · ${g.variant}` : '', h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`), h('span', { class: 'who-line' }, h('span', { class: 'muted who' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', '))), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
+                h('td', { class: 'num unit-qty' }, `${g.qty}×`), h('td', { class: 'num unit-col' }, eur(g.price_cents)),
                 h('td', { class: 'num' }, eur(g.sum_cents))
               )
             )
@@ -38,9 +38,9 @@ export function orderContent(d) {
           h(
             'tfoot',
             null,
-            h('tr', null, h('td', { colspan: 3, class: 'foot-lbl' }, t('Summe Artikel')), h('td', { class: 'num' }, eur(d.items_total_cents))),
-            d.delivery_fee_cents ? h('tr', null, h('td', { colspan: 3, class: 'foot-lbl' }, t('Lieferkosten')), h('td', { class: 'num' }, eur(d.delivery_fee_cents))) : null,
-            h('tr', null, h('td', { colspan: 3, class: 'foot-lbl' }, t('Gesamt')), h('td', { class: 'num' }, eur(d.grand_total_cents)))
+            h('tr', null, h('td', { class: 'num qty-cell qty-total', title: t('Anzahl aller Artikel') }, `${d.groups.reduce((a, g) => a + g.qty, 0)}×`), h('td', { colspan: 3, class: 'foot-lbl' }, t('Summe Artikel')), h('td', { class: 'num' }, eur(d.items_total_cents))),
+            d.delivery_fee_cents ? h('tr', null, h('td', { colspan: 4, class: 'foot-lbl' }, t('Lieferkosten')), h('td', { class: 'num' }, eur(d.delivery_fee_cents))) : null,
+            h('tr', null, h('td', { colspan: 4, class: 'foot-lbl' }, t('Gesamt')), h('td', { class: 'num' }, eur(d.grand_total_cents)))
           )
         )
       : h('p', { class: 'muted' }, t('Noch keine Positionen.')),
