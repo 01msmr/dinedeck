@@ -94,7 +94,7 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     if (flow) b.push(h('div', { class: 'status-flow' + (unpaid ? ' unpaid' : allPaid ? ' paid' : '') }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);
       if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text
-      return [...(n ? [sep()] : []), x, ...(chip ? [chip] : [])];
+      return [...(n ? [sep()] : []), chip ? h('span', { class: 'step-pair' }, x, chip) : x]; // Schritt und ↩ bleiben zusammen (kein Umbruch dazwischen)
     })));
     if (unpaid) {
       const [before, after] = joinList(d.debts.map((x) => x.user), '\u0001').split('\u0001'); // nur das Wort „und“ in normaler Schrift

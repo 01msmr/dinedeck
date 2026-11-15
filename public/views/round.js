@@ -9,15 +9,8 @@ import { payRows } from '/views/round/pay.js';
 import { app, eur, fmtWhen, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
-function disclosureTriangle() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 14 14', class: 'tri', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
-  const chevron = document.createElementNS(ns, 'path');
-  for (const [k, v] of Object.entries({ d: 'M4.5 2 9.5 7 4.5 12', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) chevron.setAttribute(k, v);
-  svg.append(chevron);
-  return svg;
-}
+// Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
+const disclosureTriangle = () => h('span', { class: 'tri', 'aria-hidden': 'true' }, '›');
 
 export function roundView(id) {
   let d = null;
@@ -208,6 +201,8 @@ export function roundView(id) {
   const feeLabel = h('label', { class: 'fee-field fold-item' }, t('Lieferkosten (€)'), eFee);
   const headTop = h('div', { class: 'head-top' }, addrEl, feeLabel); // Adresse links, Lieferkosten rechts
   const headBand = h('div', { class: 'head-band' });
+  const foldBtn = h('button', { class: 'fold-toggle', type: 'button', 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()); // bleibt bestehen, damit sich der Pfeil animiert drehen kann
+  headBand.append(foldBtn);
   headBand.addEventListener('click', (e) => {
     if (!d || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
     setFold(!foldOpen);
@@ -250,8 +245,9 @@ export function roundView(id) {
 
   function renderHead() {
     headBand.classList.add('foldable');
-    headBand.replaceChildren(
-      h('button', { class: 'fold-toggle', type: 'button', 'aria-expanded': String(foldOpen), 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()),
+    foldBtn.setAttribute('aria-expanded', String(foldOpen));
+    for (const el of [...headBand.children]) if (el !== foldBtn) el.remove(); // foldBtn bleibt eingehängt, sonst gibt es keine Drehanimation
+    headBand.append(
       h('h2', { class: 'round-title' }, d.restaurant.name, d.locked ? h('span', { class: 'round-closed' }, t('Bestellung geschlossen')) : null, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );

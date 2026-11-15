@@ -169,7 +169,7 @@ export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   return h(
     'div',
     { class: 'row' },
-    linkPill ? h('strong', { class: 'contact-label' }, t('Bestellen:')) : null, // Kopf: „Bestellen: Telefon · Web“
+    linkPill ? h('strong', { class: 'contact-label desk-only' }, t('Bestellen:')) : null, // Kopf: „Bestellen: Telefon · Web“ (nicht auf dem Handy)
     telEl,
     web ? h('a', { class: pill ? 'link-pill' : linkPill ? 'link-pill colored' : null, title: pill || linkPill ? r.url : null, href: web, target: '_blank', rel: 'noopener noreferrer' }, ...(pill ? [] : [extArrow()]), linkPill ? t('Web') : '' + r.url.replace(/^https?:\/\//i, '')) : null
   );

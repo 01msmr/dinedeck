@@ -35,7 +35,7 @@ export function orderActions(d) {
         }
       },
     }, t('Text kopieren')),
-    tel ? h('a', { class: 'link-pill', href: tel }, t('Anrufen')) : null,
+    tel ? h('a', { class: 'link-pill desk-only', href: tel }, t('Anrufen')) : null, // auf dem Handy genügt die Nummer dahinter
   ].filter(Boolean);
 }
 

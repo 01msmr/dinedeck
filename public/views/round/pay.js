@@ -1,4 +1,4 @@
-// Bezahlbereich: Adresse des Bestellers, Betrag, Link
+// Bezahlbereich: Desktop mit Adresse, Kopieren, QR und PayPal-Knopf; Handy kompakt (Zahl-Link als Knopf, QR dahinter)
 import { t } from '/i18n.js';
 import { eur, h, lc, me, flashButton } from '/util.js';
 import { payHref } from '/format.js';
@@ -28,7 +28,7 @@ function copyButton(text, hint) {
   }, svg);
 }
 
-export function payRows(d) {
+function payRowsDesktop(d) {
   const hasOrders = d.users.some((u) => u.subtotal_cents > 0);
   if (!hasOrders) return null;
   const meU = d.users.find((u) => lc(u.user) === lc(me));
@@ -69,4 +69,38 @@ export function payRows(d) {
     }
   }
   return rows;
+}
+
+// Handy: Zahl-Link als runder Knopf mit Betrag, QR-Code dahinter, ohne Kopierknopf und ohne „Bezahlen an“
+function payRowsMobile(d) {
+  const hasOrders = d.users.some((u) => u.subtotal_cents > 0);
+  if (!hasOrders) return null;
+  const meU = d.users.find((u) => lc(u.user) === lc(me));
+  const isBuyer = lc(me) === lc(d.buyer);
+  const canPay = !!meU && meU.done && !meU.paid && meU.subtotal_cents > 0; // bezahlen erst nach ready
+  const payLink = !isBuyer && canPay && d.paypal ? payHref(d.paypal, meU.total_cents) : null;
+  const rows = [];
+  if (!d.paypal_visible) rows.push(h('div', { class: 'muted' }, t('PayPal-Adresse ist nur für Teilnehmer der Bestellung sichtbar.')));
+  else if (!d.paypal) rows.push(h('div', { class: 'muted' }, t('Keine PayPal-Adresse hinterlegt.')));
+  else {
+    rows.push(h(
+      'div',
+      { class: 'pay-line' },
+      payLink
+        ? [h('a', { class: 'link-pill pay-pill', href: payLink, target: '_blank', rel: 'noopener noreferrer' }, `${eur(meU.total_cents)} · ${d.paypal}`), qrIcon(payLink)]
+        : h('strong', { class: 'payaddr' }, d.paypal)
+    ));
+  }
+  if (isBuyer) {
+    // Besteller zahlt nicht an sich selbst: nur die Adresse
+  } else if (meU && meU.subtotal_cents > 0 && meU.paid) rows.unshift(h('div', { class: 'ready-strip on' }, t('✓ Du hast bezahlt')));
+  else if (meU && meU.subtotal_cents > 0 && !meU.done) rows.push(h('div', { class: 'muted' }, t('Erst ready setzen, dann bezahlen')));
+  else if (meU && meU.subtotal_cents > 0 && !payLink) rows.push(h('div', { class: 'muted' }, t('Dein Betrag: {amount}', { amount: eur(meU.total_cents) })));
+  return rows;
+}
+
+export function payRows(d) {
+  const desk = payRowsDesktop(d);
+  if (!desk) return null;
+  return [h('div', { class: 'desk-only pay-variant' }, ...desk), h('div', { class: 'mobile-only pay-variant' }, ...payRowsMobile(d))];
 }
