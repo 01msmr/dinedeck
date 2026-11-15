@@ -6,15 +6,20 @@ Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live
 
 ## Features
 
-- **Items:** article, variant, price, quantity. Own rows are editable until ready; deleting offers a 15 s undo. Items are grouped by name + variant + price, ignoring case, spacing, punctuation and umlaut spelling.
+- **Items:** article, variant, price, quantity. Own rows are editable until ready; deleting offers a 15 s undo. Items are grouped by name + variant + price, ignoring case, spacing, punctuation and umlaut spelling. Identical own rows are merged into one with a higher quantity (also when an edit makes two rows identical).
 - **Catalog per restaurant:** names and variants from earlier orders are suggested. Prices are never prefilled; the last price is offered as an unchecked chip. Price deviations are flagged.
-- **Tabs:** own items, everyone (one card per user), order list (for phoning or copying, with menu link). On wide screens the order list stays visible in a pane to the right of the tabs.
-- **Status line:** `opened › ready › ordered › delivered › paid` with times; the latest step is highlighted. Banners for users not yet ready and for open amounts.
-- **Ready and paid** are independent per-user flags. Any change to your items resets your ready flag. Only the user or the buyer can set paid. Ready is yellow, unready red, paid green.
-- **Deadline** (default 20 min, `+5 min`). When it expires or an admin/creator/buyer closes the order, items of unready users stay visible but do not count. Optional auto-close once everyone is ready; new users then need approval.
-- **Locked from "ordered":** no item or user changes, deadline and buyer data frozen; "take back ordered" reopens.
+- **Tabs:** own items, everyone (one card per user), order list (for phoning or copying, with menu link). On wide screens the order list stays visible in a pane to the right of the tabs. The list is kept short: one line per dish (names behind it), filler words such as "mit", "und", "zusätzlich" are dropped from variants in the display (the copied text keeps the original).
+- **Status line (also the controls):** `opened › ready › ordered › delivered › paid` with times, pinned below the header. Everyone sees the state, the paid count (`paid 1/3`, also before delivery) and the remaining time. Buyer, creator and admins also operate it:
+  - `ready` carries a checkbox "close when everyone is ready" (greyed out for others), followed by `+5` (extend), the remaining time and a lock (close now). Closing, going forward (`ordered`, `delivered`) and taking a step back (arrow after the step) ask once more before they run.
+  - After closing the line shows the lock with the closing time, `+5` is greyed out, and the arrow reopens. Reopening switches "close when ready" off.
+  - After `ordered` a delivery time field appears before `delivered`; a new value is saved immediately and shown again after a reload.
+- **Ready and paid** are independent per-user flags. Any change to your items resets your ready flag. Only the user or the buyer can set paid. Ready is yellow, unready red, paid green. Open payments show as one card per person (fixed width, aligned with the content) under a red "n unpaid: names" banner.
+- **Deadline** (default 20 min). When it expires or an admin/creator/buyer closes the order, items of unready users stay visible but do not count. Optional auto-close once everyone is ready; new users then need approval.
+- **Time warnings:** the remaining time pulses grey from 10 to 5 min, then turns red with a glowing pulse. From 3 min the logo row flashes red for 1 s every 6 s (the sidebar band flashes with it). A telephone ring plays at the thresholds in `SOUND.bellAtMs` if a recording is present (see Sound). Thresholds, tempo and volume are in `public/config.js` and `public/style.css`; reduced-motion settings switch the animation off.
+- **Locked from "ordered":** no item or user changes, deadline and buyer data frozen; the step arrows take it back (delivered first, then ordered).
 - **Buyer and payment:** buyer, PayPal address and delivery fee (split equally among users with items). PayPal address (per buyer) and fee (per restaurant) are remembered. The pay block offers a link with the user's amount and a QR code of it. The address is visible only to participants, buyer, creator and admins.
-- **Navigation:** sidebar (open / unpaid / closed, live) docked from 1280 px and as a drawer with a menu button below, the list also appears on the start page then. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
+- **Order header:** collapsed by default, the choice is remembered per order. The restaurant row (copy text, call, order phone and web link) is always visible.
+- **Navigation:** sidebar (open / unpaid / closed, live; the count of orders with unpaid items on "All orders") docked from 1280 px and as a drawer with a menu button below, the list also appears on the start page then. "All orders" can be filtered to unpaid only. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
 - **Statistics:** top restaurant, favourite dish per restaurant, average item price and order total. No per-user statistics. Admins can export all item rows as JSON.
 - **Appearance:** light/dark/auto, colour themes, German/English.
 
@@ -43,8 +48,12 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 | Open order | Delivered, partly paid |
 |---|---|
 | ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
-| **Combined order** | **All orders** |
+| **Order list** | **All orders** |
 | ![Order list](docs/screenshots/combined-order.png) | ![All orders](docs/screenshots/all-orders.png) |
+
+## Sound
+
+The warning ring uses a recording that is **not part of the repository** (`public/sounds/` is git-ignored). Put an MP3 at `public/sounds/old-telephone-ringing.mp3` (about 3 s, one ring) to enable it; without the file the app stays silent. The file name, volume and the minutes of remaining time that ring are in `SOUND` in `public/config.js`. Browsers only play sound after the first click on the page. With Docker the file is copied into the image if it exists at build time. Check the licence of any recording you use.
 
 ## Hosting with Docker Compose
 
@@ -82,13 +91,15 @@ security.js          Security headers (CSP, nosniff, referrer policy, frame deni
 db.js                Business logic: writes, permissions, validation
 db/                  schema.js, queries.js, read.js (reads, stats, export), helpers.js, errors.js
 public/config.js     All tunable values (limits, defaults, lists, timings), shared by server and client
-public/format.js     Pure helpers (times, payHref, round stage), unit-tested
+public/format.js     Pure helpers (times, payHref, round stage, bell thresholds, variant shortening), unit-tested
 public/qr.js         QR encoder (byte mode, ECC M, up to 106 bytes)
 public/app.js        Entry: name prompt, router, live updates
-public/views/        home, all, stats, round; round/ holds status, users, order, pay, qr-icon
+public/side.js       Sidebar, countdown ticks, time warnings
+public/phone.js      Ring sound (plays the recording if present)
+public/views/        home, all, stats, round; round/ holds status (the control line), users, order, pay, qr-icon
 public/i18n.js       Translations (German text is the key)
 public/style.css     Colours via light-dark(), lengths in rem (1rem = 16 px)
-test/                api, format, group, qr  (npm test)
+test/                api, format, group, qr, demo, merge  (npm test)
 ```
 
 Notes:
