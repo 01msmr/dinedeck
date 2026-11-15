@@ -165,6 +165,7 @@ const EN = {
   'Bestellung': 'Order',
   '{n} Personen': '{n} people',
   'Wiederherstellen': 'Restore',
+  'wiederherstellen?': 'restore?',
   'Liefer- und Servicekosten': 'Delivery and service fees',
   'Lieferkosten': 'Delivery fee',
   'Gesamt': 'Grand total',

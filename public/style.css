@@ -815,6 +815,8 @@ button.confirm, button.btn.confirm, button.badge.confirm { background: var(--bla
 .trash-bar.hidden { display: none; }
 .trash-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem 0.25rem 0.5rem; border: 1px solid color-mix(in srgb, var(--debts-fg) 45%, transparent); border-radius: var(--radius-pill); background: transparent; color: inherit; font: inherit; font-size: var(--fs-md); cursor: pointer; }
 .trash-item:hover { background: var(--debts-fg); color: var(--trash-bg); }
+.trash-item.confirm { background: var(--black); color: var(--white); border-color: var(--black); } /* Rückfrage im Knopf, wie bei den Schritten */
+.trash-item.confirm .trash-when { opacity: 1; font-weight: 600; }
 .trash-item svg { width: 1.25rem; height: 1.25rem; flex: none; }
 .trash-when { opacity: 0.8; font-size: var(--fs-sm); }
 .hist:has(~ .trash-bar:not(.hidden)) { padding-bottom: 4rem; }

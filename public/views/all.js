@@ -1,6 +1,6 @@
 // Alle Bestellungen: Historie nach Monaten (letzte 12), ältere nach Jahren.
 import { t } from '/i18n.js';
-import { LISTS } from '/config.js';
+import { LISTS, TIMING } from '/config.js';
 import { groupHistory, isCurrentRound } from '/group.js';
 import { app, h, api, fmtDay, recycleIcon, toast } from '/util.js';
 import { roundItem } from '/views/home.js';
@@ -20,13 +20,27 @@ export function allView() {
   });
   const trash = h('div', { class: 'trash-bar' });
   app.replaceChildren(h('div', { class: 'all-head' }, h('h2', null, t('Alle Bestellungen')), h('label', { class: 'card filter-bar' }, box, t('Nur Unbezahlte'))), overview, body, trash);
-  // Zuletzt gelöschte Bestellungen am unteren Fensterrand; das Symbol holt sie zurück
-  function drawTrash(list) {
+  // Zuletzt gelöschte Bestellungen am unteren Fensterrand; das Symbol holt sie zurück, erst nach einer Rückfrage im Knopf selbst
+  let deleted = [];
+  let asking = null; // {id, timer}
+  function drawTrash(list = deleted) {
+    deleted = list;
     trash.classList.toggle('hidden', !list.length);
-    trash.replaceChildren(...list.map((x) => h('button', { class: 'trash-item', type: 'button', title: t('Wiederherstellen'), onclick: async () => {
-      try { await api('POST', `/rounds/${x.id}/restore`); } catch (e) { toast(e.message); }
-      view.refresh();
-    } }, recycleIcon(), h('span', null, x.restaurant), h('span', { class: 'trash-when' }, fmtDay(x.created_at, false)))));
+    trash.replaceChildren(...list.map((x) => {
+      const ask = asking?.id === x.id;
+      return h('button', { class: 'trash-item' + (ask ? ' confirm' : ''), type: 'button', title: t('Wiederherstellen'), onclick: async () => {
+        if (!ask) {
+          clearTimeout(asking?.timer);
+          asking = { id: x.id, timer: setTimeout(() => { asking = null; drawTrash(); }, TIMING.confirmMs) };
+          drawTrash();
+          return;
+        }
+        clearTimeout(asking.timer);
+        asking = null;
+        try { await api('POST', `/rounds/${x.id}/restore`); } catch (e) { toast(e.message); }
+        view.refresh();
+      } }, recycleIcon(), h('span', null, x.restaurant), h('span', { class: 'trash-when' }, ask ? t('wiederherstellen?') : fmtDay(x.created_at, false)));
+    }));
   }
   // Nur die Anzahl offener Zahlungen; Namen und Beträge stehen in der Bestellzeile
   function drawOverview(rounds) {
