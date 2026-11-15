@@ -88,3 +88,9 @@ export function shortVariant(text) {
     .replace(/,(\s*,)+/g, ',')
     .replace(/^[\s,]+|[\s,]+$/g, '');
 }
+
+/** Welche Glocken-Schwelle (ms Restzeit) ist neu erreicht? Die kleinste erreichte, die noch nicht geläutet hat; sonst null. */
+export function bellStep(left, thresholds, last) {
+  const hit = thresholds.filter((t) => left <= t && t < last && (left > 0 || t === 0)); // nach Ablauf nur die Schwelle 0
+  return hit.length ? Math.min(...hit) : null;
+}

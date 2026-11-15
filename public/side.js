@@ -1,8 +1,9 @@
 // Sidebar: offene/unbezahlte und letzte 12 Wochen abgeschlossener Bestellungen, Links „Alle“ und „Statistik“ (ab 1280 px angedockt, darunter als Drawer) und globale Countdown-Badges.
 import { t, locale } from '/i18n.js';
-import { LISTS, TIMING } from '/config.js';
+import { LISTS, TIMING, SOUND } from '/config.js';
+import { ringPhone } from '/phone.js';
 import { groupHistory, isCurrentRound } from '/group.js';
-import { roundStage } from '/format.js';
+import { roundStage, bellStep } from '/format.js';
 import { eur, h, api, me, fmtRemaining, fmtWhen } from '/util.js';
 
 const sideEl = document.getElementById('side');
@@ -62,6 +63,19 @@ export function renderSide() {
   );
   tickCountdowns();
 }
+const belledKey = 'bb_belled'; // „Fristende:zuletzt geläutete Schwelle“ (überlebt Neuladen)
+let belled = { until: '', last: Infinity };
+try {
+  const [u, l] = (sessionStorage.getItem(belledKey) ?? '').split(':');
+  if (u) belled = { until: u, last: Number(l) };
+} catch {}
+function ringIfDue(until, left) {
+  const last = belled.until === until ? belled.last : Infinity;
+  const step = bellStep(left, SOUND.bellAtMs, last);
+  if (step === null || !ringPhone()) return; // erst „erledigt“, wenn der Browser den Ton wirklich abgespielt hat
+  belled = { until, last: step };
+  try { sessionStorage.setItem(belledKey, `${until}:${step}`); } catch {}
+}
 // Countdown-Badges (Sidebar und Startseite) – einmal global, nicht je Ansicht
 export function tickCountdowns() {
   for (const el of document.querySelectorAll('[data-expires]')) {
@@ -69,6 +83,11 @@ export function tickCountdowns() {
     el.textContent = left > 0 ? fmtRemaining(left) : t('abgelaufen');
     el.className = 'badge ' + (left > 0 ? (left < TIMING.lowTimeMs ? 'off' : 'on') : 'mid');
   }
+  const timeEl = document.querySelector('[data-until]'); // Kopf blinkt rot, wenn die gezeigte Bestellung bald schließt
+  const alarmLeft = timeEl ? Number(timeEl.dataset.until) - Date.now() : -1;
+  const alarm = alarmLeft > 0 && alarmLeft <= TIMING.alarmMs;
+  if (timeEl) ringIfDue(timeEl.dataset.until, alarmLeft); // Glocke bei 3, 2 und 1 min (Versuch, bis der Browser Ton erlaubt)
+  document.body.classList.toggle('alarm', alarm);
   for (const el of document.querySelectorAll('[data-until]')) { // Restzeit in der Ablaufzeile: nur Text, kein Badge
     const left = Number(el.dataset.until) - Date.now();
     el.textContent = left > 0 ? fmtRemaining(left) : t('abgelaufen');

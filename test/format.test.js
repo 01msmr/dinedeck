@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -147,4 +147,18 @@ test('shortVariant: Füllwörter weg, „und“ wird Komma, nichts übrig bleibt
   assert.equal(shortVariant('26 cm, Fladenbrot'), '26 cm, Fladenbrot');
   assert.equal(shortVariant(''), '');
   assert.equal(shortVariant('mit'), '');
+});
+
+test('bellStep: läutet je Schwelle einmal, nimmt bei verpassten die kleinste erreichte', () => {
+  const at = [180000, 120000, 60000];
+  assert.equal(bellStep(190000, at, Infinity), null, 'noch über 3 min');
+  assert.equal(bellStep(170000, at, Infinity), 180000);
+  assert.equal(bellStep(170000, at, 180000), null, 'schon geläutet');
+  assert.equal(bellStep(110000, at, 180000), 120000);
+  assert.equal(bellStep(110000, at, Infinity), 120000, 'Seite erst bei 1:50 geöffnet: ein Läuten');
+  assert.equal(bellStep(50000, at, 120000), 60000);
+  assert.equal(bellStep(50000, at, 60000), null);
+  assert.equal(bellStep(0, at, Infinity), null, 'abgelaufen: keine Glocke');
+  assert.equal(bellStep(0, [60000, 0], 60000), 0, 'Schwelle 0: läutet zum Ablauf');
+  assert.equal(bellStep(-5000, [60000, 0], 0), null, 'nicht noch einmal');
 });

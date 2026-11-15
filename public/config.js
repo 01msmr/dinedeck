@@ -58,6 +58,7 @@ export const TIMING = {
   refreshDebounceMs: 150,
   tickMs: 1000,
   lowTimeMs: 5 * 60 * 1000, // darunter wird der Countdown rot
+  alarmMs: 3 * 60 * 1000, // darunter blinkt der Kopf rot (Takt: --alarm-period in style.css)
   blinkTimeMs: 10 * 60 * 1000, // von hier bis lowTimeMs pulsiert der Hintergrund der Restzeit in der Ablaufzeile
   editRevertMs: 30 * 1000, // ungespeicherte Änderung im Bestellkopf wird danach zurückgenommen
   editWarnMs: 10 * 1000, // so lange läuft der Warnbalken rückwärts
@@ -67,3 +68,12 @@ export const TIMING = {
   sseRetryMs: 2000,
 };
 
+/** Warnton (Telefonklingeln) bei den letzten Minuten einer Frist. */
+export const SOUND = {
+  bellAtMs: Array.from({ length: 10 }, (_, i) => (9 - i) * 60 * 1000), // TEST: jede Minute von 9 bis 0; später 3, 2 und 1 min
+  file: '/sounds/old-telephone-ringing.mp3', // Aufnahme (liegt nur lokal, nicht im Repository); ohne Datei bleibt es still
+  volume: 0.3, // Lautstärke (0–1)
+  fileStartSec: 0, // Anfang der Aufnahme überspringen (die Datei ist schon auf das erste Klingeln gekürzt)
+  ringSeconds: 3, // abgespielte Länge (die gekürzte Datei ist 3 s lang: genau ein Klingeln)
+  fadeSec: 0.2, // Ausblenden am Ende
+};

@@ -89,7 +89,7 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     if (flow) {
       const counting = !allPaid && !!d.delivered_at && payers.length > 0; // nach „geliefert“: x/y bezahlt (gelb), alle bezahlt (grün)
       if (allPaid || counting) flow.forEach((el) => { if (!(counting && el.textContent.includes(t('geliefert')))) el.classList.replace('now', 'done'); }); // „geliefert“ bleibt grün, solange es aktiv ist (bis alles bezahlt ist)
-      flow.push(allPaid ? step('now', `✓ ${t('bezahlt')}`) : counting ? step('now ready', t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length })) : step('todo', t('bezahlt')));
+      flow.push(allPaid ? step('now', `✓ ${t('bezahlt')}`) : counting ? step('now ready', t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length })) : step('todo', paidN > 0 ? `${t('bezahlt')} ${paidN}/${payers.length}` : t('bezahlt'))); // schon vor „geliefert“ Bezahlte zählen
     }
     if (flow) b.push(h('div', { class: 'status-flow' + (unpaid ? ' unpaid' : allPaid ? ' paid' : '') }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);

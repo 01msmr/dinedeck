@@ -17,6 +17,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.json': 'application/json; charset=utf-8',
   '.webmanifest': 'application/manifest+json',
+  '.mp3': 'audio/mpeg',
 };
 
 export function createApp({ dbFile = ':memory:', admins = [], frameAncestors = [] } = {}) {

@@ -728,3 +728,22 @@ test('Lieferzeit: eingegebene Minuten werden gespeichert und wieder geliefert', 
     await close();
   }
 });
+
+test('Wieder öffnen schaltet „Schließen, wenn alle ready“ aus', async () => {
+  const { call, close } = await boot();
+  try {
+    const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma', url: '', phone: '' }, paypal: 'alex', minutes: 20 })).body.id;
+    await call('POST', `/api/rounds/${id}/items`, 'alex', { article: 'Cola', price: '2,50', qty: 1 });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { close_when_ready: true });
+    await call('POST', `/api/rounds/${id}/done`, 'alex', { value: true }); // alle ready: schließt automatisch
+    let d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.locked, true);
+    assert.equal(d.close_when_ready, true);
+    assert.equal((await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'reopen', minutes: 5 })).status, 200);
+    d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.locked, false, 'offen');
+    assert.equal(d.close_when_ready, false, 'Automatik aus, sonst würde es sofort wieder schließen');
+  } finally {
+    await close();
+  }
+});

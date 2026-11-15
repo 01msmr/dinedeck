@@ -103,6 +103,11 @@ a { color: var(--accent); text-underline-offset: 0.125rem; }
 /* Kopf: Titel mittig, Einstellungen rechts als direkte Pills (kein Overlay) */
 .top { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.5rem 0.875rem; padding: 0.625rem 0.875rem; background: var(--surface); border-bottom: 1px solid var(--line); }
 .top a { color: var(--fg); text-decoration: none; }
+:root { --alarm-period: 6s; } /* Warnblitz: Kopf (und Band über der Seitenleiste) blinkt rot für die ersten 1 s der Periode; Keyframes in %: 1 s / 6 s = 16,7 % */
+body.alarm .top { animation: top-alarm var(--alarm-period) linear infinite; }
+@keyframes top-alarm { 0%, 15% { background: var(--bad); } 16.7%, 100% { background: var(--surface); } }
+@keyframes side-alarm { 0%, 15% { background: var(--bad); } 16.7%, 100% { background: var(--side-bg); } }
+@media (prefers-reduced-motion: reduce) { body.alarm .top, body.alarm #side::before { animation: none; } }
 .brand { grid-column: 2; display: flex; align-items: center; gap: 0.25rem; font-weight: 700; letter-spacing: -0.025rem; font-size: 1.875rem; line-height: 1; }
 .brand svg { flex: none; }
 .brand .wordmark { height: 3.125rem; width: auto; overflow: visible; }
@@ -271,6 +276,8 @@ a.btn { text-decoration: none; text-align: center; }
   .layout { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); }
   #side { display: flex; flex-direction: column; position: sticky; top: 0; height: 100lvh; overflow: auto; padding: 0.75rem; background: var(--side-bg); }
   .home-lists { display: none; }
+  #side::before { content: ''; flex: none; position: sticky; top: -0.75rem; z-index: 1; height: var(--top-h); margin: -0.75rem -0.75rem 0.75rem; background: var(--side-bg); } /* Band auf Höhe des Kopfs: Inhalt der Leiste beginnt darunter */
+  body.alarm #side::before { animation: side-alarm var(--alarm-period) linear infinite; }
 }
 
 .hist h3 { margin: 0.75rem 0 0.5rem; font-size: 0.875rem; font-weight: 650; text-transform: capitalize; color: var(--muted); }

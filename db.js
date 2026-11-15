@@ -138,6 +138,7 @@ export function createLogic(db, { admins = [] } = {}) {
       if (action === 'extend' && closed) throw new HttpError(400, 'Erst wieder öffnen');
       if (action === 'reopen' && !closed) throw new HttpError(400, 'Die Bestellung ist noch offen');
       q.roundExpiry.run(Math.max(now, r.expires_at) + m * 60000, r.id);
+      if (action === 'reopen') q.roundCwr.run(0, r.id); // Automatik aus, sonst schließt es sofort wieder
     } else if (action === 'set') {
       if (r.ordered_at) throw new HttpError(400, 'Erst „Bestellt“ zurücknehmen');
       const m = Number(minutes);
