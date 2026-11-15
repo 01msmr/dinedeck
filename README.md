@@ -4,6 +4,8 @@ Group food ordering. One person opens an **order** at a restaurant, everyone add
 
 Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live updates via SSE.
 
+![dinedeck](https://github.com/01msmr/dinedeck/blob/main/docs/screenshots/order-open.png?raw=true)
+
 ## Features
 
 **Ordering**
@@ -28,8 +30,6 @@ Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live
 - **Navigation:** sidebar (docked from 1280 px, else drawer), "All orders" with an unpaid filter, one URL per order (`#/r/<id>`).
 - **Also:** statistics without per-user data, admin JSON export, light/dark/auto and colour themes, German/English, installable app icon, compact phone layout.
 
-![dinedeck](https://github.com/01msmr/dinedeck/blob/main/docs/screenshots/order-open.png?raw=true)
-
 ## Run
 
 ```sh
@@ -52,13 +52,11 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 
 `npm run demo` fills an empty database (`./data/demo.db` or `DB_FILE`) with four invented orders and names (Alex, Sam, Jo, Kim, Robin, Lee); a database with orders is never touched. Try: `DB_FILE=data/demo.db npm start`. With Docker: `DEMO=1 docker compose up -d --build`.
 
-| Open order | Delivered, partly paid |
+| Delivered, partly paid | Order list |
 |---|---|
-| ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
-| **Order list** | **All orders** |
-| ![Order list](docs/screenshots/order-list.png) | ![All orders](docs/screenshots/all-orders.png) |
-| **Open payments on return** | |
-| ![Open payments overlay](docs/screenshots/payments-notice.png) | |
+| ![Delivered order](docs/screenshots/order-delivered.png) | ![Order list](docs/screenshots/order-list.png) |
+| **All orders** | **Open payments on return** |
+| ![All orders](docs/screenshots/all-orders.png) | ![Open payments overlay](docs/screenshots/payments-notice.png) |
 
 ## Sound
 
