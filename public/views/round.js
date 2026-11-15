@@ -7,7 +7,6 @@ import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
 import { nbspUnits } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
-import { payRows } from '/views/round/pay.js';
 import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
@@ -27,12 +26,12 @@ export function roundView(id) {
   const timerCard = h('section', { class: 'card fold-item' }, h('div', null, timerLabel, timerNum));
   // Status-Zeilen (nicht ready, unbezahlt, Freigaben) als markante Leiste unter dem Kopf
   const banners = h('div', { class: 'status-lines' });
+  const debtsHost = h('div', { class: 'debts-host' });
   document.getElementById('statusbar').replaceChildren(banners);
   const tabsEl = h('div', { class: 'tabs', role: 'tablist' });
   const usersPane = h('div', { class: 'users-pane' });
   const minePane = h('div', { class: 'stack-4 mine-pane' });
   const orderPane = h('div', { class: 'card order-pane' });
-  const payCard = h('section', { class: 'card pay hidden' });
   const inEta = h('input', { type: 'number', min: 1, max: LIMITS.etaMaxMinutes, value: DEFAULTS.etaMinutes, inputmode: 'numeric', class: 'w-eta' });
   const etaText = h('div', { class: 'semibold' });
   const orderCard = h('section', { class: 'card order-card hidden' });
@@ -135,7 +134,7 @@ export function roundView(id) {
   app.classList.add('wide');
   head.classList.add('round-head');
   const roundMain = h('div', { class: 'round-main' }, tabsEl, usersPane, minePane, orderPane);
-  const roundGrid = h('div', { class: 'round-grid' }, head, roundMain);
+  const roundGrid = h('div', { class: 'round-grid' }, head, debtsHost, roundMain);
   app.replaceChildren(roundGrid);
   showTab(tab);
 
@@ -156,7 +155,7 @@ export function roundView(id) {
   const etaField = h('label', { class: 'step-eta' }, t('Lieferzeit (min)'), inEta);
   inEta.addEventListener('change', () => { if (d?.ordered_at && !d.delivered_at && inEta.value !== '') patchRound({ eta_minutes: Number(inEta.value) }); });
   inEta.addEventListener('keydown', (e) => { if (e.key === 'Enter') inEta.blur(); });
-  const status = createStatus({ banners, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
+  const status = createStatus({ banners, debtsHost, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
 
   const flagBadge = (u, flag) => flagBadgeOf(d, toggle, u, flag);
 
@@ -246,7 +245,7 @@ export function roundView(id) {
     },
   }, t('Bestellung löschen'));
   const deleteRow = h('div', { class: 'row end fold-item' }, deleteBtn);
-  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm, deleteRow), h('div', { class: 'head-side' }, timerCard, orderCard), payCard); // Bezahlen: unten, eigene Zeile, zu- und aufgeklappt gleich
+  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm, deleteRow), h('div', { class: 'head-side' }, timerCard, orderCard));
 
   // Wechsel zwischen den heutigen/offenen Bestellungen (nur sichtbar, wenn es mehrere gibt)
   function renderPick(list) {
@@ -266,7 +265,7 @@ export function roundView(id) {
     foldBtn.setAttribute('aria-expanded', String(foldOpen));
     for (const el of [...headBand.children]) if (el !== foldBtn) el.remove(); // foldBtn bleibt eingehängt, sonst gibt es keine Drehanimation
     headBand.append(
-      h('h2', { class: 'round-title' }, d.restaurant.name, d.locked ? h('span', { class: 'round-closed' }, t('Bestellung geschlossen')) : null, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('h2', { class: 'round-title' }, d.restaurant.name, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );
     addrEl.textContent = d.restaurant.address || '';
@@ -420,12 +419,6 @@ export function roundView(id) {
     orderPane.replaceChildren(...orderContent(d).filter(Boolean));
   }
 
-  function renderPay() {
-    const rows = payRows(d);
-    payCard.classList.toggle('hidden', !rows);
-    if (rows) payCard.replaceChildren(...rows);
-  }
-
   function updateTimer() {
     if (!d) return;
     updateEta();
@@ -466,7 +459,6 @@ export function roundView(id) {
       renderUsers();
       renderMine();
       renderOrder();
-      renderPay();
       updateTimer();
     },
     destroy() {

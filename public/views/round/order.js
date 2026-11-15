@@ -1,7 +1,7 @@
 // Bestellliste: Gruppentabelle, Summen und Text zum Kopieren
 import { t } from '/i18n.js';
 import { shortVariant, nbspUnits } from '/format.js';
-import { eur, h, telHref, flashButton } from '/util.js';
+import { eur, h, flashButton, copyIcon } from '/util.js';
 
 export function orderText(d) {
   const lines = [`${t('Bestellung')} ${d.restaurant.name}`];
@@ -19,9 +19,8 @@ function articleCell(g) {
   return [h('strong', null, g.article), unit, h('span', { class: 'who-line' }, h('span', { class: 'muted' }, `${variant} · ${who}`))];
 }
 
-// „Text kopieren“ und „Anrufen“ stehen im Kopf beim Restaurant (immer, für alle)
+// „Bestellliste kopieren“ steht im Kopf beim Restaurant (immer, für alle); angerufen wird über die Nummer dahinter
 export function orderActions(d) {
-  const tel = telHref(d.restaurant.phone);
   return [
     h('button', {
       class: 'link-pill', type: 'button',
@@ -34,8 +33,7 @@ export function orderActions(d) {
           flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
         }
       },
-    }, t('Text kopieren')),
-    tel ? h('a', { class: 'link-pill desk-only', href: tel }, t('Anrufen')) : null, // auf dem Handy genügt die Nummer dahinter
+    }, copyIcon(), t('Bestellliste kopieren')),
   ].filter(Boolean);
 }
 
@@ -66,7 +64,7 @@ export function orderContent(d) {
             'tfoot',
             null,
             h('tr', null, h('td', { class: 'num qty-cell qty-total', title: t('Anzahl aller Artikel') }, `${d.groups.reduce((a, g) => a + g.qty, 0)}×`), h('td', { colspan: 3, class: 'foot-lbl' }, t('Summe Artikel')), h('td', { class: 'num' }, eur(d.items_total_cents))),
-            d.delivery_fee_cents ? h('tr', null, h('td', { colspan: 4, class: 'foot-lbl' }, t('Lieferkosten')), h('td', { class: 'num' }, eur(d.delivery_fee_cents))) : null,
+            h('tr', { class: 'foot-fees' }, h('td', { colspan: 4, class: 'foot-lbl' }, t('Liefer- und Servicekosten')), h('td', { class: 'num' }, eur(d.delivery_fee_cents ?? 0))), // immer, auch bei 0; Servicekosten haben noch kein Datenfeld
             h('tr', null, h('td', { colspan: 4, class: 'foot-lbl' }, t('Gesamt')), h('td', { class: 'num' }, eur(d.grand_total_cents)))
           )
         )

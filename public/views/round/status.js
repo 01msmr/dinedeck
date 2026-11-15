@@ -1,10 +1,12 @@
 // Statusleiste oben: Ablaufzeile, Hinweise, offene Beträge
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS } from '/config.js';
+import { isToday } from '/format.js';
 import { debtChipEl, debtsHead } from '/views/round/debt-row.js';
-import { fmtWhen, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
+import { payRows } from '/views/round/pay.js';
+import { fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
 
-export function createStatus({ banners, toggle, decide, undo, advance, etaField, time, autoClose }) {
+export function createStatus({ banners, debtsHost, toggle, decide, undo, advance, etaField, time, autoClose }) {
   let d = null;
   let payConfirm = null; // {user, timer}: Rückfrage im Button vor „bezahlt“
   let confirm = null; // {key, timer}: Rückfrage vor Zurücknehmen/Weitergehen
@@ -50,7 +52,7 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
         : h('button', { class: 'step todo step-go' + (asking(key) ? ' confirm' : ''), type: 'button', disabled: !can, title: can ? '' : hint, onclick: run(key, () => advance(key)) }, asking(key) ? ask : label);
     const sep = () => h('span', { class: 'step-sep' }, '›');
     const readyTxt = d.ready.total ? t('ready {done}/{total}', { done: d.ready.done, total: d.ready.total }) : t('ready');
-    const opened = step('done', `✓ ${t('eröffnet')}`, d.ordered_at ? null : fmtWhen(d.created_at)); // Zeiten früherer Schritte entfallen, sobald der nächste bestätigt ist
+    const opened = step('done', `✓ ${t('eröffnet')}`);
     const ordTxt = `✓ ${t('bestellt')}`;
     const allPaid = !d.debts.length && d.ordered_at && d.users.some((u) => u.subtotal_cents > 0);
     // „ready“: offen = Kästchen „Schließen, wenn alle ready“ in der Pille (Verwalter klicken, andere sehen es grau), davor +5, dahinter Schließen; geschlossen = Pille mit ↩ „Wieder öffnen“
@@ -76,9 +78,9 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     // Ab „Bestellt“: ready erledigt, Schloss + Schließzeit bleiben sichtbar (zurückhaltend), kein +5; Öffnen geht erst nach „Bestellt zurücknehmen“
     const closedStep = () => h('span', { class: 'step-group' }, step('done', `✓ ${t('ready')}`), h('span', { class: 'step-left done', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)));
     const flow = d.delivered_at
-      ? [opened, closedStep(), step('done', ordTxt), undoable(step('now', `✓ ${t('geliefert')}`, fmtWhen(d.delivered_at)), { delivered: false })]
+      ? [opened, closedStep(), step('done', ordTxt), undoable(step('now', `✓ ${t('geliefert')}`, fmtClock(d.delivered_at)), { delivered: false })]
       : d.ordered_at
-        ? [opened, closedStep(), undoable(step('now', ordTxt, fmtWhen(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
+        ? [opened, closedStep(), undoable(step('now', ordTxt, fmtClock(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
         : d.ready.total
           ? [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked, t('Erst die Bestellung schließen')), step('todo', t('geliefert'))] // noch nicht alle ready: derselbe Ablauf, ready rot
           : null;
@@ -89,17 +91,17 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
       const count = t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length }); // immer x/y, auch bei einem
       flow.push(allPaid ? step('paid-done', payers.length ? `✓ ${count}` : `✓ ${t('bezahlt')}`) : counting ? step('now ready', count) : step('todo', payers.length && paidN > 0 ? count : t('bezahlt')));
     }
-    if (flow) b.push(h('div', { class: 'status-flow' }, ...flow.flatMap((x, n) => {
+    const where = h('span', { class: 'step-where' }, h('span', null, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, false))); // links: am selben Tag nur die Uhrzeit, sonst nur das Datum
+    if (flow) b.push(h('div', { class: 'status-flow' }, where, h('div', { class: 'flow-steps' }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);
       if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text
       return [...(n ? [sep()] : []), chip ? h('span', { class: 'step-pair' }, x, chip) : x]; // Schritt und ↩ bleiben zusammen (kein Umbruch dazwischen)
-    })));
-    // Offene Zahlungen: roter Kopf (Markierungsfarbe), darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
-    if (d.ordered_at && d.debts.length) {
-      b.push(h('section', { class: 'debts-block' },
-        debtsHead(t('in dieser Bestellung')),
-        h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))));
-    }
+    }))));
+    // Offene Zahlungen: schwarzer Kopf, darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
+    const debtsBlock = d.ordered_at && d.debts.length ? h('section', { class: 'debts-block' },
+        debtsHead(t('in dieser Bestellung'), d.debts.length, ...(payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : [])), // Bezahllink im Kopf, mittig
+        h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))) : null;
+    debtsHost.replaceChildren(...(debtsBlock ? [debtsBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {
       b.unshift(h('div', { class: 'banner bad row between' },
         h('span', null, t('Neu: {user} möchte mitbestellen', { user: u })),
