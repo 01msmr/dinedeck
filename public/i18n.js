@@ -162,6 +162,7 @@ const EN = {
   'Einzelpreis': 'Unit price',
   'Summe': 'Total',
   'Bestellung': 'Order',
+  '{n} Personen': '{n} people',
   'Liefer- und Servicekosten': 'Delivery and service fees',
   'Lieferkosten': 'Delivery fee',
   'Gesamt': 'Grand total',

@@ -11,10 +11,14 @@ const boldNames = (names) => names.flatMap((n, i) => [i === 0 ? null : i === nam
 
 export const roundItem = (r, highlight = false) => {
   const stage = roundStage(r);
-  const status = stage === 'alles bezahlt'
-    ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt')) // wie in der Seitenleiste
+  const paid = stage === 'alles bezahlt';
+  const payment = paid
+    ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt'))
+    : r.unpaid ? h('span', { class: 'unpaid-line' }, h('span', null, ...boldNames(r.debts_users ?? []), ' — '), h('span', { class: 'badge off' }, `${t('unbezahlt')}: ${eur(r.debts_total_cents)}`)) : null;
+  const delivered = paid || stage === 'geliefert';
+  const top = delivered && payment ? null // ab „geliefert“ zählt nur die Zahlung (unten), die Pille wäre doppelt
     : stage
-    ? h('span', { class: 'badge mid' }, t(stage))
+    ? h('span', { class: delivered ? 'badge on' : 'badge mid' }, t(stage))
     : h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
   return h(
     'a',
@@ -22,14 +26,9 @@ export const roundItem = (r, highlight = false) => {
     h(
       'div',
       { class: 'card pad-4' },
-      h('div', { class: 'row between' }, h('strong', null, r.restaurant), status),
-      h('div', { class: 'muted' }, `${fmtDate(r.created_at)} · ${r.creator} · ${t('bestellt von')} ${r.buyer}`),
-      h(
-        'div',
-        { class: 'row between' },
-        h('span', null, `${r.done}/${r.users} ${t('ready')} · ${eur(r.total_cents)}`),
-        r.unpaid ? h('span', { class: 'unpaid-line' }, h('span', null, ...boldNames(r.debts_users ?? []), ' — '), h('span', { class: 'badge off' }, `${t('unbezahlt')}: ${eur(r.debts_total_cents)}`)) : null
-      )
+      h('div', { class: 'row between' }, h('strong', null, r.restaurant), h('span', null, `${t('{n} Personen', { n: r.users })} · ${eur(r.total_cents)}`)), // Summe oben rechts
+      h('div', { class: 'row between' }, h('span', { class: 'muted' }, `${fmtDate(r.created_at)} · ${t('bestellt von')} ${r.buyer}`), top),
+      payment ? h('div', { class: 'row end' }, payment) : null
     )
   );
 };

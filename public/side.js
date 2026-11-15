@@ -26,7 +26,7 @@ export function renderSide() {
     if (!r.locked) return h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
     const stage = roundStage(r);
     if (stage === 'alles bezahlt') return h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt')); // Häkchen im grünen Kreis, Text wie der Name
-    return h('span', { class: 'badge mid' }, t(stage));
+    return h('span', { class: stage === 'geliefert' ? 'badge on' : 'badge mid' }, t(stage)); // geliefert grün wie in der Ablaufzeile
   };
   const item = (r) =>
     h(
