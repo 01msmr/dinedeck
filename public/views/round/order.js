@@ -1,6 +1,6 @@
 // Bestellliste: Gruppentabelle, Summen und Text zum Kopieren
 import { t } from '/i18n.js';
-import { shortVariant } from '/format.js';
+import { shortVariant, nbspUnits } from '/format.js';
 import { eur, h, telHref, flashButton } from '/util.js';
 
 export function orderText(d) {
@@ -12,7 +12,7 @@ export function orderText(d) {
 
 // Ein Nutzer oder keine Variante: alles in einer Zeile; sonst Artikel, darunter Variante · Namen
 function articleCell(g) {
-  const variant = shortVariant(g.variant);
+  const variant = nbspUnits(shortVariant(g.variant));
   const who = g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ');
   const unit = h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`);
   if (!variant || g.users.length < 2) return [h('strong', null, g.article), variant ? ` · ${variant}` : '', unit, h('span', { class: 'muted who' }, who)];

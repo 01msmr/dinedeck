@@ -94,3 +94,10 @@ export function bellStep(left, thresholds, last) {
   const hit = thresholds.filter((t) => left <= t && t < last && (left > 0 || t === 0)); // nach Ablauf nur die Schwelle 0
   return hit.length ? Math.min(...hit) : null;
 }
+
+const unitRe = () => new RegExp(`(\\d) (${VARIANT_SHORT.units.map((u) => u.replace('.', '\\.')).join('|')})(?![\\p{L}\\p{N}])`, 'giu');
+
+/** Zahl und Einheit („26 cm“) mit geschütztem Leerzeichen verbinden, damit sie nie am Zeilenende getrennt werden (nur Anzeige). */
+export function nbspUnits(text) {
+  return String(text ?? '').replace(unitRe(), '$1\u00a0$2');
+}

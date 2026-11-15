@@ -5,6 +5,7 @@ import { isCurrentRound } from '/group.js';
 import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
+import { nbspUnits } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
 import { payRows } from '/views/round/pay.js';
 import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
@@ -386,7 +387,7 @@ export function roundView(id) {
     const itemRow = (i) => {
       const qtyCol = col('qty', h('div', { class: 'row nowrap gap-1' }, stepper(i, -1), h('strong', null, String(i.qty)), stepper(i, 1)));
       const del = h('button', { class: 'btn small danger', disabled: closed, title: t('Entfernen'), onclick: async () => { if ((await act(() => api('DELETE', `/items/${i.id}`))) !== null) showUndo(i); nav.current.refresh(); } }, '✕');
-      if (closed) return h('div', { class: 'item-row item-line' }, qtyCol, col('art', i.article), col('var', h('span', { class: 'muted' }, i.variant)), col('price', priceCell(i.price_cents)));
+      if (closed) return h('div', { class: 'item-row item-line' }, qtyCol, col('art', i.article), col('var', h('span', { class: 'muted' }, nbspUnits(i.variant))), col('price', priceCell(i.price_cents)));
       const field = (key, value, max, extra) => h('input', { value, maxlength: max, autocomplete: 'off', ...extra, onchange: async (e) => { await act(() => api('PATCH', `/items/${i.id}`, { [key]: e.target.value })); nav.current.refresh(); } });
       return h('div', { class: 'item-row item-line' }, qtyCol, col('art', field('article', i.article, LIMITS.article, { required: true, 'aria-label': t('Artikel') })), col('var', field('variant', i.variant || '', LIMITS.variant, { 'aria-label': t('Variante (optional)') })), col('price', h('div', { class: 'price-in' }, field('price', money(i.price_cents), 12, { inputmode: 'decimal', 'aria-label': t('Preis') }), h('span', { class: 'eur-box' }, '€'))), col('act', del));
     };

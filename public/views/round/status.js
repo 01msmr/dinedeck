@@ -1,7 +1,7 @@
 // Statusleiste oben: Ablaufzeile, Hinweise, offene Beträge
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS } from '/config.js';
-import { debtChipEl } from '/views/round/debt-row.js';
+import { debtChipEl, debtsHead } from '/views/round/debt-row.js';
 import { fmtWhen, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
 
 export function createStatus({ banners, toggle, decide, undo, advance, etaField, time, autoClose }) {
@@ -97,7 +97,7 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     // Offene Zahlungen: roter Kopf (Markierungsfarbe), darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
     if (d.ordered_at && d.debts.length) {
       b.push(h('section', { class: 'debts-block' },
-        h('div', { class: 'debts-head' }, t('Offene Zahlungen'), h('span', { class: 'debts-head-rest' }, ` – ${t('in dieser Bestellung')}`)),
+        debtsHead(t('in dieser Bestellung')),
         h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))));
     }
     for (const u of d.pending) {

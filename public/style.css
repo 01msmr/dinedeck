@@ -614,7 +614,12 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .overlay-card .overlay-close { position: absolute; top: 0.75rem; right: 0.75rem; } /* gleicher Abstand zu oberem und rechtem Rand */
 .overlay-card:focus { outline: none; }
 .overlay-card .overlay-close:hover { background: var(--bad); color: var(--on-bad); border-color: transparent; outline: none; } /* Schließen: beim Überfahren rot gefüllt, ohne Rand */
-.overlay-card > strong:first-of-type { padding-right: calc(var(--chip) + 0.5rem); }
+.overlay-card .debts-block { width: 100%; max-width: none; margin: 0; }
+.overlay-card.notice-card { padding-top: calc(var(--chip) + 2rem); gap: 1.5rem; } /* Platz unter dem Schließen-Knopf, Abschnitte klar getrennt */
+.debt-entry { display: grid; gap: 0.25rem; color: inherit; text-decoration: none; } /* Overlay: Chip in voller Breite, Beschriftung darunter */
+.debt-entry .debt-chip { justify-content: space-between; padding-right: 0.875rem; }
+.debt-caption { font-size: var(--fs-sm); color: var(--pane-muted); padding: 0 0.875rem; }
+.debt-entry:hover .debt-chip { filter: brightness(1.08); }
 .qr-bg { fill: var(--qr-light); }
 .qr-fg { fill: var(--qr-dark); }
 .round-head.folded .fold-item { display: none; }

@@ -3,7 +3,7 @@ import { t } from '/i18n.js';
 import { DEFAULTS, NOTICE } from '/config.js';
 import { h, api, eur, me, lc, fmtDay, fmtClock, closeIcon } from '/util.js';
 import { owedByMe, owedToMe } from '/format.js';
-import { debtCard } from '/views/round/debt-row.js';
+import { debtLinkChip, debtsHead } from '/views/round/debt-row.js';
 
 const box = document.getElementById('pay-notice');
 const seenKey = 'bb_pay_notice';
@@ -25,15 +25,15 @@ export async function showOpenPayments() {
   const perDay = new Map();
   for (const d of details.values()) perDay.set(dayKey(d.created_at), (perDay.get(dayKey(d.created_at)) ?? 0) + 1);
   const when = (d) => `${fmtDay(d.created_at, false)}${perDay.get(dayKey(d.created_at)) > 1 ? `, ${fmtClock(d.created_at)}` : ''}`;
-  const link = (d, left, right) => debtCard(left, right, { tag: 'a', href: `#/r/${d.id}`, foot: when(d), onclick: () => box.replaceChildren() }); // Datum (und ggf. Uhrzeit) unten rechts
+  const link = (d, left, right, place) => debtLinkChip(left, right, `${place} · ${when(d)}`, { href: `#/r/${d.id}`, onclick: () => box.replaceChildren() });
   const owe = mine.flatMap((r) => {
     const d = details.get(r.id);
     const debt = d?.debts.find((x) => lc(x.user) === lc(me));
-    return debt ? [link(d, h('strong', null, `${d.restaurant.name} · ${t('an')} ${d.buyer}`), h('strong', null, eur(debt.amount_cents)))] : [];
+    return debt ? [link(d, `${t('an')} ${d.buyer}`, eur(debt.amount_cents), d.restaurant.name)] : [];
   });
   const owed = toMe.flatMap((r) => {
     const d = details.get(r.id);
-    return (d?.debts ?? []).map((x) => link(d, h('strong', null, `${x.user} ${t('über')} ${eur(x.amount_cents)}`), h('strong', null, d.restaurant.name)));
+    return (d?.debts ?? []).map((x) => link(d, x.user, eur(x.amount_cents), d.restaurant.name));
   });
   if (!owe.length && !owed.length) return;
   const key = `${lc(me)}:${ids.join(',')}`;
@@ -48,13 +48,11 @@ export async function showOpenPayments() {
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const closeBtn = h('button', { class: 'btn small ghost chip-btn overlay-close', type: 'button', 'aria-label': t('Schließen'), onclick: close }, closeIcon());
-  const title = h('strong', { id: 'pay-notice-title' }, owe.length ? t('Du musst noch bezahlen:') : t('Offene Zahlungen an dich:'));
-  const card = h('div', { class: 'card overlay-card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pay-notice-title', tabindex: '-1' },
+  const block = (rest, chips) => h('section', { class: 'debts-block' }, debtsHead(rest), h('div', { class: 'status-debts' }, ...chips));
+  const card = h('div', { class: 'card overlay-card notice-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('Offene Zahlungen'), tabindex: '-1' },
     closeBtn,
-    title,
-    ...(owe.length ? owe : []),
-    ...(owe.length && owed.length ? [h('strong', null, t('Offene Zahlungen an dich:'))] : []),
-    ...owed);
+    ...(owe.length ? [block(t('von dir'), owe)] : []),
+    ...(owed.length ? [block(t('an dich'), owed)] : []));
   box.append(card);
   box.onclick = (e) => { if (e.target === box) close(); }; // Klick neben die Karte schließt
   document.addEventListener('keydown', onKey);

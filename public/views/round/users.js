@@ -2,6 +2,7 @@
 import { t } from '/i18n.js';
 import { TIMING } from '/config.js';
 import { eur, h, lc, me } from '/util.js';
+import { nbspUnits } from '/format.js';
 
 let payConfirm = null; // { user, timer }: wartet auf die zweite Bestätigung
 
@@ -48,7 +49,7 @@ function itemsTable(u, single, total) {
       null,
       u.items.map((i, n) => h('tr', null,
         h('td', { class: 'num' }, `${i.qty}×`),
-        h('td', null, i.article, i.variant ? h('span', { class: 'muted' }, ` · ${i.variant}`) : null),
+        h('td', null, i.article, i.variant ? h('span', { class: 'muted' }, ` · ${nbspUnits(i.variant)}`) : null),
         h('td', { class: 'num unit' }, single ? null : eur(i.price_cents)),
         h('td', { class: 'num total' }, single ? h('strong', { class: 'text-fg' }, eur(i.price_cents)) : total && n === last ? h('strong', { class: 'text-fg' }, total) : null)))
     )

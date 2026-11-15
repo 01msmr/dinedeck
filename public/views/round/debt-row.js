@@ -16,3 +16,15 @@ export function debtChipEl(x, { asking, onClick }) {
     h('strong', null, eur(x.amount_cents)),
     onClick ? h('button', { class: 'debt-pay' + (asking ? ' confirm' : ''), type: 'button', onclick: onClick }, asking ? t('ist bezahlt?') : t('als bezahlt markieren')) : null);
 }
+
+/** Kopfband „Offene Zahlungen – <Zusatz>“, in der Bestellung und im Overlay gleich. */
+export function debtsHead(rest, ...extra) {
+  return h('div', { class: 'debts-head' }, t('Offene Zahlungen'), h('span', { class: 'debts-head-rest' }, ` – ${rest}`), ...extra);
+}
+
+/** Eintrag im Overlay: roter Chip (Name, Betrag) wie in der Bestellung, darunter außerhalb Restaurant und Datum; Verweis auf die Bestellung. */
+export function debtLinkChip(left, right, caption, attrs) {
+  return h('a', { class: 'debt-entry', ...attrs },
+    h('div', { class: 'debt-chip' }, h('strong', null, left), h('strong', null, right)),
+    h('div', { class: 'debt-caption' }, caption));
+}

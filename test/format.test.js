@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -161,4 +161,16 @@ test('bellStep: läutet je Schwelle einmal, nimmt bei verpassten die kleinste er
   assert.equal(bellStep(0, at, Infinity), null, 'abgelaufen: keine Glocke');
   assert.equal(bellStep(0, [60000, 0], 60000), 0, 'Schwelle 0: läutet zum Ablauf');
   assert.equal(bellStep(-5000, [60000, 0], 0), null, 'nicht noch einmal');
+});
+
+test('nbspUnits: Zahl und Einheit bleiben zusammen (geschütztes Leerzeichen)', () => {
+  const nb = '\u00a0';
+  assert.equal(nbspUnits('26 cm, Fladenbrot'), `26${nb}cm, Fladenbrot`);
+  assert.equal(nbspUnits('0,5 l und 330 ml'), `0,5${nb}l und 330${nb}ml`);
+  assert.equal(nbspUnits('2 Stück'), `2${nb}Stück`);
+  assert.equal(nbspUnits('26 CM'), `26${nb}CM`, 'Groß/Klein egal');
+  assert.equal(nbspUnits('extra Schinken'), 'extra Schinken', 'ohne Zahl unverändert');
+  assert.equal(nbspUnits('26 cmx'), '26 cmx', 'nur ganze Einheiten');
+  assert.equal(nbspUnits(''), '');
+  assert.equal(nbspUnits(null), '');
 });

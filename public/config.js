@@ -35,6 +35,7 @@ export const DEFAULTS = {
 export const VARIANT_SHORT = {
   filler: ['mit', 'zusätzlich'], // fallen weg
   joiners: ['und'], // werden zu Komma
+  units: ['mm', 'cm', 'm', 'g', 'kg', 'cl', 'dl', 'ml', 'l', 'stück', 'stk', 'st.'], // Einheiten: Zahl und Einheit werden nicht getrennt (geschütztes Leerzeichen)
 };
 
 /** Listen und Auswertungen. */
