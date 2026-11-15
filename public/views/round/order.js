@@ -15,8 +15,8 @@ function articleCell(g) {
   const variant = nbspUnits(shortVariant(g.variant));
   const who = g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ');
   const unit = h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`);
-  if (!variant || g.users.length < 2) return [h('strong', null, g.article), variant ? ` · ${variant}` : '', unit, h('span', { class: 'muted who' }, who)];
-  return [h('strong', null, g.article), unit, h('span', { class: 'who-line' }, h('span', { class: 'muted' }, `${variant} · ${who}`))];
+  if (!variant || g.users.length < 2) return [h('strong', { class: 'art-name' }, g.article), variant ? h('span', { class: 'art-var' }, `·\u00a0${variant}`) : '', unit, ' ', h('span', { class: 'muted who' }, who)];
+  return [h('strong', { class: 'art-name' }, g.article), unit, h('span', { class: 'who-line' }, h('span', { class: 'muted' }, `${variant} · ${who}`))];
 }
 
 // „Bestellliste kopieren“ steht im Kopf beim Restaurant (immer, für alle); angerufen wird über die Nummer dahinter

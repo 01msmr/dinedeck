@@ -730,7 +730,8 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table tfoot tr:first-child td { border-top: 0; padding-top: 1.5rem; } /* Leerzeile vor „Summe Artikel“ */
 .order-table tfoot tr:last-child td { font-size: 1.25rem; font-weight: 700; padding-top: 0.5rem; } /* „Gesamt“ größer */
 .order-table tfoot tr:last-child td { border-top: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); }
-.order-table td .who { margin-left: 0.625rem; } /* Namen in derselben Zeile wie das Gericht */
+.order-table .art-var { display: inline-block; max-width: 100%; margin-right: 0.625rem; } /* fester Abstand zwischen Zusatz und erstem Namen */
+.order-table .art-name { display: inline-block; max-width: 100%; margin-right: 0.625rem; } /* Gerichtname bleibt in einer Zeile, solange er allein passt; Namen brechen um */
 .order-table .who-line { display: block; } /* Variante und Namen mehrerer Nutzer in der Zeile darunter */
 .order-table .lbl-short { display: none; }
 .order-table .unit-inline { display: none; }
