@@ -49,7 +49,7 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 |---|---|
 | ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
 | **Order list** | **All orders** |
-| ![Order list](docs/screenshots/combined-order.png) | ![All orders](docs/screenshots/all-orders.png) |
+| ![Order list](docs/screenshots/order-list.png) | ![All orders](docs/screenshots/all-orders.png) |
 
 ## Sound
 
