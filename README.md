@@ -61,7 +61,7 @@ No clone needed: save this as `compose.yaml` on your server and run `docker comp
 ```yaml
 services:
   dinedeck:
-    build: https://github.com/01msmr/dinedeck.git#main
+    build: https://github.com/01msmr/dinedeck.git
     restart: unless-stopped
     environment:
       ADMINS: "${ADMINS:-}"                    # comma-separated usernames, may manage every order
