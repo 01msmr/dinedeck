@@ -56,30 +56,26 @@ The ring is a recording **not in the repository** (`public/sounds/` is git-ignor
 
 ## Hosting with Docker Compose
 
-```sh
-git clone https://github.com/01msmr/dinedeck && cd dinedeck
-echo 'ADMINS=anna,ben' > .env      # optional
-docker compose up -d --build
-```
-
-`compose.yaml` (in the repository; reads `ADMINS`, `DEMO` and `FRAME_ANCESTORS` from the shell or `.env`):
+No clone needed: save this as `compose.yaml` on your server and run `docker compose up -d --build` (Compose builds the image straight from GitHub).
 
 ```yaml
 services:
   dinedeck:
-    build: .
+    build: https://github.com/01msmr/dinedeck.git#main
     restart: unless-stopped
     environment:
-      ADMINS: "${ADMINS:-}"                        # comma-separated usernames, may manage every order
-      DEMO: "${DEMO:-}"                            # 1 = fill an empty database with fictional demo orders
-      FRAME_ANCESTORS: "${FRAME_ANCESTORS:-}"      # origins allowed to embed the app in an iframe (empty = blocked)
+      ADMINS: "${ADMINS:-}"                    # comma-separated usernames, may manage every order
+      DEMO: "${DEMO:-}"                        # 1 = fill an empty database with fictional demo orders
+      FRAME_ANCESTORS: "${FRAME_ANCESTORS:-}"  # origins allowed to embed the app in an iframe (empty = blocked)
     ports:
-      - "127.0.0.1:3000:3000"  # local only; for a LAN use "3000:3000", or keep it and put a reverse proxy in front
+      - "127.0.0.1:3000:3000"  # local only; for a LAN use "3000:3000"
     volumes:
       - dinedeck-data:/data
 volumes:
   dinedeck-data:
 ```
+
+Settings come from the shell or a `.env` file next to it (`echo 'ADMINS=anna,ben' > .env`). The `compose.yaml` in the repository is the same, but builds the local checkout (`build: .`).
 
 - **Port:** published on `127.0.0.1:3000` only. For a local network use `"3000:3000"`; for the internet put an HTTPS reverse proxy in front (e.g. Caddy: `dinedeck.example.org { reverse_proxy 127.0.0.1:3000 }`). Clipboard and iframe embedding need HTTPS; with nginx set `proxy_buffering off` for `/api/events` (SSE).
 - **Data:** SQLite in the volume `dinedeck-data`, survives rebuilds. Update: `git pull && docker compose up -d --build`. Stop: `docker compose down` (`-v` deletes the data).
