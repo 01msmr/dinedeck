@@ -52,6 +52,8 @@ const EN = {
   'als Gast': 'as guest',
   'Erst ready setzen, dann bezahlen': 'Set ready first, then pay',
   'Keine passenden Bestellungen.': 'No matching orders.',
+  'die Bestellung ist bezahlt': 'the order is paid',
+  'alle {n} Bestellungen sind bezahlt': 'all {n} orders are paid',
   'Bestelle für jemand anderen': 'Order for someone else',
   'Nur du selbst kannst deine Artikel als ready bestätigen': 'Only you can mark your own items as ready',
   'Noch nicht ready – zählt nicht in der Bestellung': 'Not ready yet – not part of the order',

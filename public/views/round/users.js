@@ -82,11 +82,12 @@ export function renderUsers(d, toggle, usersPane) {
   const box = h('input', { type: 'checkbox', checked: onlyUnpaid, onchange: (e) => { try { sessionStorage.setItem(filterKey, e.target.checked ? 'unpaid' : 'all'); } catch {} renderUsers(d, toggle, usersPane); } });
   const bar = d.ordered_at ? h('label', { class: 'card filter-bar' }, box, t('Nur Unbezahlte')) : null;
   const shown = d.users.filter(keep);
+  const orders = d.users.filter((u) => u.items?.length).length; // Bestellungen = Nutzer mit Artikeln
   const ready = shown.filter((u) => u.done);
   const unready = shown.filter((u) => !u.done);
   usersPane.replaceChildren(
     ...(bar ? [bar] : []),
-    ...(shown.length ? [] : [h('div', { class: 'card muted' }, t('Keine passenden Bestellungen.'))]),
+    ...(shown.length ? [] : [h('div', { class: 'card muted' }, onlyUnpaid ? t(orders === 1 ? 'die Bestellung ist bezahlt' : 'alle {n} Bestellungen sind bezahlt', { n: orders }) : t('Keine passenden Bestellungen.'))]),
     ...ready.map(card),
     ...(unready.length ? [h('div', { class: 'unready-gap' }), h('div', { class: 'unready-block' }, h('div', { class: 'unready-sep' }, t('Noch nicht ready – zählt nicht in der Bestellung')), ...unready.map(card))] : [])
   );
