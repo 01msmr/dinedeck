@@ -160,7 +160,8 @@ export function roundView(id) {
   const flagBadge = (u, flag) => flagBadgeOf(d, toggle, u, flag);
 
   // Dauerhaftes Formular (Besteller, PayPal, Lieferkosten): wird bei Live-Updates nicht neu gebaut; ungespeicherte Eingaben bleiben
-  const eBuyer = h('input', { maxlength: LIMITS.userName });
+  const eBuyer = h('input', { maxlength: LIMITS.userName, list: 'buyer-round', autocomplete: 'off' });
+  const buyerList = h('datalist', { id: 'buyer-round' }); // Vorschläge: die Teilnehmer dieser Bestellung
   const ePaypal = h('input', { maxlength: LIMITS.paypal });
   const eFee = h('input', { inputmode: 'decimal', form: 'head-form' }); // steht oben neben der Adresse, gehört zum Formular
   const editInputs = [eBuyer, ePaypal, eFee];
@@ -224,7 +225,7 @@ export function roundView(id) {
         nav.current.refresh();
       },
     },
-    h('label', null, t('Bestellt von'), eBuyer),
+    h('label', null, t('Bestellt von'), eBuyer, buyerList),
     h('label', null, 'PayPal', ePaypal),
     h('div', { class: 'form-actions inline' }, saveBtn), // Speichern am Ende der Zeile Besteller/PayPal
     editBar
@@ -279,6 +280,7 @@ export function roundView(id) {
       h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );
+    buyerList.replaceChildren(...d.users.map((u) => h('option', { value: u.user })));
     addrEl.textContent = d.restaurant.address || '';
     head.classList.toggle('folded', !foldOpen);
     const manage = d.viewer.can_manage;
