@@ -1,19 +1,11 @@
 // Bezahlbereich: Desktop mit Adresse, Kopieren, QR und PayPal-Knopf; Handy kompakt (Zahl-Link als Knopf, QR dahinter)
 import { t } from '/i18n.js';
-import { eur, h, lc, me, flashButton } from '/util.js';
+import { eur, h, lc, me, flashButton, copyIcon } from '/util.js';
 import { payHref } from '/format.js';
 import { qrIcon } from './qr-icon.js';
 
-// Standard-Kopiersymbol (zwei überlappende Rechtecke) als Knopf mit Hinweistext
+// Kopierknopf mit dem Standard-Symbol (icons.js) und Hinweistext
 function copyButton(text, hint) {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1.5rem', height: '1.5rem', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
-  const back = document.createElementNS(ns, 'path');
-  back.setAttribute('d', 'M5 15V5a2 2 0 0 1 2-2h10');
-  const front = document.createElementNS(ns, 'rect');
-  for (const [k, v] of Object.entries({ x: '9', y: '7', width: '12', height: '14', rx: '2' })) front.setAttribute(k, v);
-  svg.append(back, front);
   return h('button', {
     class: 'btn small ghost copy-btn', type: 'button', title: hint, 'aria-label': hint,
     onclick: async (e) => {
@@ -25,7 +17,7 @@ function copyButton(text, hint) {
         flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
       }
     },
-  }, svg);
+  }, copyIcon());
 }
 
 function payRowsDesktop(d) {

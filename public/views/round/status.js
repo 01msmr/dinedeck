@@ -1,8 +1,7 @@
 // Statusleiste oben: Ablaufzeile, Hinweise, offene Beträge
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS } from '/config.js';
-import { joinList } from '/format.js';
-import { debtRowEl } from '/views/round/debt-row.js';
+import { debtChipEl } from '/views/round/debt-row.js';
 import { fmtWhen, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
 
 export function createStatus({ banners, toggle, decide, undo, advance, etaField, time, autoClose }) {
@@ -10,7 +9,7 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
   let payConfirm = null; // {user, timer}: Rückfrage im Button vor „bezahlt“
   let confirm = null; // {key, timer}: Rückfrage vor Zurücknehmen/Weitergehen
   const debtRow = (x) =>
-    debtRowEl(x, {
+    debtChipEl(x, {
       asking: payConfirm?.user === x.user,
       onClick: lc(x.user) === lc(me) || d.viewer.is_buyer
         ? () => {
@@ -54,7 +53,6 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     const opened = step('done', `✓ ${t('eröffnet')}`, d.ordered_at ? null : fmtWhen(d.created_at)); // Zeiten früherer Schritte entfallen, sobald der nächste bestätigt ist
     const ordTxt = `✓ ${t('bestellt')}`;
     const allPaid = !d.debts.length && d.ordered_at && d.users.some((u) => u.subtotal_cents > 0);
-    const unpaid = d.unpaid && !!d.ordered_at; // offene Beträge erst nach „Bestellt“
     // „ready“: offen = Kästchen „Schließen, wenn alle ready“ in der Pille (Verwalter klicken, andere sehen es grau), davor +5, dahinter Schließen; geschlossen = Pille mit ↩ „Wieder öffnen“
     const readyStep = () => {
       const names = allReady ? '' : t('Noch nicht ready: {names}', { names: d.ready.not_ready.join(', ') });
@@ -87,21 +85,21 @@ export function createStatus({ banners, toggle, decide, undo, advance, etaField,
     const payers = d.users.filter((u) => u.done && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)); // Besteller zahlt nicht an sich selbst
     const paidN = payers.filter((u) => u.paid).length;
     if (flow) {
-      const counting = !allPaid && !!d.delivered_at && payers.length > 0; // nach „geliefert“: x/y bezahlt (gelb), alle bezahlt (grün)
-      if (allPaid || counting) flow.forEach((el) => { if (!(counting && el.textContent.includes(t('geliefert')))) el.classList.replace('now', 'done'); }); // „geliefert“ bleibt grün, solange es aktiv ist (bis alles bezahlt ist)
-      flow.push(allPaid ? step('now', `✓ ${t('bezahlt')}`) : counting ? step('now ready', t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length })) : step('todo', paidN > 0 ? `${t('bezahlt')} ${paidN}/${payers.length}` : t('bezahlt'))); // schon vor „geliefert“ Bezahlte zählen
+      const counting = !allPaid && !!d.delivered_at && payers.length > 0; // nach „geliefert“: x/y bezahlt (gelb), alle bezahlt (dunkel); der aktuelle Stand (bestellt/geliefert) bleibt grün
+      const count = t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length }); // immer x/y, auch bei einem
+      flow.push(allPaid ? step('paid-done', payers.length ? `✓ ${count}` : `✓ ${t('bezahlt')}`) : counting ? step('now ready', count) : step('todo', payers.length && paidN > 0 ? count : t('bezahlt')));
     }
-    if (flow) b.push(h('div', { class: 'status-flow' + (unpaid ? ' unpaid' : allPaid ? ' paid' : '') }, ...flow.flatMap((x, n) => {
+    if (flow) b.push(h('div', { class: 'status-flow' }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);
       if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text
       return [...(n ? [sep()] : []), chip ? h('span', { class: 'step-pair' }, x, chip) : x]; // Schritt und ↩ bleiben zusammen (kein Umbruch dazwischen)
     })));
-    if (unpaid) {
-      const [before, after] = joinList(d.debts.map((x) => x.user), '\u0001').split('\u0001'); // nur das Wort „und“ in normaler Schrift
-      b.push(h('div', { class: 'banner bad' }, t('{n} unbezahlt:', { n: d.debts.length }), h('span', { class: 'banner-names' }, before, after === undefined ? null : [h('span', { class: 'und' }, t('und')), after])));
+    // Offene Zahlungen: roter Kopf (Markierungsfarbe), darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
+    if (d.ordered_at && d.debts.length) {
+      b.push(h('section', { class: 'debts-block' },
+        h('div', { class: 'debts-head' }, t('Offene Zahlungen'), h('span', { class: 'debts-head-rest' }, ` – ${t('in dieser Bestellung')}`)),
+        h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))));
     }
-    if (d.ordered_at && d.debts.length) b.push(h('div', { class: 'status-debts' }, ...d.debts.map(debtRow)));
-    else if (allPaid) b.push(h('div', { class: 'banner ok' }, t('✓ alles bezahlt')));
     for (const u of d.pending) {
       b.unshift(h('div', { class: 'banner bad row between' },
         h('span', null, t('Neu: {user} möchte mitbestellen', { user: u })),

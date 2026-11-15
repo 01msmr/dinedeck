@@ -70,10 +70,15 @@ export const TIMING = {
 
 /** Warnton (Telefonklingeln) bei den letzten Minuten einer Frist. */
 export const SOUND = {
-  bellAtMs: Array.from({ length: 10 }, (_, i) => (9 - i) * 60 * 1000), // TEST: jede Minute von 9 bis 0; später 3, 2 und 1 min
+  bellAtMs: [5, 3, 1].map((m) => m * 60 * 1000), // klingelt alle 2 Minuten: bei 5, 3 und 1 min Restzeit
   file: '/sounds/old-telephone-ringing.mp3', // Aufnahme (liegt nur lokal, nicht im Repository); ohne Datei bleibt es still
   volume: 0.3, // Lautstärke (0–1)
   fileStartSec: 0, // Anfang der Aufnahme überspringen (die Datei ist schon auf das erste Klingeln gekürzt)
   ringSeconds: 3, // abgespielte Länge (die gekürzte Datei ist 3 s lang: genau ein Klingeln)
   fadeSec: 0.2, // Ausblenden am Ende
+};
+
+/** Benachrichtigung über offene Zahlungen. */
+export const NOTICE = {
+  showEveryLoad: false, // false: einmal je Sitzung und Stand der offenen Zahlungen; true zum Testen bei jedem Seitenaufruf
 };

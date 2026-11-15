@@ -4,9 +4,10 @@ import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
 import { isCurrentRound } from '/group.js';
 import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
+import { confirmDialog } from '/dialog.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
 import { payRows } from '/views/round/pay.js';
-import { app, eur, fmtWhen, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
+import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
 // Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
@@ -228,7 +229,23 @@ export function roundView(id) {
     h('div', { class: 'form-actions inline' }, saveBtn), // Speichern am Ende der Zeile Besteller/PayPal
     editBar
   );
-  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm), h('div', { class: 'head-side' }, timerCard, orderCard), payCard); // Bezahlen: unten, eigene Zeile, zu- und aufgeklappt gleich
+  // Löschen: nur Ersteller oder Admin, nur im aufgeklappten Kopf, mit Sicherheitsabfrage
+  const deleteBtn = h('button', {
+    class: 'btn small danger', type: 'button',
+    onclick: async () => {
+      const ok = await confirmDialog({
+        title: t('Bestellung löschen?'),
+        text: t('„{name}“ vom {date} wird mit allen Artikeln und Zahlungsständen endgültig gelöscht. Das lässt sich nicht rückgängig machen.', { name: d.restaurant.name, date: fmtDate(d.created_at) }),
+        confirm: t('Endgültig löschen'),
+      });
+      if (!ok) return;
+      await act(() => api('DELETE', `/rounds/${id}`));
+      toast(t('Bestellung gelöscht'));
+      location.hash = '#/';
+    },
+  }, t('Bestellung löschen'));
+  const deleteRow = h('div', { class: 'row end fold-item' }, deleteBtn);
+  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm, deleteRow), h('div', { class: 'head-side' }, timerCard, orderCard), payCard); // Bezahlen: unten, eigene Zeile, zu- und aufgeklappt gleich
 
   // Wechsel zwischen den heutigen/offenen Bestellungen (nur sichtbar, wenn es mehrere gibt)
   function renderPick(list) {
@@ -256,6 +273,7 @@ export function roundView(id) {
     const manage = d.viewer.can_manage;
     headMeta.replaceChildren(...(manage || !d.delivery_fee_cents ? [] : [t('Lieferkosten: {fee}', { fee: eur(d.delivery_fee_cents) })]));
     headForm.classList.toggle('hidden', !manage);
+    deleteRow.classList.toggle('hidden', !d.viewer.can_delete);
     feeLabel.classList.toggle('hidden', !manage);
     const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents)];
     saved = vals;

@@ -3,7 +3,7 @@ import { LISTS } from '../public/config.js';
 import { HttpError } from './errors.js';
 import { collapse, lower, foldKey, parseVariant, parseMoneyToCents, distribute } from './helpers.js';
 
-export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isBuyer, deliveryStats }) {
+export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, canDelete, isBuyer, deliveryStats }) {
   function roundDetail(id, viewer = '', now = Date.now(), { withPrices = true } = {}) {
     const r = getRound(id);
     const items = q.itemAll.all(r.id);
@@ -106,8 +106,8 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, isB
       debts_total_cents: debts.reduce((a, d) => a + d.amount_cents, 0),
       unpaid: locked && !!r.ordered_at && debts.length > 0,
       viewer: viewer
-        ? { user: viewer, can_manage: canManage(r, viewer), is_buyer: isBuyer(r, viewer), is_admin: isAdmin(viewer) }
-        : { user: '', can_manage: false, is_buyer: false, is_admin: false },
+        ? { user: viewer, can_manage: canManage(r, viewer), can_delete: canDelete(r, viewer), is_buyer: isBuyer(r, viewer), is_admin: isAdmin(viewer) }
+        : { user: '', can_manage: false, can_delete: false, is_buyer: false, is_admin: false },
     };
   }
 

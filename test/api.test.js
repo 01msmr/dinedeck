@@ -747,3 +747,26 @@ test('Wieder öffnen schaltet „Schließen, wenn alle ready“ aus', async () =
     await close();
   }
 });
+
+test('Bestellung löschen: nur Ersteller oder Admin, samt Positionen', async () => {
+  const { call, close } = await boot(); // Admin: root
+  try {
+    const mk = async () => (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma', url: '', phone: '' }, buyer: 'bea', paypal: 'bea', minutes: 20 })).body.id;
+    const id = await mk();
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2,50', qty: 1 });
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).body.viewer.can_delete, true, 'Ersteller darf');
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'bea')).body.viewer.can_delete, false, 'Besteller darf nicht');
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'anna')).body.viewer.can_delete, false);
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'root')).body.viewer.can_delete, true, 'Admin darf');
+    assert.equal((await call('DELETE', `/api/rounds/${id}`, 'bea')).status, 403, 'Besteller: 403');
+    assert.equal((await call('DELETE', `/api/rounds/${id}`, 'anna')).status, 403);
+    assert.equal((await call('DELETE', `/api/rounds/${id}`, 'alex')).status, 200, 'Ersteller löscht');
+    assert.equal((await call('GET', `/api/rounds/${id}`, 'alex')).status, 404, 'weg');
+    assert.equal((await call('DELETE', `/api/rounds/${id}`, 'alex')).status, 404, 'zweites Löschen: 404');
+    const id2 = await mk();
+    assert.equal((await call('DELETE', `/api/rounds/${id2}`, 'root')).status, 200, 'Admin löscht');
+    assert.ok(!(await call('GET', '/api/rounds?all=1', 'alex')).body.some((r) => r.id === id || r.id === id2));
+  } finally {
+    await close();
+  }
+});

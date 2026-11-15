@@ -103,6 +103,11 @@ export function createApp({ dbFile = ':memory:', admins = [], frameAncestors = [
         emit(m[1]);
         return send(res, 200, logic.roundDetail(m[1], user));
       }
+      if (method === 'DELETE') {
+        logic.deleteRound(user, m[1]);
+        emit(m[1]);
+        return send(res, 200, { ok: true });
+      }
     }
     if (method === 'POST' && (m = p.match(/^\/api\/rounds\/(\d+)\/time$/))) {
       logic.changeTime(user, m[1], await readJson(req));

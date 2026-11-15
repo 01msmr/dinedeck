@@ -13,14 +13,17 @@ Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live
   - `ready` carries a checkbox "close when everyone is ready" (greyed out for others), followed by `+5` (extend), the remaining time and a lock (close now). Closing, going forward (`ordered`, `delivered`) and taking a step back (arrow after the step) ask once more before they run.
   - After closing the line shows the lock with the closing time, `+5` is greyed out, and the arrow reopens. Reopening switches "close when ready" off.
   - After `ordered` a delivery time field appears before `delivered`; a new value is saved immediately and shown again after a reload.
-- **Ready and paid** are independent per-user flags. Any change to your items resets your ready flag. Only the user or the buyer can set paid. Ready is yellow, unready red, paid green. Open payments show as one card per person (fixed width, aligned with the content) under a red "n unpaid: names" banner.
+- **Ready and paid** are independent per-user flags. Any change to your items resets your ready flag. Only the user or the buyer can set paid. Ready is yellow, unready red. The payment state is shown in colour only by the stripe of the user card (green paid, red unpaid); the pill stays grey (`✓ paid`, `mark as paid` for those who may set it).
+- **Open payments:** a black header "Open payments – in this order" and one red chip per person (name, amount, white button "mark as paid"), only when there are any. When the order is delivered or paid, the flow shows `n/m paid` (always, also for one payer); "all paid" is a dark mark that does not compete with the green current step.
 - **Deadline** (default 20 min). When it expires or an admin/creator/buyer closes the order, items of unready users stay visible but do not count. Optional auto-close once everyone is ready; new users then need approval.
-- **Time warnings:** the remaining time pulses grey from 10 to 5 min, then turns red with a glowing pulse. From 3 min the logo row flashes red for 1 s every 6 s (the sidebar band flashes with it). A telephone ring plays at the thresholds in `SOUND.bellAtMs` if a recording is present (see Sound). Thresholds, tempo and volume are in `public/config.js` and `public/style.css`; reduced-motion settings switch the animation off.
+- **Time warnings:** the remaining time pulses grey from 10 to 5 min, then turns red with a glowing pulse. From 3 min the logo row flashes red for 1 s every 6 s (the sidebar band flashes with it). A telephone ring plays at 5, 3 and 1 min remaining (`SOUND.bellAtMs`) if a recording is present (see Sound). Thresholds, tempo and volume are in `public/config.js` and `public/style.css`; reduced-motion settings switch the animation off.
 - **Locked from "ordered":** no item or user changes, deadline and buyer data frozen; the step arrows take it back (delivered first, then ordered).
 - **Buyer and payment:** buyer, PayPal address and delivery fee (split equally among users with items). PayPal address (per buyer) and fee (per restaurant) are remembered. The pay block offers a link with the user's amount and a QR code of it. The address is visible only to participants, buyer, creator and admins.
 - **Order header:** collapsed by default (the arrow is a font character at the size of the name and turns when it opens), the choice is remembered per order. The restaurant row (copy text, call, order phone and web link) is always visible.
 - **Phones (up to 30 em):** compact layout. The order header puts the arrow and the restaurant name on one line, followed by the closed note and the buyer; the contact row shows "copy text", the phone number and the web link (no "Order:" label, no separate call button). The pay block is one rounded button with the amount and the PayPal address (the pay link itself) with the QR code behind it (tap to enlarge); there is no copy button. The control line wraps onto two lines, tab labels are larger, and a step and its undo arrow stay together.
-- **Navigation:** sidebar (open / unpaid / closed, live; the count of orders with unpaid items on "All orders") docked from 1280 px and as a drawer with a menu button below, the list also appears on the start page then. "All orders" can be filtered to unpaid only. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
+- **Notification on return:** after opening the app, a centred overlay lists the open payments **from you** ("You still have to pay") and **to you** as buyer ("Open payments to you"), each as a card with restaurant and date (time too when two orders share a day). Only earlier days; it appears once per session and state (`NOTICE.showEveryLoad` in `public/config.js` shows it on every load for testing). Close with ✕, Escape or a click beside it.
+- **Deleting an order:** only the creator or an admin, in the expanded header ("Delete order"), after a confirmation dialog. Items and payment states are deleted with it.
+- **Navigation:** sidebar ("Today" is always shown, with "no order yet" when there is none; open / unpaid / closed, live; the count of orders with unpaid items on "All orders") docked from 1280 px and as a drawer with a menu button below, the list also appears on the start page then. "All orders" can be filtered to unpaid only. Each order has its own URL (`#/r/<id>`). Orders from today show only the time.
 - **Statistics:** top restaurant, favourite dish per restaurant, average item price and order total. No per-user statistics. Admins can export all item rows as JSON.
 - **Appearance:** light/dark/auto, colour themes, German/English.
 
@@ -51,6 +54,8 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 | ![Open order](docs/screenshots/order-open.png) | ![Delivered order](docs/screenshots/order-delivered.png) |
 | **Order list** | **All orders** |
 | ![Order list](docs/screenshots/order-list.png) | ![All orders](docs/screenshots/all-orders.png) |
+| **Open payments on return** | |
+| ![Open payments overlay](docs/screenshots/payments-notice.png) | |
 
 ## Sound
 
@@ -97,11 +102,20 @@ public/qr.js         QR encoder (byte mode, ECC M, up to 106 bytes)
 public/app.js        Entry: name prompt, router, live updates
 public/side.js       Sidebar, countdown ticks, time warnings
 public/phone.js      Ring sound (plays the recording if present)
+public/notice.js     Overlay with the open payments on return
+public/dialog.js     Confirmation dialog (same overlay pattern)
+public/icons.js      All icons from one SVG template
 public/views/        home, all, stats, round; round/ holds status (the control line), users, order, pay, qr-icon
 public/i18n.js       Translations (German text is the key)
 public/style.css     Colours via light-dark(), lengths in rem (1rem = 16 px)
 test/                api, format, group, qr, demo, merge  (npm test)
 ```
+
+Design conventions (`public/style.css`):
+
+- Colours, radii, type scale, pill padding and the round button size are tokens in `:root` (`--radius-pill`, `--radius-sm`, `--fs-xs` … `--fs-lg`, `--pill-pad`, `--pill-pad-lg`, `--chip`). New rules use `var(--…)`, not literals; a colour never appears outside `:root`.
+- One component per concept, reused everywhere: `.badge` and `.link-pill` (pills), `.card` and `.user-card` (cards with a status stripe and a header band), `.btn` (buttons). An open payment is a `.user-card.unpaid` built by `debtCard()` (`public/views/round/debt-row.js`), the same in the status bar and in the notification overlay.
+- Keep to the existing component before adding a new class; if a new value is needed twice, make it a token first.
 
 Notes:
 

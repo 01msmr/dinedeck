@@ -49,5 +49,7 @@ export function prepareQueries(db) {
     ),
   
     itemDelete: db.prepare('DELETE FROM items WHERE id = ?'),
+    itemsDeleteOfRound: db.prepare('DELETE FROM items WHERE round_id = ?'),
+    roundDelete: db.prepare('DELETE FROM rounds WHERE id = ?'),
   };
 }

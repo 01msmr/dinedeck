@@ -2,6 +2,8 @@
 import { t, locale, lang } from '/i18n.js';
 import { LIMITS, TIMING, DEFAULTS } from '/config.js';
 import { isToday, centsToInput } from '/format.js';
+import { userIcon, extArrow } from '/icons.js';
+export { lockIcon, undoIcon, closeIcon, copyIcon } from '/icons.js';
 
 // Betrag als Zahl (ohne €) im Dezimalzeichen der Sprache: de 9,00 · en 9.00
 export const money = (c) => centsToInput(c, lang === 'en' ? '.' : ',');
@@ -106,19 +108,6 @@ export function setMe(name, { guest = false } = {}) {
   whoBtn.classList.toggle('guest', guest);
 }
 
-// Einfaches Personen-Symbol (Kopf und Schultern) in Schriftgröße und Textfarbe
-function userIcon() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'user-icon' })) svg.setAttribute(k, v);
-  const head = document.createElementNS(ns, 'circle');
-  for (const [k, v] of Object.entries({ cx: '12', cy: '8', r: '4' })) head.setAttribute(k, v);
-  const body = document.createElementNS(ns, 'path');
-  body.setAttribute('d', 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7');
-  svg.append(head, body);
-  return svg;
-}
-
 // ---------- Helpers ----------
 export function webHref(u) {
   if (!u) return null;
@@ -129,38 +118,6 @@ export function telHref(p) {
   return d ? 'tel:' + d : null;
 }
 // PayPal-Link mit Betrag (nur für paypal.me-Adressen möglich; E-Mail-Adressen werden nur angezeigt)
-// Pfeil „öffnet extern“ (nach rechts oben), in Schriftgröße (1em) und Textfarbe
-function extArrow() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'ext-arrow' })) svg.setAttribute(k, v);
-  const path = document.createElementNS(ns, 'path');
-  path.setAttribute('d', 'M6 18L18 6M8 6h10v10');
-  svg.append(path);
-  return svg;
-}
-// Schloss „jetzt schließen“, in Schriftgröße (1em) und Textfarbe
-export function lockIcon() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'lock-icon' })) svg.setAttribute(k, v);
-  const body = document.createElementNS(ns, 'rect');
-  for (const [k, v] of Object.entries({ x: '5', y: '11', width: '14', height: '9', rx: '2' })) body.setAttribute(k, v);
-  const shackle = document.createElementNS(ns, 'path');
-  shackle.setAttribute('d', 'M8 11V8a4 4 0 0 1 8 0v3');
-  svg.append(body, shackle);
-  return svg;
-}
-// Pfeil „wieder öffnen“ (zurück), in Schriftgröße (1em) und Textfarbe
-export function undoIcon() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '1em', height: '1em', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'lock-icon' })) svg.setAttribute(k, v);
-  const path = document.createElementNS(ns, 'path');
-  path.setAttribute('d', 'M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3');
-  svg.append(path);
-  return svg;
-}
 export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   const tel = telHref(r.phone);
   const web = webHref(r.url);

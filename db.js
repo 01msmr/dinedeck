@@ -41,6 +41,7 @@ export function createLogic(db, { admins = [] } = {}) {
     return r;
   }
 
+  const canDelete = (r, user) => !!user && (isAdmin(user) || lower(user) === lower(r.creator));
   const isBuyer = (r, user) => !!user && lower(user) === lower(r.buyer);
   const canManage = (r, user) => !!user && (isAdmin(user) || lower(user) === lower(r.creator) || lower(user) === lower(r.buyer));
 
@@ -217,6 +218,16 @@ export function createLogic(db, { admins = [] } = {}) {
     return item.round_id;
   }
 
+  /** Bestellung samt Positionen und Teilnehmern löschen: nur Ersteller oder Admin. */
+  function deleteRound(user, roundId) {
+    user = cleanUser(user);
+    const r = getRound(roundId);
+    if (!canDelete(r, user)) throw new HttpError(403, 'Nur Ersteller oder Admins');
+    q.itemsDeleteOfRound.run(r.id);
+    q.roundDelete.run(r.id);
+    return r.id;
+  }
+
   function deleteItem(user, itemId) {
     const item = ownItem(user, itemId);
     q.itemDelete.run(item.id);
@@ -242,7 +253,7 @@ export function createLogic(db, { admins = [] } = {}) {
     return r.id;
   }
 
-  const { roundDetail, users, exportRows, listRounds, catalog, stats } = createReads({ db, q, getRound, isLocked, isAdmin, canManage, isBuyer, deliveryStats });
+  const { roundDetail, users, exportRows, listRounds, catalog, stats } = createReads({ db, q, getRound, isLocked, isAdmin, canManage, canDelete, isBuyer, deliveryStats });
 
   return {
     isAdmin,
@@ -254,6 +265,7 @@ export function createLogic(db, { admins = [] } = {}) {
     changeTime,
     addItem,
     updateItem,
+    deleteRound,
     deleteItem,
     setFlag,
     roundDetail,

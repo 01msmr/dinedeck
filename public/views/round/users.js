@@ -7,13 +7,13 @@ let payConfirm = null; // { user, timer }: wartet auf die zweite Bestätigung
 
 export function flagBadge(d, toggle, u, flag) {
   const on = u[flag];
-  const label = flag === 'done' ? (on ? t('✓ ready') : t('○ unready')) : on ? t('✓ bezahlt') : t('nicht bezahlt');
-  const cls = flag === 'done' ? (on ? (d.ordered_at ? 'faded' : 'mid') : 'off') : on ? 'on' : 'off'; // ready gelb (ab „Bestellt“ blass), unready rot, bezahlt grün
   const editable = lc(u.user) === lc(me) || (flag === 'paid' && d.viewer.is_buyer);
-  const isPaid = flag === 'paid' && on; // bezahlt: Häkchen im grünen Kreis + Text, hebt sich von „nicht bezahlt“ ab
-  const klass = isPaid ? 'side-paid' : `badge ${cls}`;
-  const content = isPaid ? [h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt')] : label;
-  if (flag === 'paid' && !on && !u.done) return h('span', { class: 'badge faded', title: t('Erst ready setzen, dann bezahlen') }, content); // vor ready nicht klickbar und abgeschwächt (grau)
+  // Zahlungsstand zeigt nur der Streifen der Karte in Farbe; die Marke bleibt neutral (Text), ready ist gelb/rot
+  const label = flag === 'done' ? (on ? t('✓ ready') : t('○ unready')) : on ? t('✓ bezahlt') : editable ? t('als bezahlt markieren') : t('nicht bezahlt');
+  const cls = flag === 'done' ? (on ? (d.ordered_at ? 'faded' : 'mid') : 'off') : 'faded'; // ready gelb (ab „Bestellt“ blass), unready rot, bezahlt/nicht bezahlt neutral grau
+  const klass = `badge ${cls}`;
+  const content = label;
+  if (flag === 'paid' && !on && !u.done) return h('span', { class: 'badge faded', title: t('Erst ready setzen, dann bezahlen') }, t('nicht bezahlt')); // vor ready nicht klickbar und abgeschwächt (grau)
   if (!editable || flag === 'done') return h('span', { class: klass }, content); // ready wird nur über den Button gesetzt
   const key = lc(u.user);
   const confirming = flag === 'paid' && !on; // „bezahlt“ setzen braucht eine zweite Bestätigung
