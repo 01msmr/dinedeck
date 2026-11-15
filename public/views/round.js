@@ -234,8 +234,8 @@ export function roundView(id) {
     onclick: async () => {
       const ok = await confirmDialog({
         title: t('Bestellung löschen?'),
-        text: t('„{name}“ vom {date} wird mit allen Artikeln und Zahlungsständen endgültig gelöscht. Das lässt sich nicht rückgängig machen.', { name: d.restaurant.name, date: fmtDate(d.created_at) }),
-        confirm: t('Endgültig löschen'),
+        text: [t('„{name}“ vom {date} wird gelöscht.', { name: d.restaurant.name, date: fmtDate(d.created_at) }), t('Die letzten {n} gelöschten Bestellungen der letzten {weeks} Wochen bleiben archiviert und lassen sich in „Alle Bestellungen“ wiederherstellen.', { n: LISTS.deletedKept, weeks: LISTS.deletedKeepDays / 7 })],
+        confirm: t('Löschen'),
       });
       if (!ok) return;
       await act(() => api('DELETE', `/rounds/${id}`));
