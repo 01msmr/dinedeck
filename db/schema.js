@@ -49,6 +49,14 @@ CREATE TABLE IF NOT EXISTS payment_profiles (
   user_key TEXT PRIMARY KEY,
   paypal TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS deleted_rounds (
+  id INTEGER PRIMARY KEY,
+  creator TEXT NOT NULL,
+  restaurant TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  deleted_at INTEGER NOT NULL,
+  data TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS items_round ON items(round_id);
 CREATE INDEX IF NOT EXISTS rounds_created ON rounds(created_at);
 `;

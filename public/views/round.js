@@ -7,7 +7,7 @@ import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
 import { nbspUnits } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
-import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, money, nav } from '/util.js';
+import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
 // Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
@@ -260,12 +260,23 @@ export function roundView(id) {
     );
   }
 
+  // Klick auf die Bestellnummer: Link zu dieser Bestellung in die Zwischenablage
+  async function copyOrderUrl(e) {
+    const btn = e.currentTarget; // nach dem await ist currentTarget leer
+    try {
+      await navigator.clipboard.writeText(`${location.origin}/#/r/${d.id}`);
+      flashButton(btn, `✓ ${t('Kopiert')}`);
+    } catch {
+      flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
+    }
+  }
+
   function renderHead() {
     headBand.classList.add('foldable');
     foldBtn.setAttribute('aria-expanded', String(foldOpen));
     for (const el of [...headBand.children]) if (el !== foldBtn) el.remove(); // foldBtn bleibt eingehängt, sonst gibt es keine Drehanimation
     headBand.append(
-      h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );
     addrEl.textContent = d.restaurant.address || '';

@@ -57,7 +57,9 @@ export function createLogic(db, { admins = [] } = {}) {
     // Pro Restaurant nur eine Bestellung gleichzeitig: offen, oder geschlossen aber noch nicht bestellt (nur kürzlich)
     const pending = q.roundsOfRestaurant.all(restaurantId).some((x) => now < x.expires_at || (!x.ordered_at && now - x.created_at < LIMITS.unorderedBlockHours * 3600000));
     if (pending) throw new HttpError(409, 'Für dieses Restaurant läuft bereits eine Bestellung');
-    const id = Number(q.roundInsert.run(restaurantId, user, buyer, paypal, fee, now, now + minutes * 60000).lastInsertRowid);
+    purgeDeleted(); // abgelaufene Nummern werden dabei wieder frei
+    const id = q.nextRoundId.get().id; // über der höchsten belegten Nummer, gelöschte im Papierkorb zählen mit
+    q.roundInsert.run(id, restaurantId, user, buyer, paypal, fee, now, now + minutes * 60000);
     if (paypal) q.profSet.run(lower(buyer), paypal);
     return id;
   }
@@ -223,9 +225,43 @@ export function createLogic(db, { admins = [] } = {}) {
     user = cleanUser(user);
     const r = getRound(roundId);
     if (!canDelete(r, user)) throw new HttpError(403, 'Nur Ersteller oder Admins');
+    // Abbild sichern (die letzten LISTS.deletedKept bleiben wiederherstellbar), dann wirklich löschen
+    const snapshot = { round: q.roundRaw.get(r.id), participants: q.partsRaw.all(r.id), items: q.itemAll.all(r.id) };
+    q.trashPut.run(r.id, r.creator, r.rname, r.created_at, Date.now(), JSON.stringify(snapshot));
+    q.trashTrim.run(LISTS.deletedKept);
+    purgeDeleted();
     q.itemsDeleteOfRound.run(r.id);
     q.roundDelete.run(r.id);
     return r.id;
+  }
+
+  /** Gelöschte Bestellungen, die länger als LISTS.deletedKeepDays zurückliegen, endgültig entfernen. */
+  function purgeDeleted() {
+    q.trashExpire.run(Date.now() - LISTS.deletedKeepDays * 24 * 60 * 60 * 1000);
+  }
+
+  /** Die zuletzt gelöschten Bestellungen, soweit `user` sie wiederherstellen darf (Ersteller oder Admin). */
+  function deletedRounds(user) {
+    user = cleanUser(user);
+    purgeDeleted();
+    return q.trashAll.all().filter((x) => canDelete(x, user)).map(({ id, restaurant, creator, created_at, deleted_at }) => ({ id, restaurant, creator, created_at, deleted_at }));
+  }
+
+  /** Gelöschte Bestellung samt Positionen und Teilnehmern mit ihrer alten Nummer zurückholen. */
+  function restoreRound(user, roundId) {
+    user = cleanUser(user);
+    purgeDeleted();
+    const row = q.trashGet.get(Number(roundId));
+    if (!row) throw new HttpError(404, 'Bestellung nicht gefunden');
+    if (!canDelete(row, user)) throw new HttpError(403, 'Nur Ersteller oder Admins');
+    const { round: r, participants, items } = JSON.parse(row.data);
+    const vals = [r.restaurant_id, r.creator, r.buyer, r.paypal, r.delivery_fee_cents, r.created_at, r.expires_at, r.close_when_ready, r.ordered_at, r.eta_at, r.eta_minutes, r.delivered_at];
+    q.roundInsertRaw.run(r.id, ...vals); // die Nummer war reserviert
+    const newId = r.id;
+    for (const p of participants) q.partInsertRaw.run(newId, p.user, p.done, p.paid, p.approved);
+    for (const i of items) q.itemInsert.run(newId, i.user, i.article, i.akey, i.variant, i.vkey, i.price_cents, i.qty);
+    q.trashDelete.run(row.id);
+    return newId;
   }
 
   function deleteItem(user, itemId) {
@@ -266,6 +302,8 @@ export function createLogic(db, { admins = [] } = {}) {
     addItem,
     updateItem,
     deleteRound,
+    deletedRounds,
+    restoreRound,
     deleteItem,
     setFlag,
     roundDetail,

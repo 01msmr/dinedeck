@@ -13,8 +13,9 @@ export function prepareQueries(db) {
     profGet: db.prepare('SELECT paypal FROM payment_profiles WHERE user_key = ?'),
     profSet: db.prepare('INSERT INTO payment_profiles (user_key, paypal) VALUES (?, ?) ON CONFLICT(user_key) DO UPDATE SET paypal = excluded.paypal'),
     roundInsert: db.prepare(
-      'INSERT INTO rounds (restaurant_id, creator, buyer, paypal, delivery_fee_cents, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO rounds (id, restaurant_id, creator, buyer, paypal, delivery_fee_cents, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ),
+    nextRoundId: db.prepare('SELECT MAX(COALESCE((SELECT MAX(id) FROM rounds), 0), COALESCE((SELECT MAX(id) FROM deleted_rounds), 0)) + 1 AS id'),
     roundGet: db.prepare(
       `SELECT r.*, s.name AS rname, s.url AS rurl, s.phone AS rphone, s.address AS raddress
        FROM rounds r JOIN restaurants s ON s.id = r.restaurant_id WHERE r.id = ?`
@@ -51,5 +52,17 @@ export function prepareQueries(db) {
     itemDelete: db.prepare('DELETE FROM items WHERE id = ?'),
     itemsDeleteOfRound: db.prepare('DELETE FROM items WHERE round_id = ?'),
     roundDelete: db.prepare('DELETE FROM rounds WHERE id = ?'),
+    roundRaw: db.prepare('SELECT * FROM rounds WHERE id = ?'),
+    partsRaw: db.prepare('SELECT * FROM participants WHERE round_id = ?'),
+    trashPut: db.prepare('INSERT OR REPLACE INTO deleted_rounds (id, creator, restaurant, created_at, deleted_at, data) VALUES (?, ?, ?, ?, ?, ?)'),
+    trashAll: db.prepare('SELECT id, creator, restaurant, created_at, deleted_at FROM deleted_rounds ORDER BY deleted_at DESC, id DESC'),
+    trashGet: db.prepare('SELECT * FROM deleted_rounds WHERE id = ?'),
+    trashDelete: db.prepare('DELETE FROM deleted_rounds WHERE id = ?'),
+    trashExpire: db.prepare('DELETE FROM deleted_rounds WHERE deleted_at < ?'),
+    trashTrim: db.prepare('DELETE FROM deleted_rounds WHERE id NOT IN (SELECT id FROM deleted_rounds ORDER BY deleted_at DESC, id DESC LIMIT ?)'),
+    roundInsertRaw: db.prepare(
+      'INSERT INTO rounds (id, restaurant_id, creator, buyer, paypal, delivery_fee_cents, created_at, expires_at, close_when_ready, ordered_at, eta_at, eta_minutes, delivered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ),
+    partInsertRaw: db.prepare('INSERT INTO participants (round_id, user, done, paid, approved) VALUES (?, ?, ?, ?, ?)'),
   };
 }

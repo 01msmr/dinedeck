@@ -58,6 +58,7 @@
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
   --side-item-hover: color-mix(in srgb, var(--fg) 10%, var(--side-bg));
   --head-outline: 0.5rem; /* dicker Rand um den Bestellkopf */
+  --trash-bg: light-dark(#76767d, #4a4a52); /* mittelgrau: gelöschte Bestellungen */
   --debts-fg: #fff; /* Schrift auf dem dunkelgrauen Block (in beiden Modi hell) */
   --debts-bg: light-dark(#4d4d52, #222227); /* dunkelgrauer Block der offenen Zahlungen */
   --head-band-bg: var(--fg); /* dunkler Kopfbereich der Bestellung */
@@ -656,6 +657,8 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .round-head.folded .fold-item { display: none; }
 
 .round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: -0.875rem -0.875rem 0; padding: 0.25rem 1.25rem 0.375rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
+.head-band .round-no { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; font-size: var(--fs-base); font-weight: 400; color: color-mix(in srgb, var(--head-band-fg) 60%, var(--head-band-bg)); } /* Bestellnummer hinter dem Namen, Klick kopiert den Link */
+.head-band .round-no:hover { color: var(--head-band-fg); }
 .head-band .round-name { cursor: pointer; } /* klappt zusammen mit dem Pfeil auf und zu */
 .head-band .round-buyer, .head-band .muted { color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); }
 .head-band a { color: inherit; }
@@ -805,3 +808,13 @@ button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; fon
 @media (max-width: 30em) { .order-table { width: 100%; } }
 .status-flow .now.unready { background: var(--bad); color: var(--on-bad); }
 button.confirm, button.btn.confirm, button.badge.confirm { background: var(--black); color: var(--white); border-color: color-mix(in srgb, var(--white) 35%, var(--black)); } /* Rückfrage „ist bezahlt?“: schwarz */
+
+/* Zuletzt gelöschte Bestellungen: am unteren Fensterrand, Symbol vorn holt sie zurück */
+.trash-bar { position: fixed; z-index: 6; bottom: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 0.875rem; background: var(--trash-bg); color: var(--debts-fg); }
+@media (min-width: 80em) { .trash-bar { left: var(--side-w); } }
+.trash-bar.hidden { display: none; }
+.trash-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem 0.25rem 0.5rem; border: 1px solid color-mix(in srgb, var(--debts-fg) 45%, transparent); border-radius: var(--radius-pill); background: transparent; color: inherit; font: inherit; font-size: var(--fs-md); cursor: pointer; }
+.trash-item:hover { background: var(--debts-fg); color: var(--trash-bg); }
+.trash-item svg { width: 1.25rem; height: 1.25rem; flex: none; }
+.trash-when { opacity: 0.8; font-size: var(--fs-sm); }
+.hist:has(~ .trash-bar:not(.hidden)) { padding-bottom: 4rem; }

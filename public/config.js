@@ -41,6 +41,8 @@ export const VARIANT_SHORT = {
 /** Listen und Auswertungen. */
 export const LISTS = {
   rounds: 60, // Bestellungen in Sidebar/Startseite
+  deletedKept: 3, // so viele zuletzt gelöschte Bestellungen lassen sich wiederherstellen
+  deletedKeepDays: 14, // und nur so lange, danach werden sie endgültig gelöscht
   closedShown: 10, // abgeschlossene Bestellungen auf der Startseite (mobil)
   sideWeeks: 12, // Zeitraum abgeschlossener Bestellungen in der Sidebar
   historyMonths: 12, // so viele Monate einzeln gruppiert, ältere je Jahr

@@ -770,3 +770,54 @@ test('Bestellung löschen: nur Ersteller oder Admin, samt Positionen', async () 
     await close();
   }
 });
+
+test('Gelöschte Bestellungen: die letzten 3 lassen sich wiederherstellen', async () => {
+  const { call, close } = await boot(); // Admin: root
+  try {
+    const mk = async (name) => {
+      const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name, url: '', phone: '' }, buyer: 'bea', paypal: 'bea', minutes: 20 })).body.id;
+      await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2,50', qty: 2 });
+      return id;
+    };
+    const ids = [];
+    for (const n of ['A', 'B', 'C', 'D']) ids.push(await mk(n));
+    for (const id of ids) assert.equal((await call('DELETE', `/api/rounds/${id}`, 'alex')).status, 200);
+
+    const list = (await call('GET', '/api/rounds/deleted', 'alex')).body;
+    assert.deepEqual(list.map((x) => x.restaurant), ['D', 'C', 'B'], 'nur die letzten 3, neueste zuerst');
+    assert.ok(list.every((x) => x.id && x.deleted_at && x.created_at));
+    assert.deepEqual((await call('GET', '/api/rounds/deleted', 'anna')).body, [], 'nur Ersteller oder Admin sehen sie');
+    assert.equal((await call('GET', '/api/rounds/deleted', 'root')).body.length, 3, 'Admin sieht sie');
+
+    assert.equal((await call('POST', `/api/rounds/${ids[3]}/restore`, 'anna')).status, 403, 'Teilnehmer darf nicht');
+    assert.equal((await call('POST', `/api/rounds/${ids[0]}/restore`, 'alex')).status, 404, 'älter als 3: endgültig weg');
+    const back = await call('POST', `/api/rounds/${ids[3]}/restore`, 'alex');
+    assert.equal(back.status, 200);
+    const d = (await call('GET', `/api/rounds/${back.body.id}`, 'alex')).body;
+    assert.equal(d.restaurant.name, 'D');
+    assert.equal(d.users.find((u) => u.user === 'anna').items[0].qty, 2, 'Positionen sind wieder da');
+    assert.ok((await call('GET', '/api/rounds?all=1', 'alex')).body.some((r) => r.id === back.body.id));
+    assert.equal((await call('GET', '/api/rounds/deleted', 'alex')).body.length, 2, 'nicht mehr in der Liste');
+    assert.equal((await call('POST', `/api/rounds/${ids[3]}/restore`, 'alex')).status, 404, 'zweites Wiederherstellen: 404');
+  } finally {
+    await close();
+  }
+});
+
+test('Nummern: eine gelöschte Bestellung behält ihre Nummer reserviert und kommt mit ihr zurück', async () => {
+  const { call, close } = await boot();
+  try {
+    const mk = async (name) => (await call('POST', '/api/rounds', 'alex', { restaurant: { name, url: '', phone: '' }, buyer: 'bea', paypal: 'bea', minutes: 20 })).body.id;
+    const a = await mk('A');
+    await call('DELETE', `/api/rounds/${a}`, 'alex');
+    const b = await mk('B'); // die Nummer von A bleibt reserviert, solange A wiederherstellbar ist
+    assert.equal(b, a + 1);
+    const back = await call('POST', `/api/rounds/${a}/restore`, 'alex');
+    assert.equal(back.status, 200);
+    assert.equal(back.body.id, a, 'kommt mit der alten Nummer zurück');
+    assert.equal((await call('GET', `/api/rounds/${b}`, 'alex')).body.restaurant.name, 'B');
+    assert.equal((await call('GET', `/api/rounds/${a}`, 'alex')).body.restaurant.name, 'A');
+  } finally {
+    await close();
+  }
+});

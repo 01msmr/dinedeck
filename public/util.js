@@ -3,7 +3,7 @@ import { t, locale, lang } from '/i18n.js';
 import { LIMITS, TIMING, DEFAULTS } from '/config.js';
 import { isToday, centsToInput } from '/format.js';
 import { userIcon, extArrow, phoneIcon } from '/icons.js';
-export { lockIcon, undoIcon, closeIcon, copyIcon } from '/icons.js';
+export { lockIcon, undoIcon, closeIcon, copyIcon, recycleIcon } from '/icons.js';
 
 // Betrag als Zahl (ohne €) im Dezimalzeichen der Sprache: de 9,00 · en 9.00
 export const money = (c) => centsToInput(c, lang === 'en' ? '.' : ',');

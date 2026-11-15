@@ -97,6 +97,12 @@ export function createApp({ dbFile = ':memory:', admins = [], frameAncestors = [
       emit(id);
       return send(res, 201, { id });
     }
+    if (method === 'GET' && p === '/api/rounds/deleted') return send(res, 200, logic.deletedRounds(user));
+    if (method === 'POST' && (m = p.match(/^\/api\/rounds\/(\d+)\/restore$/))) {
+      const id = logic.restoreRound(user, m[1]);
+      emit(id);
+      return send(res, 200, { id });
+    }
     if ((m = p.match(/^\/api\/rounds\/(\d+)$/))) {
       if (method === 'GET') return send(res, 200, logic.roundDetail(m[1], user));
       if (method === 'PATCH') {

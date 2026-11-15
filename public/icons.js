@@ -20,3 +20,11 @@ export const lockIcon = () => svgIcon([['rect', { x: 5, y: 11, width: 14, height
 export const undoIcon = () => svgIcon([['path', { d: 'M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3' }]], { cls: 'lock-icon' });
 export const closeIcon = () => svgIcon([['path', { d: 'M6 6l12 12M18 6L6 18' }]], { cls: 'close-icon' });
 export const copyIcon = () => svgIcon([['path', { d: 'M5 15V5a2 2 0 0 1 2-2h10' }], ['rect', { x: 9, y: 7, width: 12, height: 14, rx: 2 }]], { cls: 'copy-icon', viewBox: '1 0 24 24' }); // Zeichnung liegt bei x 5–21: Ausschnitt verschoben, damit sie mittig sitzt
+export const recycleIcon = () => svgIcon([
+  ['path', { d: 'M7 19H4.8a1.8 1.8 0 0 1-1.6-.9 1.8 1.8 0 0 1 0-1.8L7.2 9.5' }],
+  ['path', { d: 'M11 19h8.2a1.8 1.8 0 0 0 1.6-.9 1.8 1.8 0 0 0 0-1.8l-1.2-2.1' }],
+  ['path', { d: 'm14 16-3 3 3 3' }],
+  ['path', { d: 'M8.3 13.6 7.2 9.5 3.1 10.6' }],
+  ['path', { d: 'm9.3 5.8 1.1-1.9A1.8 1.8 0 0 1 12 3a1.8 1.8 0 0 1 1.5.9l3.9 6.8' }],
+  ['path', { d: 'm13.4 9.6 4.1 1.1 1.1-4.1' }],
+], { cls: 'recycle-icon', stroke: 2 }); // wiederherstellen
