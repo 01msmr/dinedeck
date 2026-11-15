@@ -232,6 +232,10 @@ details > summary { cursor: pointer; font-weight: 600; }
 /* Kopf der Bestellseite: links Daten/Formular, rechts Frist, Banner, Bezahlen */
 .round-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .head-main, .head-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.625rem; align-content: start; min-width: 0; }
+.head-formrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.5rem 1rem; } /* Löschen unten rechts neben dem Formular, bricht erst bei Platzmangel um */
+.head-formrow > form { flex: 1 1 20rem; min-width: 0; }
+.head-formrow > .row { margin-left: auto; flex: none; }
+@media (min-width: 68.75em) { .round-head:not(.folded) { position: relative; } .round-head:not(.folded) .head-formrow > .row { position: absolute; right: 0.875rem; bottom: 0.875rem; } } /* breit: ganz rechts unten im Kopf */
 .head-side { gap: 0.5rem; }
 .head-side .card { background: transparent; border: 0; padding: 0; }
 @media (min-width: 68.75em) { .round-head { grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 22.5rem); } }

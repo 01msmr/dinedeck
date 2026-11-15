@@ -245,7 +245,7 @@ export function roundView(id) {
     },
   }, t('Bestellung löschen'));
   const deleteRow = h('div', { class: 'row end fold-item' }, deleteBtn);
-  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, headForm, deleteRow), h('div', { class: 'head-side' }, timerCard, orderCard));
+  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, h('div', { class: 'head-formrow' }, headForm, deleteRow)), h('div', { class: 'head-side' }, timerCard, orderCard));
 
   // Wechsel zwischen den heutigen/offenen Bestellungen (nur sichtbar, wenn es mehrere gibt)
   function renderPick(list) {
