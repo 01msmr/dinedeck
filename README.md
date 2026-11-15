@@ -62,7 +62,25 @@ echo 'ADMINS=anna,ben' > .env      # optional
 docker compose up -d --build
 ```
 
-- **Settings:** `compose.yaml` reads `ADMINS` and `FRAME_ANCESTORS` from the shell or `.env`.
+`compose.yaml` (in the repository; reads `ADMINS`, `DEMO` and `FRAME_ANCESTORS` from the shell or `.env`):
+
+```yaml
+services:
+  dinedeck:
+    build: .
+    restart: unless-stopped
+    environment:
+      ADMINS: "${ADMINS:-}"                        # comma-separated usernames, may manage every order
+      DEMO: "${DEMO:-}"                            # 1 = fill an empty database with fictional demo orders
+      FRAME_ANCESTORS: "${FRAME_ANCESTORS:-}"      # origins allowed to embed the app in an iframe (empty = blocked)
+    ports:
+      - "127.0.0.1:3000:3000"  # local only; for a LAN use "3000:3000", or keep it and put a reverse proxy in front
+    volumes:
+      - dinedeck-data:/data
+volumes:
+  dinedeck-data:
+```
+
 - **Port:** published on `127.0.0.1:3000` only. For a local network use `"3000:3000"`; for the internet put an HTTPS reverse proxy in front (e.g. Caddy: `dinedeck.example.org { reverse_proxy 127.0.0.1:3000 }`). Clipboard and iframe embedding need HTTPS; with nginx set `proxy_buffering off` for `/api/events` (SSE).
 - **Data:** SQLite in the volume `dinedeck-data`, survives rebuilds. Update: `git pull && docker compose up -d --build`. Stop: `docker compose down` (`-v` deletes the data).
 - **Backup / restore** (container stopped):
