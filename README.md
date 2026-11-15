@@ -6,19 +6,29 @@ Vanilla JS, no build step, no dependencies. Node ≥ 22.13 (`node:sqlite`), live
 
 ## Features
 
-- **Items:** article, variant, price, quantity; own rows are editable until ready (delete has a 15 s undo). Equal items (ignoring case, spacing, punctuation, umlaut spelling) are grouped, identical own rows merged.
-- **Catalog per restaurant:** names and variants from earlier orders are suggested; prices never prefilled (the last one is an unchecked chip), deviations are flagged.
-- **Tabs:** own items, everyone, order list (copy for phoning; one line per dish, filler words like "mit" dropped in the display). On wide screens the list stays in a right pane.
-- **Status line = controls:** `opened › ready › ordered › delivered › paid`, pinned below the top bar, with the order date or time on the left. Buyer, creator and admins operate it: "close when everyone is ready", `+5`, close now, step forward/back (each asks once more), delivery time after `ordered`. Locked from `ordered` (no item or user changes).
-- **Ready and paid** are per-user flags; changing your items resets ready; only the user or the buyer sets paid.
-- **Deadline** (default 20 min): afterwards items of unready users stay visible but do not count. Optional auto-close; new users then need approval.
-- **Time warnings:** pulsing time, red from 5 min, flashing logo row from 3 min, optional phone ring at 5/3/1 min (see Sound); reduced-motion respected.
-- **Open payments:** a dark grey block under the order header with the count, sum, the **pay link** (copy, QR code, amount button; the address only as tooltip) and one red chip per debt with "mark as paid". The same block appears as an overlay when you return, listing payments **from you** and **to you** (earlier days only, once per session; `NOTICE.showEveryLoad` forces it for testing).
-- **Buyer and payment:** buyer, PayPal address and delivery fee (split among users with items), remembered per buyer/restaurant. The address is visible to participants only.
-- **Order header:** a slim pill (arrow, name, number `#id` that copies the order link, buyer, copy list, phone, website); the arrow or name opens details and form. Phones get a compact layout.
-- **Delete / restore:** only creator or admin, after a confirmation. The last 3 deleted orders stay restorable for 2 weeks (grey bar in "All orders", recycle icon, second click confirms); their numbers stay reserved meanwhile.
-- **Navigation:** sidebar (docked from 1280 px, else drawer) with today, open/unpaid/closed orders; "All orders" (filter: unpaid only); one URL per order (`#/r/<id>`).
-- **Statistics** (no per-user data), admin JSON export, light/dark/auto, colour themes, German/English, installable app icon (`manifest.webmanifest`).
+**Ordering**
+- **Items:** article, variant, price, quantity; equal items are grouped, own rows editable until ready (delete has an undo).
+- **Catalog per restaurant:** names and variants from earlier orders are suggested; prices are never prefilled, deviations are flagged.
+- **Tabs:** own items, everyone, and the order list (one line per dish, copy for phoning); on wide screens the list stays in a right pane.
+- **Deadline** (default 20 min) with optional auto-close once everyone is ready; items of unready users do not count.
+
+**Flow**
+- **Status line = controls:** `opened › ready › ordered › delivered › paid`, pinned below the top bar. Buyer, creator and admins operate it (close, `+5`, step forward/back, delivery time); each step asks once more. Locked from `ordered`.
+- **Ready and paid** are per-user flags; only the user or the buyer sets paid.
+- **Time warnings:** pulsing and red time, flashing logo row, optional phone ring at 5/3/1 min (see Sound).
+
+**Paying**
+- **Open payments:** a dark grey block under the order header with count, sum, the **pay link** (copy, QR code, amount button) and one red chip per debt with "mark as paid".
+- **On return** an overlay lists payments **from you** and **to you** (earlier days, once per session).
+- **Buyer and payment:** PayPal address and delivery fee (split among users with items) are remembered; the address is visible to participants only.
+
+**Managing**
+- **Order header:** a slim pill (arrow, name, `#id` that copies the order link, buyer, phone, website); the arrow or name opens details.
+- **Delete / restore:** creator or admin only; the last 3 deleted orders stay restorable for 2 weeks (grey bar in "All orders"), their numbers stay reserved.
+- **Navigation:** sidebar (docked from 1280 px, else drawer), "All orders" with an unpaid filter, one URL per order (`#/r/<id>`).
+- **Also:** statistics without per-user data, admin JSON export, light/dark/auto and colour themes, German/English, installable app icon, compact phone layout.
+
+![dinedeck](https://github.com/01msmr/dinedeck/blob/main/docs/screenshots/order-open.png?raw=true)
 
 ## Run
 
