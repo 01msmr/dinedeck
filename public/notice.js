@@ -26,13 +26,17 @@ export async function showOpenPayments() {
   for (const d of details.values()) perDay.set(dayKey(d.created_at), (perDay.get(dayKey(d.created_at)) ?? 0) + 1);
   const when = (d) => `${fmtDay(d.created_at, false)}${perDay.get(dayKey(d.created_at)) > 1 ? `, ${fmtClock(d.created_at)}` : ''}`;
   const link = (d, left, right, place) => debtLinkChip(left, right, `${place} · ${when(d)}`, { href: `#/r/${d.id}`, onclick: () => box.replaceChildren() });
+  let oweSum = 0;
+  let owedSum = 0;
   const owe = mine.flatMap((r) => {
     const d = details.get(r.id);
     const debt = d?.debts.find((x) => lc(x.user) === lc(me));
+    if (debt) oweSum += debt.amount_cents;
     return debt ? [link(d, `${t('an')} ${d.buyer}`, eur(debt.amount_cents), d.restaurant.name)] : [];
   });
   const owed = toMe.flatMap((r) => {
     const d = details.get(r.id);
+    for (const x of d?.debts ?? []) owedSum += x.amount_cents;
     return (d?.debts ?? []).map((x) => link(d, x.user, eur(x.amount_cents), d.restaurant.name));
   });
   if (!owe.length && !owed.length) return;
@@ -48,11 +52,11 @@ export async function showOpenPayments() {
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const closeBtn = h('button', { class: 'btn small ghost chip-btn overlay-close', type: 'button', 'aria-label': t('Schließen'), onclick: close }, closeIcon());
-  const block = (rest, chips) => h('section', { class: 'debts-block' }, debtsHead(rest), h('div', { class: 'status-debts' }, ...chips));
+  const block = (rest, chips, sum) => h('section', { class: 'debts-block' }, debtsHead(rest, null, sum), h('div', { class: 'status-debts' }, ...chips));
   const card = h('div', { class: 'card overlay-card notice-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('Offene Zahlungen'), tabindex: '-1' },
     closeBtn,
-    ...(owe.length ? [block(t('von dir'), owe)] : []),
-    ...(owed.length ? [block(t('an dich'), owed)] : []));
+    ...(owe.length ? [block(t('von dir'), owe, oweSum)] : []),
+    ...(owed.length ? [block(t('an dich'), owed, owedSum)] : []));
   box.append(card);
   box.onclick = (e) => { if (e.target === box) close(); }; // Klick neben die Karte schließt
   document.addEventListener('keydown', onKey);

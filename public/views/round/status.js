@@ -99,7 +99,7 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
     }))));
     // Offene Zahlungen: schwarzer Kopf, darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
     const debtsBlock = d.ordered_at && d.debts.length ? h('section', { class: 'debts-block' },
-        debtsHead(t('in dieser Bestellung'), d.debts.length, ...(payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : [])), // Bezahllink im Kopf, mittig
+        debtsHead(t('in dieser Bestellung'), d.debts.length, d.debts.reduce((a, x) => a + x.amount_cents, 0), ...(payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : [])), // Bezahllink im Kopf, mittig
         h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))) : null;
     debtsHost.replaceChildren(...(debtsBlock ? [debtsBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {

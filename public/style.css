@@ -58,7 +58,8 @@
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
   --side-item-hover: color-mix(in srgb, var(--fg) 10%, var(--side-bg));
   --head-outline: 0.5rem; /* dicker Rand um den Bestellkopf */
-  --debts-bg: light-dark(#4d4d52, #3a3a40); /* dunkelgrauer Block der offenen Zahlungen */
+  --debts-fg: #fff; /* Schrift auf dem dunkelgrauen Block (in beiden Modi hell) */
+  --debts-bg: light-dark(#4d4d52, #222227); /* dunkelgrauer Block der offenen Zahlungen */
   --head-band-bg: var(--fg); /* dunkler Kopfbereich der Bestellung */
   --head-band-fg: var(--bg);
   --stripe: color-mix(in srgb, var(--fg) 8%, transparent); /* Zebra-Zeilen */
@@ -71,6 +72,7 @@
   --faded-fg: var(--pane-muted);
   --wide-max: 80rem; /* Breite der Bestellseite (main.wide) und der Zeilen offener Zahlungen */
   --content-max-wide: 86rem; /* mehr Breite, wenn die Bestellliste rechts steht und der Platz da ist */
+  --head-radius: 1.25rem; /* Rundung des Bestellkopfs, zu- und aufgeklappt gleich */
   --round-w: var(--content-max); /* tatsächliche Breite des Bestellinhalts (Ablaufzeile richtet sich daran aus) */
   --content-max: 75rem; /* größte Breite des Inhalts der Bestellseite auf sehr breiten Bildschirmen */
   --scrim: #0008;
@@ -487,21 +489,21 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 /* Offene Beträge direkt unter dem Unbezahlt-Hinweis, ohne Karte; zweispaltig wenn breit genug */
 .debts-host:empty { display: none; }
 .debts-block { width: 100%; }
-.debts-host .debts-block { background: var(--debts-bg); border-radius: 0; padding: 0.875rem; display: grid; gap: 0.75rem; } /* dunkelgrau, eckig; Chips auf demselben Grund */
-.debts-host .debts-head { background: transparent; border-radius: 0; padding: 0; color: var(--head-band-fg); }
-.debts-host .debts-head.with-pay { padding-block: 0; }
-.debts-host .status-debts { padding: 0; } /* breit, bündig mit dem Inhalt; kein Rahmen um die Chips */
-.debts-head { text-align: center; background: var(--head-band-bg); color: var(--head-band-fg); font-size: var(--fs-lg); font-weight: 700; padding: 0.375rem 0.875rem; border-radius: var(--radius); }
-.debts-head-rest { font-weight: 400; } /* zweiter Teil normal */
-.debts-head.with-pay { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; text-align: left; padding-block: 0.625rem; } /* Text links, Bezahllink rechtsbündig, alles vertikal zentriert */
-.debts-head.with-pay .head-pay { grid-column: 2; }
-.head-pay { display: grid; gap: 0.5rem; justify-items: end; color: var(--head-band-fg); font-weight: 400; } /* Farben für den dunklen Kopf */
+.debts-block { background: var(--debts-bg); border-radius: 0; padding: 0.875rem; display: grid; gap: 0.75rem; } /* dunkelgrau, eckig, in der Bestellung und im Overlay gleich */
+.debts-head { text-align: left; background: transparent; color: var(--debts-fg); font-size: var(--fs-lg); font-weight: 700; padding: 0; border-radius: 0; }
+.debts-head-main { white-space: nowrap; }
+.debts-head-sum { margin-left: 0.75rem; font-size: var(--fs-sm); font-weight: 400; white-space: nowrap; } /* Summe klein hinter dem Titel */
+.debts-head-rest { font-weight: 400; white-space: nowrap; } /* zweiter Teil normal, bricht nur als Ganzes um */
+.debts-head.with-pay { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; align-items: center; } /* Text links, Bezahllink rechtsbündig, alles vertikal zentriert */
+.debts-head.with-pay .head-pay { margin-left: auto; }
+.head-pay { display: grid; gap: 0.5rem; justify-items: end; color: var(--debts-fg); font-weight: 400; } /* Farben für den dunklen Kopf */
 .head-pay a { color: inherit; }
-.head-pay .muted { color: color-mix(in srgb, var(--head-band-fg) 70%, transparent); }
-.head-pay button.btn.copy-btn { background: transparent; color: var(--head-band-fg); border-color: color-mix(in srgb, var(--head-band-fg) 60%, transparent); }
-.head-pay button.btn.copy-btn:hover { background: var(--head-band-fg); color: var(--head-band-bg); border-color: transparent; }
-.head-pay .pay-go { background: var(--head-band-fg); color: var(--head-band-bg); border-color: transparent; }
-.status-debts { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem 0 0; }
+.head-pay .qr-pop { color: var(--debts-fg); }
+.head-pay .muted { color: color-mix(in srgb, var(--debts-fg) 70%, transparent); }
+.head-pay button.btn.copy-btn { background: transparent; color: var(--debts-fg); border-color: color-mix(in srgb, var(--debts-fg) 60%, transparent); }
+.head-pay button.btn.copy-btn:hover { background: var(--debts-fg); color: var(--debts-bg); border-color: transparent; }
+.head-pay .pay-go { background: var(--debts-fg); color: var(--debts-bg); border-color: transparent; }
+.status-debts { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; }
 .debt-chip { display: inline-flex; align-items: center; gap: 0.625rem; background: var(--bad); color: var(--on-bad); border-radius: var(--radius-pill); padding: 0.25rem 0.375rem 0.25rem 0.875rem; font-size: var(--fs-base); } /* offene Zahlung: roter Chip */
 .debt-chip .debt-pay { border: 0; border-radius: var(--radius-pill); background: var(--white); color: var(--black); font: inherit; font-size: var(--fs-md); font-weight: 600; padding: 0.25rem 0.75rem; cursor: pointer; } /* Knopf im Chip: Gegenfarbe */
 .debt-chip .debt-pay.confirm { background: var(--black); color: var(--white); }
@@ -634,25 +636,29 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .overlay-card { position: relative; border-radius: 0; width: min(28rem, 100%); max-height: calc(100lvh - 2rem); overflow: auto; font-size: var(--fs-lg); display: grid; gap: 1rem; padding: 1.5rem; background: var(--surface); box-shadow: 0 0.75rem 2rem var(--shadow-notice), 0 2rem 3.5rem -0.5rem var(--shadow-notice-deep); }
 .overlay-card .overlay-close { position: absolute; top: 0.75rem; right: 0.75rem; } /* gleicher Abstand zu oberem und rechtem Rand */
 .overlay-card:focus { outline: none; }
-.overlay-card .overlay-close:hover { background: var(--bad); color: var(--on-bad); border-color: transparent; outline: none; } /* Schließen: beim Überfahren rot gefüllt, ohne Rand */
+.overlay-card button.btn.overlay-close:hover { background: var(--bad); color: var(--on-bad); border-color: transparent; outline: none; } /* Schließen: beim Überfahren rot gefüllt, ohne Rand */
 .overlay-card .debts-block { width: 100%; max-width: none; margin: 0; }
-.overlay-card.notice-card { padding-top: calc(var(--chip) + 2rem); gap: 1.5rem; } /* Platz unter dem Schließen-Knopf, Abschnitte klar getrennt */
+.overlay-card.notice-card { padding: 0.75rem 1.5rem 1.25rem; gap: 1rem; } /* oben wie der Knopf (0,75 rem), Abschnitte getrennt */
+.notice-card .debts-block:first-of-type .debts-head { display: flex; align-items: center; min-height: var(--chip); padding-right: calc(var(--chip) + 0.75rem); } /* erste Zeile: Titel in Höhe des Schließen-Knopfs */
+.overlay-card.notice-card { background: var(--debts-bg); color: var(--debts-fg); } /* Rand = Grund des Blocks: eine dunkelgraue Fläche */
+.notice-card .debts-block { padding: 0; gap: 2.5rem; } /* zwei Leerzeilen zwischen Titel und Chips */
+.notice-card button.btn.overlay-close { color: var(--black); border-color: transparent; background: var(--white); } /* passiv weiß, beim Überfahren rot */
 .debt-entry { display: grid; gap: 0.25rem; color: inherit; text-decoration: none; } /* Overlay: Chip in voller Breite, Beschriftung darunter */
 .debt-entry .debt-chip { justify-content: space-between; padding-right: 0.875rem; }
-.debt-caption { font-size: var(--fs-sm); color: var(--pane-muted); padding: 0 0.875rem; }
+.debt-caption { font-size: var(--fs-sm); color: color-mix(in srgb, var(--debts-fg) 70%, transparent); padding: 0 0.875rem; }
 .debt-entry:hover .debt-chip { filter: brightness(1.08); }
 .qr-bg { fill: var(--qr-light); }
 .qr-fg { fill: var(--qr-dark); }
 .round-head.folded .fold-item { display: none; }
 
 .round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: -0.875rem -0.875rem 0; padding: 0.25rem 1.25rem 0.375rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
-.head-band.foldable { cursor: pointer; }
+.head-band .round-name { cursor: pointer; } /* klappt zusammen mit dem Pfeil auf und zu */
 .head-band .round-buyer, .head-band .muted { color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); }
 .head-band a { color: inherit; }
 .head-band button.link-pill { display: inline-flex; align-items: center; gap: 0.25rem; border: 0; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
 .head-band .link-pill, .head-band .link-pill.colored { background: var(--head-band-fg); color: var(--head-band-bg); }
 .fold-toggle { flex: none; display: grid; place-items: center; font-size: var(--round-title-size); width: 0.8em; height: 1.1em; padding: 0; border: 0; border-radius: 0.5rem; background: transparent; color: var(--head-band-fg); cursor: pointer; }
-.fold-toggle .tri { display: block; font-size: 1.7em; font-weight: 600; line-height: 1; transform-origin: 50% 0.59em; translate: 0 -0.2em; transition: transform 0.15s ease; } /* Zeichen so hoch wie die Großbuchstaben; Mitte des Zeichens (nicht der Zeile) ist Drehpunkt und liegt in der Mitte des Feldes */
+.fold-toggle .tri { display: block; font-size: 1.7em; font-weight: 600; line-height: 1; transform-origin: 50% 0.59em; translate: 0 -0.267em; transition: transform 0.15s ease; } /* Zeichen so hoch wie die Großbuchstaben; Mitte des Zeichens (nicht der Zeile) ist Drehpunkt und liegt in der Mitte des Feldes */
 .fold-toggle[aria-expanded="true"] .tri { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .fold-toggle .tri { transition: none; } }
 .pay-variant { display: grid; gap: 0.625rem; }
@@ -664,7 +670,7 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .pay-info .btn { flex: none; white-space: nowrap; }
 .pay-go { flex: 1 1 auto; min-width: max-content; text-align: center; white-space: nowrap; } /* der PayPal-Knopf nutzt die ganze restliche Breite */
 .pay-title { display: flex; gap: 0.3em; flex: 0 3 auto; min-width: min-content; font-size: var(--fs-base); } /* „Bezahlen an“ nie kürzen, nur den Namen */
-.pay-label { flex: none; white-space: nowrap; }
+.pay-label { flex: none; white-space: nowrap; font-weight: 400; } /* „Bezahlen an“ regular, der Name bleibt fett */
 .pay-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-info .payaddr { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; margin-left: 0; white-space: nowrap; overflow-wrap: normal; }
 .debts-overview { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
@@ -685,7 +691,9 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .user-items td.total { width: 5.5rem; min-width: 5.5rem; }
 /* Zugeklappt ist die linke Kopfspalte leer: der Bezahlbereich nutzt die volle Breite */
 .round-head.folded { padding-bottom: 0; row-gap: 0; }
-.round-head.folded, .round-head.folded .head-band { border-radius: 999px; } /* zugeklappt: Halbkreis an den Enden */
+.round-head { border-radius: var(--head-radius); }
+.round-head .head-band { border-radius: var(--head-radius) var(--head-radius) 0 0; }
+.round-head.folded .head-band { border-radius: var(--head-radius); } /* zugeklappt: Halbkreis an den Enden, aufgeklappt dieselbe Rundung oben */
 .round-head.folded > :not(.head-band) { display: none; } /* zugeklappt: nur das Kopfband, alles darunter ist weg */
 .round-head.folded { grid-template-columns: minmax(0, 1fr); }
 .round-head.folded.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr); }
@@ -700,6 +708,9 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .chip-btn { display: inline-grid; place-items: center; width: var(--chip); height: var(--chip); padding: 0; border-radius: 50%; line-height: 1; flex: none; }
 .copy-btn { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; }
 .copy-btn svg { display: block; width: 1.5rem; height: 1.5rem; }
+.copy-btn.copy-pill { display: inline-flex; align-items: center; gap: 0.5rem; width: auto; padding: 0 1rem 0 0.75rem; font-weight: 400; font-size: var(--fs-base); white-space: nowrap; } /* Kopierknopf mit Text: Symbol vorn, Rand wie bisher */
+.copy-pill .pay-title { display: flex; gap: 0.3em; }
+.copy-pill .pay-who { font-weight: 700; }
 button.btn.copy-btn:hover { background: var(--black); color: var(--white); border-color: var(--black); } /* Kopieren: beim Überfahren schwarz gefüllt */
 .chip-btn svg { display: block; width: 1.0625rem; height: 1.0625rem; }
 
@@ -756,7 +767,6 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 @media (max-width: 30em) { /* Handy: Pfeil und Name in einer Zeile, darunter Hinweis und Besteller, Kontakt linksbündig */
   .round-head .head-band { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.25rem 0.5rem; }
   .head-band .fold-toggle { align-self: start; margin-right: 0; }
-  .round-head.folded, .round-head.folded .head-band { border-radius: 1.75rem; } /* mehrzeilig: weniger runde Enden */
   .round-head { --round-title-size: 1.5rem; }
   .head-band .round-title { min-width: 0; gap: 0.125rem 0.25rem; }
   .head-band .round-buyer { font-size: 0.9375rem; margin-left: 0; }

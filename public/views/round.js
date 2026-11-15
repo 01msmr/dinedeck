@@ -205,7 +205,7 @@ export function roundView(id) {
   const foldBtn = h('button', { class: 'fold-toggle', type: 'button', 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()); // bleibt bestehen, damit sich der Pfeil animiert drehen kann
   headBand.append(foldBtn);
   headBand.addEventListener('click', (e) => {
-    if (!d || e.target.closest('a, button')) return; // Klick im ganzen Bereich klappt die Details auf und zu
+    if (!d || !e.target.closest('.round-name')) return; // nur Chevron (eigener Knopf) und Restaurantname klappen auf und zu
     setFold(!foldOpen);
   });
   const headMeta = h('div', { class: 'muted mt-2 fold-item' });
@@ -265,7 +265,7 @@ export function roundView(id) {
     foldBtn.setAttribute('aria-expanded', String(foldOpen));
     for (const el of [...headBand.children]) if (el !== foldBtn) el.remove(); // foldBtn bleibt eingehängt, sonst gibt es keine Drehanimation
     headBand.append(
-      h('h2', { class: 'round-title' }, d.restaurant.name, h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
     );
     addrEl.textContent = d.restaurant.address || '';

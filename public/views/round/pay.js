@@ -5,9 +5,9 @@ import { payHref } from '/format.js';
 import { qrIcon } from './qr-icon.js';
 
 // Kopierknopf mit dem Standard-Symbol (icons.js) und Hinweistext
-function copyButton(text, hint) {
+function copyButton(text, hint, label = null, tip = null) {
   return h('button', {
-    class: 'btn small ghost copy-btn', type: 'button', title: hint, 'aria-label': hint,
+    class: 'btn small ghost copy-btn' + (label ? ' copy-pill' : ''), type: 'button', title: tip ?? hint, 'aria-label': hint,
     onclick: async (e) => {
       const btn = e.currentTarget; // nach dem await ist currentTarget leer
       try {
@@ -17,7 +17,7 @@ function copyButton(text, hint) {
         flashButton(btn, `✕ ${t('Kopieren nicht möglich')}`, 2500);
       }
     },
-  }, copyIcon());
+  }, copyIcon(), label);
 }
 
 function payRowsDesktop(d) {
@@ -25,8 +25,9 @@ function payRowsDesktop(d) {
   if (!hasOrders) return null;
   const meU = d.users.find((u) => lc(u.user) === lc(me));
   const isBuyer = lc(me) === lc(d.buyer);
-  const [pre, post] = t('Bezahlen an {buyer}', { buyer: '\u0001' }).split('\u0001'); // „Bezahlen an“ bleibt stehen, nur der Name darf kürzen
-  const title = h('h3', { class: 'flush pay-title' }, h('span', { class: 'pay-label' }, pre.trim()), h('span', { class: 'pay-who' }, d.buyer), post.trim() ? h('span', { class: 'pay-label' }, post.trim()) : null);
+  const [pre, post] = t('{buyer} bezahlen', { buyer: '\u0001' }).split('\u0001'); // das Wort „bezahlen“ bleibt stehen, nur der Name darf kürzen
+  const titleParts = [pre.trim() ? h('span', { class: 'pay-label' }, pre.trim()) : null, h('span', { class: 'pay-who' }, d.buyer), post.trim() ? h('span', { class: 'pay-label' }, post.trim()) : null];
+  const title = h('h3', { class: 'flush pay-title' }, ...titleParts);
   const rows = [title];
   const canPay = !!meU && meU.done && !meU.paid && meU.subtotal_cents > 0; // bezahlen erst nach ready
   const payLink = !isBuyer && canPay && d.paypal ? payHref(d.paypal, meU.total_cents) : null;
@@ -39,11 +40,9 @@ function payRowsDesktop(d) {
       h('div', { class: 'pay-line' }, h(
         'div',
         { class: 'row gap-3 pay-info' }, // Titel, Adresse und Kopieren in einer Zeile
-        title,
-        payLink
-          ? h('a', { class: 'payaddr', href: payLink, target: '_blank', rel: 'noopener noreferrer' }, d.paypal)
-          : h('strong', { class: 'payaddr' }, d.paypal),
-        copyButton(payLink ?? d.paypal, payLink ? t('Bezahl-Link kopieren') : t('Adresse kopieren'))
+        payLink ? h('span', { class: 'pay-label' }, t('Bezahl-Link')) : null, // Zahler: Beschriftung vor dem Knopf
+        copyButton(payLink ?? d.paypal, payLink ? t('Bezahl-Link kopieren') : t('Adresse kopieren'), payLink ? t('Kopieren') : t('Adresse kopieren'), d.paypal), // Knopf mit Text, Adresse im Tooltip
+        payLink ? null : h('strong', { class: 'payaddr' }, d.paypal), // Zahler: Adresse nur im Tooltip des Knopfs
       ))
     );
   }
