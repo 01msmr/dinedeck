@@ -1,7 +1,7 @@
 // Statusleiste oben: Ablaufzeile, Hinweise, offene Beträge
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS } from '/config.js';
-import { isToday } from '/format.js';
+import { isToday, beforeThisYear } from '/format.js';
 import { debtChipEl, debtsHead } from '/views/round/debt-row.js';
 import { payRows } from '/views/round/pay.js';
 import { fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
@@ -91,7 +91,7 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
       const count = t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length }); // immer x/y, auch bei einem
       flow.push(allPaid ? step('paid-done', payers.length ? `✓ ${count}` : `✓ ${t('bezahlt')}`) : counting ? step('now ready', count) : step('todo', payers.length && paidN > 0 ? count : t('bezahlt')));
     }
-    const where = h('span', { class: 'step-where' }, h('span', null, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, false))); // links: am selben Tag nur die Uhrzeit, sonst nur das Datum
+    const where = h('span', { class: 'step-where' }, h('span', null, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at)))); // links: am selben Tag nur die Uhrzeit, sonst das Datum, aus einem früheren Jahr mit Jahr
     if (flow) b.push(h('div', { class: 'status-flow' }, where, h('div', { class: 'flow-steps' }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);
       if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text

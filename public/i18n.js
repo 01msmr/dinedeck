@@ -37,7 +37,6 @@ const EN = {
   'Artikel ändern': 'Edit items',
   'Erst „Bestellt“ zurücknehmen': 'Undo “ordered” first',
   'Menü': 'Menu',
-  '{n} Bestellungen': '{n} orders',
   'Export (JSON)': 'Export (JSON)',
   'Nur für Admins': 'Admins only',
   'Bestellung geschlossen, aber noch nicht als bestellt gemeldet:': 'Order closed but not yet marked as ordered:',

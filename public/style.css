@@ -331,16 +331,6 @@ button.btn.ready { margin-left: 0; padding: 0.6875rem 1.625rem; font-size: 1.062
 .side-today { margin: 0; padding: 0; border: 0; background: none; }
 #side .side-today h4 { font-size: var(--fs-base); font-weight: 700; color: var(--fg); }
 
-/* Wechsel zwischen aktuellen Bestellungen (nur bei mehreren) */
-.head-pick { display: flex; flex-wrap: wrap; gap: 0.375rem; align-content: start; }
-.head-pick:empty { display: none; }
-.pick-item { display: grid; gap: 0; padding: 0.375rem 0.75rem; border: 1px solid var(--line); border-radius: var(--radius); color: var(--fg); text-decoration: none; background: var(--bg); }
-.pick-item .muted { font-size: var(--fs-xs); }
-.pick-item.active { border-color: var(--accent); background: var(--wash); }
-@media (min-width: 68.75em) {
-  .round-head.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr) minmax(17.5rem, 22.5rem); }
-  .head-pick { flex-direction: column; flex-wrap: nowrap; }
-}
 @media (max-width: 30em) { .tabs button { font-size: var(--fs-sm); padding: 0.5rem 0.125rem; } }
 
 /* Warnbalken: ungespeicherte Änderung im Bestellkopf läuft rückwärts ab */
@@ -389,7 +379,6 @@ button.btn.ready { margin-left: 0; padding: 0.6875rem 1.625rem; font-size: 1.062
 
 /* „Offene Beträge“ mit deutlichem Abstand (200 px inkl. Grid-Gap) zum Inhalt darüber, wie die nicht-ready Artikel */
 
-.side-today-link h4 { margin: 0 0 0.125rem !important; }
 
 /* Schmal (unter 80 em): Sidebar als Drawer mit Hamburger-Button */
 .menu-btn { display: none; position: absolute; left: 0.625rem; top: 0.625rem; width: 2.75rem; height: 2.75rem; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--fg); cursor: pointer; }
@@ -703,10 +692,8 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .round-head.folded .head-band { border-radius: var(--head-radius); } /* zugeklappt: Halbkreis an den Enden, aufgeklappt dieselbe Rundung oben */
 .round-head.folded > :not(.head-band) { display: none; } /* zugeklappt: nur das Kopfband, alles darunter ist weg */
 .round-head.folded { grid-template-columns: minmax(0, 1fr); }
-.round-head.folded.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr); }
 @media (min-width: 43.75em) { /* eingeklappt, breit: Lieferzeit/Knöpfe und Bezahlen in einer Zeile */
   .round-head.folded { grid-template-columns: minmax(0, 1fr) auto; }
-  .round-head.folded.has-pick { grid-template-columns: 11.875rem minmax(0, 1fr) auto; }
   .round-head.folded > .head-side { order: 2; align-self: center; }
   .round-head.folded .head-side:not(:has(> :not(.hidden):not(.fold-item))) { display: none; }
 }
@@ -728,7 +715,6 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 /* Bezahlbereich: eigene Zeile über die volle Breite, unabhängig vom Zustand des Kopfs */
 @media (min-width: 68.75em) { /* breit, aufgeklappt: Bezahlen rutscht unter die Daten (links), rechts steht die Frist über zwei Zeilen */
   .round-head:not(.folded) > .head-side { grid-row: span 2; }
-  .round-head.has-pick:not(.folded) > .head-pick { grid-row: span 2; }
 }
 .head-band .head-contact { margin-left: auto; }
 .head-band .head-contact .row { justify-content: flex-end; }

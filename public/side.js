@@ -44,19 +44,10 @@ export function renderSide() {
   const today = sideRounds.filter((r) => isCurrentRound(r, now));
   const rest = sideRounds.filter((r) => !isCurrentRound(r, now));
   sideEl.replaceChildren(
-    // Mehrere Bestellungen heute: nur „Heute“ (die Auswahl steht im Hauptbereich); genau eine: diese direkt
-    ...(today.length > 1
-      ? [
-          h(
-            'a',
-            { class: 'side-item side-today-link' + (today.some((r) => hash === `#/r/${r.id}`) ? ' active' : ''), href: '#/' },
-            h('h4', null, t('Heute')),
-            h('span', { class: 'muted' }, t('{n} Bestellungen', { n: today.length }))
-          ),
-        ]
-      : today.length
-        ? [h('section', { class: 'side-today' }, h('h4', null, t('Heute')), ...today.map(item))]
-        : [h('section', { class: 'side-today' }, h('h4', null, t('Heute')), h('span', { class: 'soft-note' }, t('noch keine Bestellung')))]), // Bereich bleibt sichtbar
+    // Heute: jede Bestellung einzeln (eine Bestellung hat immer genau ein Restaurant)
+    ...(today.length
+      ? [h('section', { class: 'side-today' }, h('h4', null, t('Heute')), ...today.map(item))]
+      : [h('section', { class: 'side-today' }, h('h4', null, t('Heute')), h('span', { class: 'soft-note' }, t('noch keine Bestellung')))]), // Bereich bleibt sichtbar
     ...group(t('Unbezahlt'), rest.filter((r) => r.unpaid)),
     ...groupHistory(rest.filter((r) => r.locked && !r.unpaid && r.created_at >= since), now, LISTS.historyMonths).flatMap((g) => group(groupTitle(g), g.items)),
     h('div', { class: 'side-foot' }, link('#/all', allLabel), link('#/stats', t('Statistik')), h('a', { class: 'btn side-new', href: '#/new' }, t('+ Neue Bestellung')))

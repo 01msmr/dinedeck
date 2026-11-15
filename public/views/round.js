@@ -1,13 +1,12 @@
 // Bestellseite: Frist, Banner, Bezahlen, Tabs (Nach Usern / Meine / Bestellen), offene Beträge.
 import { t, lang } from '/i18n.js';
 import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
-import { isCurrentRound } from '/group.js';
 import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
 import { nbspUnits } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
-import { app, eur, fmtWhen, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
+import { app, eur, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
 // Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
@@ -198,7 +197,6 @@ export function roundView(id) {
     tickEdit();
   }
   for (const i of editInputs) i.addEventListener('input', () => syncEdit(true));
-  const headPick = h('nav', { class: 'head-pick' });
   const addrEl = h('div', { class: 'muted fold-item' });
   const feeLabel = h('label', { class: 'fee-field fold-item' }, t('Lieferkosten (€)'), eFee);
   const headTop = h('div', { class: 'head-top' }, addrEl, feeLabel); // Adresse links, Lieferkosten rechts
@@ -246,20 +244,7 @@ export function roundView(id) {
     },
   }, t('Bestellung löschen'));
   const deleteRow = h('div', { class: 'row end fold-item' }, deleteBtn);
-  head.append(headBand, headPick, h('div', { class: 'head-main' }, headTop, headMeta, h('div', { class: 'head-formrow' }, headForm, deleteRow)), h('div', { class: 'head-side' }, timerCard, orderCard));
-
-  // Wechsel zwischen den heutigen/offenen Bestellungen (nur sichtbar, wenn es mehrere gibt)
-  function renderPick(list) {
-    const cur = (list ?? []).filter((x) => isCurrentRound(x, Date.now()));
-    // Stack nur bei mehreren Bestellungen heute (bei einer steht sie direkt in der Sidebar)
-    const show = cur.length > 1;
-    head.classList.toggle('has-pick', show);
-    headPick.replaceChildren(
-      ...(show
-        ? cur.map((x) => h('a', { class: 'pick-item' + (x.id === id ? ' active' : ''), href: `#/r/${x.id}` }, h('strong', null, x.restaurant), h('span', { class: 'muted' }, `${fmtWhen(x.created_at)} · ${x.creator}`)))
-        : [])
-    );
-  }
+  head.append(headBand, h('div', { class: 'head-main' }, headTop, headMeta, h('div', { class: 'head-formrow' }, headForm, deleteRow)), h('div', { class: 'head-side' }, timerCard, orderCard));
 
   // Klick auf die Bestellnummer: Link zu dieser Bestellung in die Zwischenablage
   async function copyOrderUrl(e) {
@@ -464,7 +449,6 @@ export function roundView(id) {
         catalogLoaded = true;
         loadCatalog();
       }
-      api('GET', '/rounds').then(renderPick).catch(() => {});
       renderHead();
       renderTimerControls();
       renderOrderStatus();

@@ -16,6 +16,7 @@ const ROUNDS = [
   { restaurant: 'Burger Beispiel', buyer: 'Robin', fee: '', ago: 0, stage: 'closed', ready: ['Robin', 'Lee', 'Jo'], items: { Robin: [['Cheeseburger', 7.9, 1]], Lee: [['Veggie Burger', 8.4, 1], ['Pommes', 3.2, 1]], Jo: [['Cheeseburger', 7.9, 2]] } },
   { restaurant: 'Sushi Muster', buyer: 'Kim', fee: '3,00', ago: 1, stage: 'delivered', ready: ['Kim', 'Alex', 'Sam', 'Lee'], paid: ['Alex'], items: { Kim: [['Maki Mix', 11, 1]], Alex: [['Nigiri Set', 13.5, 1]], Sam: [['Maki Mix', 11, 1], ['Misosuppe', 3.5, 1]], Lee: [['Vegetarisch Set', 12, 1]] } },
   { restaurant: 'Curry Testhausen', buyer: 'Jo', fee: '2,50', ago: 5, stage: 'delivered', ready: ['Jo', 'Robin', 'Sam'], paid: ['Robin', 'Sam'], items: { Jo: [['Linsen-Curry', 9.8, 1]], Robin: [['Hähnchen-Curry', 11.2, 1], ['Reis extra', 2, 1]], Sam: [['Linsen-Curry', 9.8, 1]] } },
+  { restaurant: 'Pasta Probe', buyer: 'Lee', fee: '', ago: 400, stage: 'delivered', ready: ['Lee', 'Kim'], paid: ['Kim'], items: { Lee: [['Spaghetti Pomodoro', 9, 1]], Kim: [['Penne Arrabbiata', 8.5, 1]] } }, // aus dem Vorjahr: Datum mit Jahr
 ];
 
 /** Legt die Demo-Bestellungen an, wenn die Datenbank noch leer ist; true = angelegt. */

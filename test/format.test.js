@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits, beforeThisYear } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -173,4 +173,12 @@ test('nbspUnits: Zahl und Einheit bleiben zusammen (geschütztes Leerzeichen)', 
   assert.equal(nbspUnits('26 cmx'), '26 cmx', 'nur ganze Einheiten');
   assert.equal(nbspUnits(''), '');
   assert.equal(nbspUnits(null), '');
+});
+
+test('beforeThisYear: Bestellungen aus früheren Kalenderjahren', () => {
+  const now = new Date(2026, 10, 15, 12).getTime(); // 15. 11. 2026
+  assert.equal(beforeThisYear(new Date(2026, 0, 1, 0, 5).getTime(), now), false, 'Jahresanfang gehört noch dazu');
+  assert.equal(beforeThisYear(new Date(2026, 9, 6).getTime(), now), false, 'Vormonat im selben Jahr: kein Jahr');
+  assert.equal(beforeThisYear(new Date(2025, 11, 31, 23, 59).getTime(), now), true, 'Silvester des Vorjahrs');
+  assert.equal(beforeThisYear(new Date(2024, 4, 1).getTime(), now), true, 'zwei Jahre zurück');
 });

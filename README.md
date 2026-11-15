@@ -50,7 +50,7 @@ Backup while running: `sqlite3 data/dinedeck.db ".backup backup.db"`.
 
 ## Demo
 
-`npm run demo` fills an empty database (`./data/demo.db` or `DB_FILE`) with four invented orders and names (Alex, Sam, Jo, Kim, Robin, Lee); a database with orders is never touched. Try: `DB_FILE=data/demo.db npm start`. With Docker: `DEMO=1 docker compose up -d --build`.
+`npm run demo` fills an empty database (`./data/demo.db` or `DB_FILE`) with five invented orders and names (Alex, Sam, Jo, Kim, Robin, Lee); a database with orders is never touched. Try: `DB_FILE=data/demo.db npm start`. With Docker: `DEMO=1 docker compose up -d --build`.
 
 | Delivered, partly paid | Order list |
 |---|---|

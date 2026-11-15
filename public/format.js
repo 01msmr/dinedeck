@@ -101,3 +101,8 @@ const unitRe = () => new RegExp(`(\\d) (${VARIANT_SHORT.units.map((u) => u.repla
 export function nbspUnits(text) {
   return String(text ?? '').replace(unitRe(), '$1\u00a0$2');
 }
+
+/** true, wenn `ms` in einem früheren Kalenderjahr als `now` liegt (dann gehört das Jahr zum Datum). */
+export function beforeThisYear(ms, now = Date.now()) {
+  return ms < new Date(new Date(now).getFullYear(), 0, 1).getTime();
+}
