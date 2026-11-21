@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits, beforeThisYear } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits, beforeThisYear, rowsNeeded, splitRows } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -181,4 +181,19 @@ test('beforeThisYear: Bestellungen aus früheren Kalenderjahren', () => {
   assert.equal(beforeThisYear(new Date(2026, 9, 6).getTime(), now), false, 'Vormonat im selben Jahr: kein Jahr');
   assert.equal(beforeThisYear(new Date(2025, 11, 31, 23, 59).getTime(), now), true, 'Silvester des Vorjahrs');
   assert.equal(beforeThisYear(new Date(2024, 4, 1).getTime(), now), true, 'zwei Jahre zurück');
+});
+
+test('rowsNeeded: so wenige Zeilen wie möglich, bis jeder Name in seine Spalte passt', () => {
+  assert.equal(rowsNeeded(8, 90, 800), 1, 'passt in eine Zeile');
+  assert.equal(rowsNeeded(8, 110, 800), 2, '8 × 110 > 800, 4 × 110 passt');
+  assert.equal(rowsNeeded(9, 110, 400), 3, 'oben 3 pro Zeile');
+  assert.equal(rowsNeeded(3, 500, 200), 3, 'nie mehr Zeilen als Personen');
+  assert.equal(rowsNeeded(0, 90, 800), 1);
+});
+
+test('splitRows: gleichmäßig, die oberen Zeilen bekommen den Überschuss', () => {
+  assert.deepEqual(splitRows([1, 2, 3, 4, 5, 6, 7], 2), [[1, 2, 3, 4], [5, 6, 7]]);
+  assert.deepEqual(splitRows([1, 2, 3, 4, 5, 6, 7, 8], 3), [[1, 2, 3], [4, 5, 6], [7, 8]]);
+  assert.deepEqual(splitRows([1, 2, 3, 4], 1), [[1, 2, 3, 4]]);
+  assert.deepEqual(splitRows([], 2), [[]], 'leer: eine leere Zeile');
 });

@@ -106,3 +106,22 @@ export function nbspUnits(text) {
 export function beforeThisYear(ms, now = Date.now()) {
   return ms < new Date(new Date(now).getFullYear(), 0, 1).getTime();
 }
+
+/** Kleinste Zeilenzahl, bei der `n` Strips à `nameWidth` in `width` passen (höchstens eine Zeile je Person). */
+export function rowsNeeded(n, nameWidth, width) {
+  for (let r = 1; r < n; r++) if (Math.ceil(n / r) * nameWidth <= width) return r;
+  return Math.max(1, n);
+}
+
+/** Liste gleichmäßig auf `rows` Zeilen verteilen; die oberen Zeilen bekommen den Überschuss. */
+export function splitRows(list, rows) {
+  const r = Math.max(1, Math.min(rows, list.length));
+  const base = Math.floor(list.length / r);
+  const extra = list.length % r;
+  let i = 0;
+  return Array.from({ length: r }, (_, k) => {
+    const row = list.slice(i, i + base + (k < extra ? 1 : 0));
+    i += row.length;
+    return row;
+  });
+}

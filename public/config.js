@@ -81,6 +81,11 @@ export const SOUND = {
   fadeSec: 0.2, // Ausblenden am Ende
 };
 
+/** Personen-Strips in „Alle Bestellungen“. */
+export const STRIPS = {
+  namePadPx: 16, // Platz je Strip neben dem Namen (Innenabstand und Trenner); reicht der Platz nicht, wird in Zeilen umbrochen
+};
+
 /** Benachrichtigung über offene Zahlungen. */
 export const NOTICE = {
   showEveryLoad: false, // false: einmal je Sitzung und Stand der offenen Zahlungen; true zum Testen bei jedem Seitenaufruf
