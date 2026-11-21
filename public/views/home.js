@@ -1,8 +1,9 @@
 // Startseite: neue Bestellung anlegen, Listen offener/unbezahlter/abgeschlossener Bestellungen.
 import { t } from '/i18n.js';
-import { LIMITS, DEFAULTS, STRIPS } from '/config.js';
+import { LIMITS, DEFAULTS } from '/config.js';
 import { pendingRound } from '/group.js';
-import { roundStage, isToday, beforeThisYear, rowsNeeded, splitRows } from '/format.js';
+import { roundStage, isToday, beforeThisYear } from '/format.js';
+import { payMark, payStrips, paidFirst } from '/views/pay-bar.js';
 import { tickCountdowns } from '/side.js';
 import { app, eur, fmtDay, fmtClock, lc, h, api, act, me, parseMoney, money } from '/util.js';
 
@@ -11,35 +12,19 @@ const boldNames = (names) => names.flatMap((n, i) => [i === 0 ? null : i === nam
 
 // Ab „Bestellt“: Zeilenhintergrund als Balken, ein Strip je Person (bezahlt links), Uhr-Kreis bzw. Haken davor
 function payBarItem(r, stage) {
-  const payers = [...r.payers].sort((a, b) => Number(b.paid) - Number(a.paid)); // Bezahlte links, sonst Reihenfolge wie im Tab „Alle“
+  const payers = paidFirst(r.payers);
   const paidN = payers.filter((p) => p.paid).length;
-  const open = paidN < payers.length;
   const day = fmtDay(r.created_at, beforeThisYear(r.created_at)); // Jahr nur bei früheren Jahren
   const when = isToday(r.created_at, Date.now(), DEFAULTS.nightEndHour) ? `${day}, ${fmtClock(r.created_at)}` : day; // Uhrzeit nur am Bestelltag (bis 4 Uhr des Folgetags)
-  // Zwischen Personen ein schmaler Strich, beim Wechsel bezahlt/offen ein breiterer durchsichtiger Spalt
-  const rowOf = (list) => h('div', { class: 'prow' }, ...list.flatMap((p, i) => [
-    i > 0 ? h('span', { class: 'psep ' + (list[i - 1].paid === p.paid ? 'line' : 'gap') }) : null,
-    h('span', { class: 'pseg ' + (p.paid ? 'paid' : 'open') }, h('span', { class: 'pseg-name' }, p.paid ? `✓ ${p.user}` : p.user)),
-  ]));
-  const strips = h('div', { class: 'pstrips' });
-  let rows = 0;
-  const draw = (n) => { rows = n; strips.replaceChildren(...splitRows(payers, n).map(rowOf)); };
-  draw(1);
-  // Reicht die Breite nicht für alle Namen, werden sie auf mehrere Zeilen verteilt (oben ggf. einer mehr)
-  new ResizeObserver(() => {
-    const width = strips.clientWidth;
-    const need = Math.max(0, ...[...strips.querySelectorAll('.pseg-name')].map((e) => e.scrollWidth)) + STRIPS.namePadPx;
-    const n = width ? rowsNeeded(payers.length, need, width) : rows;
-    if (n !== rows) draw(n);
-  }).observe(strips);
+  const strips = payStrips(payers, (p) => (p.paid ? `✓ ${p.user}` : p.user));
   return h(
     'a',
     { class: 'round-link pay-bar', href: `#/r/${r.id}` },
-    h('span', { class: 'pay-mark ' + (open ? 'ring' : 'done'), style: `--paid: ${(100 * paidN) / payers.length}%; --mid: ${(180 * paidN) / payers.length}deg${paidN ? '' : '; --count-r: 0rem'}`, title: `${t('bezahlt')}: ${paidN}/${payers.length}`, role: 'img', 'aria-label': `${t('bezahlt')}: ${paidN}/${payers.length}` }, open ? h('span', { class: 'pay-count' }, String(payers.length - paidN)) : '✓'),
+    payMark(payers),
     h(
       'div',
-      { class: 'card bar' },
-      h('div', { class: 'bar-top', style: `--share: ${(100 * paidN) / payers.length}%` }, h('div', { class: 'row between' }, h('span', { class: 'bar-line' }, h('span', null, when), h('strong', null, r.restaurant), stage === 'alles bezahlt' ? null : h('span', { class: 'badge ' + (stage === 'geliefert' ? 'on' : 'mid') }, t(stage)), h('span', null, `${t('bestellt von')} ${r.buyer}`)), h('span', { class: 'badge value' }, eur(r.total_cents)))),
+      { class: 'card bar', style: `--gk: ${paidN}; --gn: ${payers.length}` },
+      h('div', { class: 'bar-top' + (paidN && paidN < payers.length ? ' mixed' : ''), style: `--share: ${(100 * paidN) / payers.length}%` }, h('div', { class: 'row between' }, h('span', { class: 'bar-line' }, h('span', null, when), h('strong', null, r.restaurant), stage === 'alles bezahlt' ? null : h('span', { class: 'badge ' + (stage === 'geliefert' ? 'on' : 'mid') }, t(stage)), h('span', null, `${t('bestellt von')} ${r.buyer}`)), h('span', { class: 'badge value' }, eur(r.total_cents)))),
       strips
     )
   );
@@ -50,7 +35,7 @@ export const roundItem = (r, highlight = false) => {
   if (r.ordered && r.payers?.length) return payBarItem(r, stage);
   const paid = stage === 'alles bezahlt';
   const payment = paid
-    ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt'))
+    ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('alle bezahlt'))
     : r.unpaid ? h('span', { class: 'unpaid-line' }, h('span', null, ...boldNames(r.debts_users ?? []), ' — '), h('span', { class: 'badge off' }, `${t('unbezahlt')}: ${eur(r.debts_total_cents)}`)) : null;
   const delivered = paid || stage === 'geliefert';
   const top = delivered && payment ? null // ab „geliefert“ zählt nur die Zahlung (unten), die Pille wäre doppelt

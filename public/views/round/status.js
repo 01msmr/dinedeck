@@ -2,9 +2,10 @@
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS, STATUS } from '/config.js';
 import { isToday, beforeThisYear } from '/format.js';
-import { debtChipEl, debtsHead } from '/views/round/debt-row.js';
+import { payMark, payStrips, paidFirst } from '/views/pay-bar.js';
+import { chevronIcon } from '/icons.js';
 import { payRows } from '/views/round/pay.js';
-import { fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
+import { eur, fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
 
 const quiet = STATUS.quietButtons ? ' quiet' : '';
 
@@ -12,23 +13,20 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
   let d = null;
   let payConfirm = null; // {user, timer}: Rückfrage im Button vor „bezahlt“
   let confirm = null; // {key, timer}: Rückfrage vor Zurücknehmen/Weitergehen
-  const debtRow = (x) =>
-    debtChipEl(x, {
-      asking: payConfirm?.user === x.user,
-      onClick: lc(x.user) === lc(me) || d.viewer.is_buyer
-        ? () => {
-            if (payConfirm?.user === x.user) {
-              clearTimeout(payConfirm.timer);
-              payConfirm = null;
-              toggle('paid', { user: x.user, value: true });
-              return;
-            }
-            clearTimeout(payConfirm?.timer);
-            payConfirm = { user: x.user, timer: setTimeout(() => { payConfirm = null; render(d); }, TIMING.confirmMs) };
-            render(d);
-          }
-        : null,
-    });
+  // Roter Strip: wer zahlt oder der Besteller darf „bezahlt“ setzen; erster Klick fragt „ist bezahlt?“, zweiter setzt es
+  const pickPay = (p) => (lc(p.user) === lc(me) || d.viewer.is_buyer
+    ? () => {
+        if (payConfirm?.user === p.user) {
+          clearTimeout(payConfirm.timer);
+          payConfirm = null;
+          toggle('paid', { user: p.user, value: true });
+          return;
+        }
+        clearTimeout(payConfirm?.timer);
+        payConfirm = { user: p.user, timer: setTimeout(() => { payConfirm = null; render(d); }, TIMING.confirmMs) };
+        render(d);
+      }
+    : null);
 
   function render(data) {
     d = data;
@@ -52,11 +50,10 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
       !d.viewer.can_manage
         ? step('todo', label)
         : h('button', { class: 'step todo step-go' + (asking(key) ? ' confirm' : ''), type: 'button', disabled: !can, title: can ? '' : hint, onclick: run(key, () => advance(key)) }, asking(key) ? ask : label);
-    const sep = () => h('span', { class: 'step-sep' }, '›');
+    const sep = () => h('span', { class: 'step-sep', 'aria-hidden': 'true' }, chevronIcon());
     const readyTxt = d.ready.total ? t('ready {done}/{total}', { done: d.ready.done, total: d.ready.total }) : t('ready');
     const opened = step('done', `✓ ${t('eröffnet')}`);
     const ordTxt = `✓ ${t('bestellt')}`;
-    const allPaid = !d.debts.length && d.ordered_at && d.users.some((u) => u.subtotal_cents > 0);
     // „ready“: offen = Kästchen „Schließen, wenn alle ready“ in der Pille (Verwalter klicken, andere sehen es grau), davor +5, dahinter Schließen; geschlossen = Pille mit ↩ „Wieder öffnen“
     const readyStep = () => {
       const names = allReady ? '' : t('Noch nicht ready: {names}', { names: d.ready.not_ready.join(', ') });
@@ -86,24 +83,27 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
         : d.ready.total
           ? [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked, t('Erst die Bestellung schließen')), step('todo', t('geliefert'))] // noch nicht alle ready: derselbe Ablauf, ready rot
           : null;
-    const payers = d.users.filter((u) => u.done && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)); // Besteller zahlt nicht an sich selbst
-    const paidN = payers.filter((u) => u.paid).length;
-    if (flow) {
-      const counting = !allPaid && !!d.delivered_at && payers.length > 0; // nach „geliefert“: x/y bezahlt (gelb), alle bezahlt (dunkel); der aktuelle Stand (bestellt/geliefert) bleibt grün
-      const count = t('{paid}/{total} bezahlt', { paid: paidN, total: payers.length }); // immer x/y, auch bei einem
-      flow.push(allPaid ? step('paid-done', payers.length ? `✓ ${count}` : `✓ ${t('bezahlt')}`) : counting ? step('now ready', count) : step('todo', payers.length && paidN > 0 ? count : t('bezahlt')));
-    }
     const where = h('span', { class: 'step-where' }, h('span', null, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at)))); // links: am selben Tag nur die Uhrzeit, sonst das Datum, aus einem früheren Jahr mit Jahr
     if (flow) b.push(h('div', { class: 'status-flow' }, where, h('div', { class: 'flow-steps' }, ...flow.flatMap((x, n) => {
       const chip = after.get(x);
       if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text
       return [...(n ? [sep()] : []), chip ? h('span', { class: 'step-pair' }, x, chip) : x]; // Schritt und ↩ bleiben zusammen (kein Umbruch dazwischen)
     }))));
-    // Offene Zahlungen: schwarzer Kopf, darunter je Zahlung ein roter Chip (nur wenn es welche gibt)
-    const debtsBlock = d.ordered_at && d.debts.length ? h('section', { class: 'debts-block' },
-        debtsHead(t('in dieser Bestellung'), d.debts.length, d.debts.reduce((a, x) => a + x.amount_cents, 0), ...(payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : [])), // Bezahllink im Kopf, mittig
-        h('div', { class: 'status-debts' }, ...d.debts.map(debtRow))) : null;
-    debtsHost.replaceChildren(...(debtsBlock ? [debtsBlock] : [])); // steht unter dem Bestellkopf
+    // Zahlungen: Zeile wie in „Alle Bestellungen“ (Kreis, Kopfband, Personen-Strips); bleibt bei „alle bezahlt“ stehen, dann ganz grün
+    const payers = paidFirst(d.payers ?? []);
+    const owed = new Map(d.debts.map((x) => [lc(x.user), x.amount_cents]));
+    const paidN = payers.filter((p) => p.paid).length;
+    const payBlock = d.ordered_at && payers.length
+      ? h('div', { class: 'pay-block' },
+          payMark(payers),
+          h('div', { class: 'card bar', style: `--gk: ${paidN}; --gn: ${payers.length}` },
+            h('div', { class: 'bar-top' + (paidN && paidN < payers.length ? ' mixed' : ''), style: `--share: ${(100 * paidN) / payers.length}%` },
+              h('div', { class: 'row between' },
+                h('span', { class: 'bar-line' }, h('strong', null, d.debts.length ? t('Offene Zahlungen') : t('Zahlungen')), d.debts.length ? h('span', null, eur(d.debts.reduce((a, x) => a + x.amount_cents, 0))) : null),
+                h('div', { class: 'bar-right' }, ...(d.debts.length && payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : []), h('span', { class: 'badge value' }, eur(d.grand_total_cents))))), // rechts: Bezahllink, ganz rechts der Bestellwert wie in „Alle Bestellungen“
+            payStrips(payers, (p) => (p.paid ? `✓ ${p.user}` : payConfirm?.user === p.user ? t('ist bezahlt?') : `${p.user} ${eur(owed.get(lc(p.user)) ?? 0)}`), pickPay)))
+      : null;
+    debtsHost.replaceChildren(...(payBlock ? [payBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {
       b.unshift(h('div', { class: 'banner bad row between' },
         h('span', null, t('Neu: {user} möchte mitbestellen', { user: u })),

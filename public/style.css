@@ -26,6 +26,7 @@
   --on-seg: #ffffff;
   --seg-paid-top: light-dark(color-mix(in srgb, var(--seg-paid) 50%, #000), color-mix(in srgb, var(--seg-paid) 50%, #fff)); /* oberer Bereich: 50 % abgetönt, hell dunkler / dunkel heller */
   --seg-open-top: light-dark(color-mix(in srgb, var(--seg-open) 50%, #000), color-mix(in srgb, var(--seg-open) 50%, #fff));
+  --gap-top: light-dark(color-mix(in srgb, var(--bg) 50%, #000), color-mix(in srgb, var(--bg) 50%, #fff)); /* Spalt im oberen Bereich: Hintergrund 50 % abgetönt wie die Farbbereiche */
   --on-seg-top: light-dark(#ffffff, #000000);
   --seg-open-dim: color-mix(in srgb, var(--seg-open) 50%, #000); /* unbezahlter Rest im Kreis: 50 % abgedunkelt */
   --mark-size: 3.25rem; /* Kreis vor der Bestellzeile */
@@ -404,7 +405,8 @@ input[type="checkbox"] { width: auto; flex: none; }
 .status-lines > * + * { margin-top: 0.1875rem; }
 .status-flow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: baseline; align-content: center; padding: 0 max(0.875rem, calc((100% - var(--round-w)) / 2)); height: var(--flow-h); box-sizing: border-box; overflow: hidden; font-size: var(--fs-base); position: sticky; top: var(--top-h); z-index: 5; background: var(--bg); }
 .status-flow .step-sep, .ready-strip .step-sep { color: var(--muted); }
-.status-flow .step-sep { font-size: 0.8em; } /* Pfeile kleiner als der Text */
+.status-flow .step-sep { font-size: 0.8em; } /* Pfeil-Zeichnung 0,8 × so hoch wie die Schrift */
+.status-flow .step-sep .chevron-icon { display: block; vertical-align: middle; }
 .status-flow .done, .ready-strip .done { font-weight: 600; color: var(--fg); }
 .status-flow .done { opacity: 0.6; } /* abgelaufene Zustände zurückgenommen */
 .status-flow .now, .ready-strip .now { font-weight: 700; background: var(--ok); color: var(--on-ok); padding: var(--pill-pad-lg); border-radius: var(--radius-pill); }
@@ -454,7 +456,6 @@ input[type="checkbox"] { width: auto; flex: none; }
 @media (max-width: 63.9375em) { .status-flow .step-where { display: none; } } /* schmal: kein Platz, der Name steht im Kopf */
 @media (max-width: 43.6875em) { .status-flow { display: block; } }
 .status-flow .now.ready { background: var(--warn); color: var(--on-warn); }
-.status-flow .paid-done { font-weight: 700; background: var(--fg); color: var(--bg); padding: var(--pill-pad-lg); border-radius: var(--radius-pill); } /* alles bezahlt: dunkel, konkurriert nicht mit dem grünen aktuellen Stand */
 .status-flow .todo, .ready-strip .todo { font-weight: 300; font-style: italic; color: var(--muted); }
 .status-lines .banner { border: 0; border-radius: 0; padding: 0.625rem 1rem; font-size: var(--fs-base); font-weight: 700; text-align: center; }
 .status-lines .banner.warn { background: var(--warn); color: var(--on-warn); }
@@ -487,7 +488,7 @@ input[type="checkbox"] { width: auto; flex: none; }
 .round-link.today .card { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color: var(--accent); }
 
 /* Alle Bestellungen ab „Bestellt“: Zeilenhintergrund als Personen-Balken; schmaler grüner Strich (33 %) zwischen Personen, durchsichtiger Spalt zwischen bezahlt und offen */
-.round-link.pay-bar { display: flex; align-items: center; gap: 0.75rem; }
+.round-link.pay-bar, .pay-block { display: flex; align-items: center; gap: 0.75rem; }
 .pay-mark { flex: none; box-sizing: border-box; width: var(--mark-size); height: var(--mark-size); border-radius: 50%; display: grid; place-items: center; font-weight: 700; }
 .pay-mark.ring { position: relative; color: var(--on-seg); background: conic-gradient(from 180deg, var(--seg-paid) var(--paid), var(--seg-open-dim) 0); } /* Sektor ab 6 Uhr rechtsherum: bezahlter Anteil, Rest dunkelrot */
 .pay-count { font-size: var(--fs-lg); line-height: 1; translate: calc(sin(var(--mid)) * var(--count-r)) calc(cos(var(--mid)) * var(--count-r) * -1); } /* Zahl der Unbezahlten in der Mitte des roten Sektors */
@@ -496,17 +497,23 @@ input[type="checkbox"] { width: auto; flex: none; }
 .round-link.pay-bar:hover .card.bar { background: transparent; }
 .round-link.pay-bar:hover .pseg, .round-link.pay-bar:hover .bar-top { filter: brightness(1.12); }
 .bar-top { box-sizing: border-box; min-height: var(--bar-top); display: flex; flex-direction: column; justify-content: center; padding: 0.4375rem 0.875rem; color: var(--on-seg-top); background: linear-gradient(to right, var(--seg-paid-top) var(--share), var(--seg-open-top) var(--share)); } /* oben: Statusfarben abgetönt, Wechsel bei bezahltem Anteil */
-.pstrips { display: flex; flex-direction: column; border-top: var(--seg-line-w) solid color-mix(in srgb, var(--seg-paid) 33%, var(--bg)); } /* 1 px Linie über den Personen */
+.bar-top.mixed { --gx: calc((100% - (var(--gn) - 2) * var(--seg-line-w) - var(--seg-gap)) * var(--gk) / var(--gn) + (var(--gk) - 1) * var(--seg-line-w)); background: linear-gradient(to right, var(--seg-paid-top) var(--gx), var(--gap-top) var(--gx), var(--gap-top) calc(var(--gx) + var(--seg-gap)), var(--seg-open-top) calc(var(--gx) + var(--seg-gap))); } /* Spalt oben genau wie unten: gleiche Breite und Lage */
+.pstrips { display: flex; flex-direction: column; border-top: var(--seg-line-w) solid var(--gap-top); } /* 1 px Linie über den Personen */
 .prow { display: flex; height: var(--strip-h); }
-.prow + .prow { border-top: var(--seg-line-w) solid color-mix(in srgb, var(--seg-paid) 33%, var(--bg)); }
+.prow + .prow { border-top: var(--seg-line-w) solid var(--gap-top); }
 .psep { flex: none; }
 .psep.line { width: var(--seg-line-w); background: var(--seg-line); }
 .psep.gap { width: var(--seg-gap); }
 .pseg { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 0 0.25rem; }
+button.pseg { border: 0; font: inherit; color: inherit; cursor: pointer; }
+button.pseg:hover { filter: brightness(1.12); }
+.prow.all-paid { background: var(--seg-paid); align-items: center; justify-content: flex-end; padding: 0 0.5rem; }
+.paid-pill { padding: 0.125rem 0.75rem; border-radius: var(--radius-pill); background: var(--white); color: var(--seg-paid); font-size: var(--fs-sm); font-weight: 700; } /* alle bezahlt: weiße Pille, grüne Schrift, rechts unten */
 .pseg.paid { background: var(--seg-paid); }
 .pseg.open { background: var(--seg-open); }
 .pseg-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; }
 .bar-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--bar-gap); }
+.bar-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
 .bar .badge.value { background: var(--black); color: var(--white); font-weight: 700; }
 .bar .badge { border-color: var(--on-seg-top); } /* 1 px Kontur gegen den Balken */
 
@@ -527,6 +534,12 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .debts-head.with-pay { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; align-items: center; } /* Text links, Bezahllink rechtsbündig, alles vertikal zentriert */
 .debts-head.with-pay .head-pay { margin-left: auto; }
 .head-pay { display: grid; gap: 0.5rem; justify-items: end; color: var(--debts-fg); font-weight: 400; } /* Farben für den dunklen Kopf */
+.bar-top .head-pay { --debts-fg: var(--on-seg-top); --debts-bg: var(--seg-open-top); gap: 0; align-items: center; } /* im Kopfband: Farben des Bands, rechter Bereich so hoch wie die Textzeile links */
+.bar-top .head-pay .copy-btn, .bar-top .head-pay .btn { height: 1.45rem; min-height: 0; padding-block: 0; line-height: 1; }
+.bar-top .head-pay .copy-btn svg { width: 1rem; height: 1rem; }
+.bar-top .head-pay .pay-title { margin: 0; }
+.bar-top .head-pay .qr-pop { width: 1.45rem; height: 1.45rem; margin: 0; }
+.bar-top .head-pay .pay-go, .bar-top .head-pay .link-pill { height: 1.45rem; min-height: 0; padding-block: 0; display: inline-flex; align-items: center; }
 .head-pay a { color: inherit; }
 .head-pay .qr-pop { color: var(--debts-fg); }
 .head-pay .muted { color: color-mix(in srgb, var(--debts-fg) 70%, transparent); }
@@ -535,8 +548,6 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .head-pay .pay-go { background: var(--debts-fg); color: var(--debts-bg); border-color: transparent; }
 .status-debts { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; }
 .debt-chip { display: inline-flex; align-items: center; gap: 0.625rem; background: var(--bad); color: var(--on-bad); border-radius: var(--radius-pill); padding: 0.25rem 0.375rem 0.25rem 0.875rem; font-size: var(--fs-base); } /* offene Zahlung: roter Chip */
-.debt-chip .debt-pay { border: 0; border-radius: var(--radius-pill); background: var(--white); color: var(--black); font: inherit; font-size: var(--fs-md); font-weight: 600; padding: 0.25rem 0.75rem; cursor: pointer; } /* Knopf im Chip: Gegenfarbe */
-.debt-chip .debt-pay.confirm { background: var(--black); color: var(--white); }
 .debt-card { padding-block: 0; background: var(--pane-bg); border-color: color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); color: var(--fg); text-decoration: none; display: block; } /* offene Zahlung im Overlay: im Design der Nutzerkarten */
 .card.user-card.debt-card > .card-head { margin-top: 0; margin-bottom: 0; padding: 0.375rem 0.875rem; gap: 0.5rem; }
 .debt-foot { padding: 0.25rem 0 0.375rem; text-align: right; color: var(--pane-muted); font-size: var(--fs-sm); }
@@ -633,10 +644,12 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .who-wrap { position: relative; display: inline-flex; }
 .name-pop { position: absolute; top: calc(100% + 0.75rem); right: 0; z-index: 20; width: min(20rem, calc(100vw - 2rem)); background: var(--tint-bg); color: var(--tint-fg); border-color: var(--tint-bg); box-shadow: 0 0.5rem 1.75rem var(--shadow-pop); text-align: left; }
 .name-pop::before { content: ''; position: absolute; top: -0.375rem; right: 1.25rem; width: 0.75rem; height: 0.75rem; background: var(--tint-bg); transform: rotate(45deg); }
-.pop-tabs { display: flex; gap: 1rem; margin: 0 0 0.75rem; border-bottom: 1px solid currentColor; }
-.pop-tab { border: 0; border-bottom: 0.1875rem solid transparent; margin-bottom: -1px; padding: 0.125rem 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
-.pop-tab[aria-selected="true"] { border-bottom-color: currentColor; }
-.pop-tab[aria-selected="false"] { font-weight: 400; }
+.pop-tabs { display: flex; align-items: center; gap: 0.125rem; margin: 0 0 0.75rem; padding: 0.1875rem; border-radius: var(--radius-pill); background: color-mix(in srgb, currentColor 14%, transparent); } /* Reiter als Segmente in einer Leiste */
+.pop-tab { border: 0; padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); background: none; color: color-mix(in srgb, currentColor 65%, transparent); font: inherit; font-size: var(--fs-md); font-weight: 600; cursor: pointer; }
+.pop-tab:hover { color: inherit; }
+.pop-tab[aria-selected="true"] { background: var(--tint-fg); color: var(--tint-bg); } /* gewählt: ausgefüllt */
+.pop-tab:nth-child(n+2) { padding: 0.1875rem 0.625rem; font-size: var(--fs-sm); font-weight: 400; } /* Einstellungen und Gastbestellung: Nebensache */
+.pop-tab:nth-child(2) { margin-left: auto; }
 .pop-settings { display: grid; gap: 0.75rem; }
 .pop-settings[hidden] { display: none; }
 .pop-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
@@ -647,6 +660,9 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .pop-row .seg button[aria-pressed="true"] { background: var(--tint-fg); color: var(--tint-bg); }
 .pop-row .seg:hover button[aria-pressed="true"] { background: var(--tint-fg); }
 .guest-link { margin: 0.5rem 0 0; font-size: var(--fs-sm); }
+.pop-inline { display: flex; align-items: center; gap: 0.5rem; }
+.pop-inline input { flex: 1; min-width: 0; }
+.pop-hint { margin: 0 0 0.5rem; }
 .link-quiet { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .name-pop .muted { color: inherit; opacity: 0.8; }
 .name-pop .btn.ghost { color: inherit; border-color: currentColor; }

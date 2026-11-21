@@ -34,6 +34,11 @@ function askName(overlay = false) {
       if (overlay) close();
       resolve(true);
     };
+    const goHome = isGuest && homeName()
+      ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { setMe(homeName()); if (overlay) close(); resolve(true); } }, `${t('Zurück zu')} ${homeName()}`)
+      : null;
+    const go = h('button', { class: 'btn', type: 'submit' }, t('Los'));
+    // Popup: knapp, Name und „Los“ in einer Zeile; die erste Seite (ohne Popup) behält Titel und Gast-Link
     const form = h(
       'form',
       {
@@ -43,32 +48,28 @@ function askName(overlay = false) {
           done(false);
         },
       },
-      h('h2', null, t('Wie heißt du?')),
-      h('p', { class: 'muted' }, t('Gleicher Name = gleiche Person.')),
-      h('div', { class: 'grow' }, input, known),
-      h('p', { class: 'guest-link' }, h('button', { class: 'link-quiet', type: 'button', title: t('Bestelle für jemand anderen'), onclick: () => done(true) }, t('Als Gast'))), // Gast: Nebensache, nur ein leiser Textlink
-      h(
-        'div',
-        { class: 'form-actions mt-4 gap-3 wrap' },
-        isGuest && homeName()
-          ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { setMe(homeName()); if (overlay) close(); resolve(true); } }, `${t('Zurück zu')} ${homeName()}`)
-          : null,
-        h('button', { class: 'btn', type: 'submit' }, t('Los'))
-      )
+      overlay ? null : h('h2', null, t('Wie heißt du?')),
+      h('div', { class: overlay ? 'pop-inline' : 'grow' }, input, known, overlay ? go : null),
+      overlay ? null : h('p', { class: 'guest-link' }, h('button', { class: 'link-quiet', type: 'button', title: t('Bestelle für jemand anderen'), onclick: () => done(true) }, t('Als Gast'))),
+      overlay ? (goHome ? h('div', { class: 'mt-2' }, goHome) : null) : h('div', { class: 'form-actions mt-4 gap-3 wrap' }, goHome, go)
     );
-    // Im Popup: zwei Reiter, „Name“ und „Einstellungen“ (Modus, Sprache, Farbe)
+    // Im Popup drei Reiter: „Name“, „Einstellungen“ (Modus, Sprache, Farbe) und „Gastbestellung“
     const settingsPanel = overlay
       ? h('div', { class: 'pop-settings', hidden: true }, ...[...settingsSrc.querySelectorAll('.seg')].map((seg) => h('div', { class: 'pop-row' }, h('span', null, t(seg.dataset.i18nTitle)), seg)))
       : null;
-    const tabName = h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': 'true', onclick: () => showTab(true) }, t('Name'));
-    const tabSet = h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': 'false', onclick: () => showTab(false) }, t('Einstellungen'));
-    const showTab = (name) => {
-      tabName.setAttribute('aria-selected', String(name));
-      tabSet.setAttribute('aria-selected', String(!name));
-      form.hidden = !name;
-      settingsPanel.hidden = name;
+    const guestInput = h('input', { placeholder: t('Name des Gasts'), maxlength: LIMITS.userName, autocomplete: 'off' });
+    const guestPanel = overlay
+      ? h('form', { hidden: true, onsubmit: (e) => { e.preventDefault(); if (!guestInput.value.trim()) return guestInput.focus(); setMe(guestInput.value, { guest: true }); close(); resolve(true); } },
+        h('p', { class: 'muted pop-hint' }, t('Bestelle für jemand anderen')),
+        h('div', { class: 'pop-inline' }, guestInput, h('button', { class: 'btn', type: 'submit' }, t('Los'))))
+      : null;
+    const tab = (label, which) => h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': String(which === 0), onclick: () => showTab(which) }, label);
+    const tabs = [tab(t('Name'), 0), tab(t('Einstellungen'), 1), tab(t('Gastbestellung'), 2)];
+    const showTab = (which) => {
+      [form, settingsPanel, guestPanel].forEach((el, i) => { el.hidden = i !== which; tabs[i].setAttribute('aria-selected', String(i === which)); });
+      (which === 0 ? input : which === 2 ? guestInput : null)?.focus();
     };
-    const root = overlay ? h('div', { class: 'card name-pop' }, h('span', { class: 'name-pop-arrow', 'aria-hidden': 'true' }), h('div', { class: 'pop-tabs', role: 'tablist' }, tabName, tabSet), form, settingsPanel) : form;
+    const root = overlay ? h('div', { class: 'card name-pop' }, h('span', { class: 'name-pop-arrow', 'aria-hidden': 'true' }), h('div', { class: 'pop-tabs', role: 'tablist' }, ...tabs), form, settingsPanel, guestPanel) : form;
     if (overlay) {
       whoWrap.append(root);
       document.addEventListener('pointerdown', outside, true);

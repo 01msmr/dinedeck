@@ -9,14 +9,6 @@ export function debtCard(left, right, { tag = 'section', foot = null, ...attrs }
     foot ? h('div', { class: 'debt-foot' }, foot) : null);
 }
 
-// Status der Bestellung: offene Zahlung als roter Chip (Markierungsfarbe) mit Knopf darin; zweistufig: erst Rückfrage „ist bezahlt?“
-export function debtChipEl(x, { asking, onClick }) {
-  return h('div', { class: 'debt-chip' },
-    h('strong', null, x.user),
-    h('strong', null, eur(x.amount_cents)),
-    onClick ? h('button', { class: 'debt-pay' + (asking ? ' confirm' : ''), type: 'button', onclick: onClick }, asking ? t('ist bezahlt?') : t('als bezahlt markieren')) : null);
-}
-
 /** Kopfband „Offene Zahlungen – <Zusatz>“, in der Bestellung und im Overlay gleich. */
 export function debtsHead(rest, count, sum, ...extra) {
   return h('div', { class: 'debts-head' + (extra.length ? ' with-pay' : '') }, h('span', { class: 'debts-head-text' }, h('span', { class: 'debts-head-main' }, `${t('Offene Zahlungen')}${count ? ` (${count})` : ''}`), ' ', h('span', { class: 'debts-head-rest' }, `– ${rest}`), sum != null ? h('span', { class: 'debts-head-sum' }, `∑ ${eur(sum)}`) : null), ...extra);

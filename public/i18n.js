@@ -5,7 +5,6 @@ const EN = {
   'Name wählen': 'Choose name',
   'Dein Name': 'Your name',
   'Wie heißt du?': 'What is your name?',
-  'Gleicher Name = gleiche Person.': 'Same name = same person.',
   'Los': 'Go',
   // Neue Runde / Übersicht
   'keine Telefon': 'no phone number',
@@ -172,7 +171,8 @@ const EN = {
   'Kopieren nicht möglich': 'Copying not possible',
   'Bestellliste kopieren': 'Copy order list',
   // Offene Beträge
-  '✓ alles bezahlt': '✓ all paid',
+  'alle bezahlt': 'all paid',
+  'Zahlungen': 'Payments',
   'alles bezahlt': 'all paid',
   'als bezahlt markieren': 'mark as paid',
   'ist bezahlt?': 'is paid?',
@@ -209,6 +209,8 @@ const EN = {
   'Modus': 'Mode',
   'Name': 'Name',
   'Einstellungen': 'Settings',
+  'Gastbestellung': 'Guest order',
+  'Name des Gasts': 'Guest name',
   'Farbe': 'Colour',
   'Sprache': 'Language',
   'Hell': 'Light',
