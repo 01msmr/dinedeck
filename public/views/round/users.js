@@ -14,6 +14,7 @@ export function flagBadge(d, toggle, u, flag) {
   const cls = flag === 'done' ? (on ? (d.ordered_at ? 'faded' : 'mid') : 'off') : 'faded'; // ready gelb (ab „Bestellt“ blass), unready rot, bezahlt/nicht bezahlt neutral grau
   const klass = `badge ${cls}`;
   const content = label;
+  if (flag === 'paid' && !on && !d.ordered_at) return h('span', { class: 'badge faded', title: t('Bezahlen erst nach „Bestellt“') }, t('nicht bezahlt')); // vor „Bestellt“ stehen die Anteile nicht fest: nicht klickbar
   if (flag === 'paid' && !on && !u.done) return h('span', { class: 'badge faded', title: t('Erst ready setzen, dann bezahlen') }, t('nicht bezahlt')); // vor ready nicht klickbar und abgeschwächt (grau)
   if (!editable || flag === 'done') return h('span', { class: klass }, content); // ready wird nur über den Button gesetzt
   const key = lc(u.user);

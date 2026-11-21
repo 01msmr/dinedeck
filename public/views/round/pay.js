@@ -31,9 +31,7 @@ function payRowsDesktop(d) {
   const rows = [title];
   const canPay = !!meU && meU.done && !meU.paid && meU.subtotal_cents > 0; // bezahlen erst nach ready
   const payLink = !isBuyer && canPay && d.paypal ? payHref(d.paypal, meU.total_cents) : null;
-  if (!d.paypal_visible) rows.push(h('div', { class: 'muted' }, t('PayPal-Adresse ist nur für Teilnehmer der Bestellung sichtbar.')));
-  else if (!d.paypal) rows.push(h('div', { class: 'muted' }, t('Keine PayPal-Adresse hinterlegt.')));
-  else {
+  if (d.paypal_visible && d.paypal) {
     rows.splice(
       0,
       1,
@@ -71,9 +69,7 @@ function payRowsMobile(d) {
   const canPay = !!meU && meU.done && !meU.paid && meU.subtotal_cents > 0; // bezahlen erst nach ready
   const payLink = !isBuyer && canPay && d.paypal ? payHref(d.paypal, meU.total_cents) : null;
   const rows = [];
-  if (!d.paypal_visible) rows.push(h('div', { class: 'muted' }, t('PayPal-Adresse ist nur für Teilnehmer der Bestellung sichtbar.')));
-  else if (!d.paypal) rows.push(h('div', { class: 'muted' }, t('Keine PayPal-Adresse hinterlegt.')));
-  else {
+  if (d.paypal_visible && d.paypal) {
     rows.push(h(
       'div',
       { class: 'pay-line' },

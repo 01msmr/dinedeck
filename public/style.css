@@ -72,12 +72,11 @@
   --side-muted: color-mix(in srgb, var(--fg) 96%, var(--side-bg)); /* Nebentext in der Seitenleiste, mind. 4,5:1 */
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
   --side-item-hover: color-mix(in srgb, var(--fg) 10%, var(--side-bg));
-  --head-outline: 0.5rem; /* dicker Rand um den Bestellkopf */
   --trash-bg: light-dark(#76767d, #4a4a52); /* mittelgrau: gelöschte Bestellungen */
   --debts-fg: #fff; /* Schrift auf dem dunkelgrauen Block (in beiden Modi hell) */
   --debts-bg: light-dark(#4d4d52, #222227); /* dunkelgrauer Block der offenen Zahlungen */
-  --head-band-bg: var(--fg); /* dunkler Kopfbereich der Bestellung */
-  --head-band-fg: var(--bg);
+  --head-band-bg: #e3e5ea; /* hellgrauer Kopfbereich der Bestellung, in allen Modi gleich */
+  --head-band-fg: #121214;
   --stripe: color-mix(in srgb, var(--fg) 8%, transparent); /* Zebra-Zeilen */
   --tab-fg: var(--fg); /* Beschriftung inaktiver Tabs */
   --surround-bg: light-dark(color-mix(in srgb, var(--accent) 12%, color-mix(in srgb, var(--black) 12%, var(--bg))), color-mix(in srgb, var(--white) 9%, var(--bg))); /* Fläche um den Inhalt der Bestellung: Mittelton */
@@ -247,11 +246,7 @@ details > summary { cursor: pointer; font-weight: 600; }
 @media (min-width: 62.5em) { main { max-width: 65rem; } }
 /* Kopf der Bestellseite: links Daten/Formular, rechts Frist, Banner, Bezahlen */
 .round-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-.head-main, .head-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.625rem; align-content: start; min-width: 0; }
-.head-formrow { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.5rem 1rem; } /* Löschen unten rechts neben dem Formular, bricht erst bei Platzmangel um */
-.head-formrow > form { flex: 1 1 20rem; min-width: 0; }
-.head-formrow > .row { margin-left: auto; flex: none; }
-@media (min-width: 68.75em) { .round-head:not(.folded) { position: relative; } .round-head:not(.folded) .head-formrow > .row { position: absolute; right: 0.875rem; bottom: 0.875rem; } } /* breit: ganz rechts unten im Kopf */
+.head-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.625rem; align-content: start; min-width: 0; }
 .head-side { gap: 0.5rem; }
 .head-side .card { background: transparent; border: 0; padding: 0; }
 @media (min-width: 68.75em) { .round-head { grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 22.5rem); } }
@@ -320,13 +315,6 @@ a.btn { text-decoration: none; text-align: center; }
 
 .form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
 .form-actions.inline { grid-column: auto; align-self: end; }
-.head-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.5rem 1rem; flex-wrap: wrap; }
-.head-top .fee-field { width: 12rem; max-width: 100%; margin-left: auto; }
-@media (min-width: 30.0625em) { /* Adresszeile und Formular teilen sich die Spalten: Lieferkosten beginnt über dem PayPal-Feld */
-  #head-form, .head-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 6rem; gap: 0.625rem; }
-  .head-top .fee-field { grid-column: 2 / 4; width: auto; margin-left: 0; max-width: 12rem; }
-  .head-top > :first-child { grid-column: 1; align-self: end; }
-}
 
 .dot { display: block; width: 0.875rem; height: 0.875rem; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 1px var(--line); }
 .seg button[aria-pressed="true"] .dot { box-shadow: 0 0 0 0.125rem var(--on-accent); }
@@ -416,7 +404,9 @@ input[type="checkbox"] { width: auto; flex: none; }
 .status-lines > * + * { margin-top: 0.1875rem; }
 .status-flow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: baseline; align-content: center; padding: 0 max(0.875rem, calc((100% - var(--round-w)) / 2)); height: var(--flow-h); box-sizing: border-box; overflow: hidden; font-size: var(--fs-base); position: sticky; top: var(--top-h); z-index: 5; background: var(--bg); }
 .status-flow .step-sep, .ready-strip .step-sep { color: var(--muted); }
+.status-flow .step-sep { font-size: 0.8em; } /* Pfeile kleiner als der Text */
 .status-flow .done, .ready-strip .done { font-weight: 600; color: var(--fg); }
+.status-flow .done { opacity: 0.6; } /* abgelaufene Zustände zurückgenommen */
 .status-flow .now, .ready-strip .now { font-weight: 700; background: var(--ok); color: var(--on-ok); padding: var(--pill-pad-lg); border-radius: var(--radius-pill); }
 .status-flow .step-btn, .status-flow .step-go { border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--fg); font: inherit; font-weight: 600; padding: var(--pill-pad); cursor: pointer; }
 .status-flow .step.now { position: relative; z-index: 1; }
@@ -450,6 +440,11 @@ input[type="checkbox"] { width: auto; flex: none; }
 .status-flow .step-go { font-style: normal; color: var(--muted); }
 .status-flow .step-btn:hover:not(:disabled), .status-flow .step-go:hover:not(:disabled) { background: var(--wash); color: var(--fg); }
 .status-flow .step-go:disabled { cursor: not-allowed; border-style: dashed; opacity: 0.7; }
+@media (hover: hover) { /* ↩ und +5 erst beim Überfahren der Leiste (STATUS.quietButtons in config.js) */
+  .status-flow .step-btn.quiet:not(.confirm) { opacity: 0; transition: opacity 0.15s; }
+  .status-flow:hover .step-btn.quiet, .status-flow:focus-within .step-btn.quiet { opacity: 1; }
+  .status-flow:hover .step-btn.quiet:disabled, .status-flow:focus-within .step-btn.quiet:disabled { opacity: 0.45; }
+}
 .status-flow .step-btn.confirm, .status-flow .step-go.confirm { background: var(--black); color: var(--white); border-color: var(--black); }
 .status-flow .step-time { font-weight: 400; }
 .flow-steps { grid-column: 2; display: flex; justify-content: center; align-items: baseline; gap: 0.625rem; flex-wrap: wrap; } /* Schritte bleiben mittig, links steht das Restaurant */
@@ -477,7 +472,6 @@ input[type="checkbox"] { width: auto; flex: none; }
 
 /* Preis-Hinweis: schlichter Text links unten in der Karte, ohne eigenen Kasten */
 .price-hint { margin: 1.375rem 0 0; font-size: var(--fs-md); color: var(--muted); text-align: left; }
-.price-hint strong { color: var(--fg); }
 
 .add-card { padding-bottom: 0.375rem; }
 
@@ -516,6 +510,9 @@ input[type="checkbox"] { width: auto; flex: none; }
 .bar .badge.value { background: var(--black); color: var(--white); font-weight: 700; }
 .bar .badge { border-color: var(--on-seg-top); } /* 1 px Kontur gegen den Balken */
 
+/* Bestellliste: eckig, rundum 1 px schwarze Linie */
+.order-pane, .round-main > .order-pane, .round-main > .tabs ~ .card.order-pane { border: 1px solid var(--black); border-radius: 0; }
+
 /* Summenzeilen der Bestellliste: Bezeichnung rechtsbündig mit Abstand vor dem Wert */
 tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 
@@ -547,8 +544,8 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, var(--band-bg)); }
 
 /* Restaurant-Kopf: kräftig abgesetzt */
-.round-head { outline: var(--head-outline) solid var(--fg); outline-offset: 0; margin: var(--head-outline); background: var(--head-bg); }
-.round-head { --round-title-size: 1.5rem; } /* Schrift des Namens; der Pfeil davor ist genauso groß */
+.round-head { background: var(--head-bg); }
+.round-head { --round-title-size: 1.5rem; } /* Schrift des Namens */
 .round-head .round-title { margin: 0; font-size: var(--round-title-size); line-height: 1.2; }
 .round-buyer { margin-left: 0.75rem; font-size: var(--fs-lg); font-weight: 400; color: var(--muted); }
 
@@ -636,6 +633,21 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .who-wrap { position: relative; display: inline-flex; }
 .name-pop { position: absolute; top: calc(100% + 0.75rem); right: 0; z-index: 20; width: min(20rem, calc(100vw - 2rem)); background: var(--tint-bg); color: var(--tint-fg); border-color: var(--tint-bg); box-shadow: 0 0.5rem 1.75rem var(--shadow-pop); text-align: left; }
 .name-pop::before { content: ''; position: absolute; top: -0.375rem; right: 1.25rem; width: 0.75rem; height: 0.75rem; background: var(--tint-bg); transform: rotate(45deg); }
+.pop-tabs { display: flex; gap: 1rem; margin: 0 0 0.75rem; border-bottom: 1px solid currentColor; }
+.pop-tab { border: 0; border-bottom: 0.1875rem solid transparent; margin-bottom: -1px; padding: 0.125rem 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.pop-tab[aria-selected="true"] { border-bottom-color: currentColor; }
+.pop-tab[aria-selected="false"] { font-weight: 400; }
+.pop-settings { display: grid; gap: 0.75rem; }
+.pop-settings[hidden] { display: none; }
+.pop-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.pop-row .seg { cursor: default; border: 1px solid currentColor; border-radius: var(--radius-pill); overflow: hidden; }
+.pop-row .seg button { display: flex; pointer-events: auto; color: inherit; border-radius: 0; cursor: pointer; }
+.pop-row .seg button + button { border-left: 1px solid currentColor; }
+.pop-row .seg button:hover { background: color-mix(in srgb, currentColor 15%, transparent); }
+.pop-row .seg button[aria-pressed="true"] { background: var(--tint-fg); color: var(--tint-bg); }
+.pop-row .seg:hover button[aria-pressed="true"] { background: var(--tint-fg); }
+.guest-link { margin: 0.5rem 0 0; font-size: var(--fs-sm); }
+.link-quiet { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .name-pop .muted { color: inherit; opacity: 0.8; }
 .name-pop .btn.ghost { color: inherit; border-color: currentColor; }
 #who { anchor-name: --who; }
@@ -684,18 +696,14 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .qr-fg { fill: var(--qr-dark); }
 .round-head.folded .fold-item { display: none; }
 
-.round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: -0.875rem -0.875rem 0; padding: 0.25rem 1.25rem 0.375rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
+.round-head .head-band { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.125rem 1rem; margin: -0.875rem -0.875rem 0; padding: 0.25rem 1.25rem 0.375rem; background: var(--head-band-bg); color: var(--head-band-fg); border-radius: var(--radius) var(--radius) 0 0; }
 .head-band .round-no { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; font-size: var(--fs-base); font-weight: 400; color: color-mix(in srgb, var(--head-band-fg) 60%, var(--head-band-bg)); } /* Bestellnummer hinter dem Namen, Klick kopiert den Link */
 .head-band .round-no:hover { color: var(--head-band-fg); }
-.head-band .round-name { cursor: pointer; } /* klappt zusammen mit dem Pfeil auf und zu */
 .head-band .round-buyer, .head-band .muted { color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); }
 .head-band a { color: inherit; }
 .head-band button.link-pill { display: inline-flex; align-items: center; gap: 0.25rem; border: 0; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
 .head-band .link-pill, .head-band .link-pill.colored { background: var(--head-band-fg); color: var(--head-band-bg); }
-.fold-toggle { flex: none; display: grid; place-items: center; font-size: var(--round-title-size); width: 0.8em; height: 1.1em; padding: 0; border: 0; border-radius: 0.5rem; background: transparent; color: var(--head-band-fg); cursor: pointer; }
-.fold-toggle .tri { display: block; font-size: 1.7em; font-weight: 600; line-height: 1; transform-origin: 50% 0.59em; translate: 0 -0.267em; transition: transform 0.15s ease; } /* Zeichen so hoch wie die Großbuchstaben; Mitte des Zeichens (nicht der Zeile) ist Drehpunkt und liegt in der Mitte des Feldes */
-.fold-toggle[aria-expanded="true"] .tri { transform: rotate(90deg); }
-@media (prefers-reduced-motion: reduce) { .fold-toggle .tri { transition: none; } }
+.head-band button.link-pill { background: color-mix(in srgb, var(--head-band-fg) 60%, var(--head-band-bg)); } /* „Bestellliste kopieren“: 40 % weniger Kontrast */
 .pay-variant { display: grid; gap: 0.625rem; }
 .mobile-only { display: none; }
 .pay-pill { flex: 0 1 auto; min-width: 0; max-width: calc(100% - 4.5rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-base); padding: var(--pill-pad-lg); }
@@ -756,6 +764,13 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
   .round-head:not(.folded) > .head-side { grid-row: span 2; }
 }
 .head-band .head-contact { margin-left: auto; }
+.head-band .head-sub { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; } /* 2. Zeile: Adresse links, Formular dahinter */
+.head-form { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; }
+.head-form label { display: flex; align-items: center; gap: 0.5rem; font-size: var(--fs-sm); font-weight: 600; }
+.head-form input { width: 7rem; padding: 0.125rem 0.5rem; }
+.head-form input[inputmode="decimal"] { width: 4rem; }
+.head-form .edit-bar { flex-basis: 100%; }
+.head-band .head-address { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); } /* Adresse klein in der ersten Zeile des Kopfbands */
 .head-band .head-contact .row { justify-content: flex-end; }
 .order-table thead th { border-bottom: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); padding-bottom: 0.5rem; }
 .order-table tfoot tr.foot-fees:not(:last-child) td, .order-table tfoot tr.foot-fees:not(:last-child) td:last-child { font-size: var(--fs-md); font-weight: 400; color: var(--pane-muted); } /* Liefer-/Servicekosten klein und zurückhaltend */
@@ -794,22 +809,20 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table tfoot tr:not(:last-child) td:last-child, .order-table tfoot tr:not(:last-child) td.qty-total { font-weight: 700; } /* Betrag und Gesamtzahl fett, nur das Wort „Summe Artikel“ normal */
 /* Dunkler Kopfbereich: alle Texte auf einer gemeinsamen Grundlinie */
 .round-head .head-band { align-items: center; }
-.head-band .fold-toggle { align-self: center; margin-right: -0.5rem; } /* Pfeil direkt am Namen */
 .head-band .round-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.625rem; }
 .head-band .head-contact .row { align-items: center; }
-@media (max-width: 30em) { /* Handy: Pfeil und Name in einer Zeile, darunter Hinweis und Besteller, Kontakt linksbündig */
-  .round-head .head-band { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.25rem 0.5rem; }
-  .head-band .fold-toggle { align-self: start; margin-right: 0; }
+@media (max-width: 30em) { /* Handy: Name, Besteller, Kontakt, Adresse und Formular untereinander */
+  .round-head .head-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem 0.5rem; }
   .round-head { --round-title-size: 1.5rem; }
   .head-band .round-title { min-width: 0; gap: 0.125rem 0.25rem; }
   .head-band .round-buyer { font-size: 0.9375rem; margin-left: 0; }
   .status-flow { font-size: var(--fs-sm); } .flow-steps { gap: 0.25rem 0.375rem; }
   .status-flow .step.now, .status-flow .step-left { padding: 0.1875rem 0.5rem; }
   .status-flow .step-pair, .status-flow .step-group { gap: 0.375rem; }
-  .head-band .head-contact { grid-column: 1 / -1; margin-left: 0; }
+  .head-band .head-contact, .head-band .head-sub { margin-left: 0; }
   .head-band .head-contact .row { justify-content: flex-start; flex-wrap: wrap; }
 }
-.round-head { border: 0; } /* keine dünne Linie zwischen dem dicken Rand und dem dunklen Kopfbereich */
+.round-head { border: 0; }
 .layout:has(#app.wide) .page { background: var(--surround-bg); min-height: 100lvh; } /* Fläche um den Inhalt reicht bis zum unteren Rand, kein weißer Streifen */
 .copy-btn.done { width: auto; padding: 0 0.75rem; white-space: nowrap; font-weight: 600; }
 .side-paid { display: inline-flex; align-items: center; gap: 0.375rem; font-size: var(--fs-md); font-weight: 600; color: var(--fg); white-space: nowrap; }
@@ -823,7 +836,7 @@ button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; fon
 @container roundgrid (min-width: 60rem) {
   .round-main { grid-template-columns: minmax(28rem, 1fr) minmax(31rem, 40rem); column-gap: 1rem; } /* Bestellliste wächst bis 40 rem, links bleiben mindestens 28 rem */
   .round-main > :not(.order-pane) { grid-column: 1; }
-  .round-main > .order-pane { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: sticky; top: calc(var(--top-h) + var(--flow-h)); display: block !important; border-radius: var(--radius); }
+  .round-main > .order-pane { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: sticky; top: calc(var(--top-h) + var(--flow-h)); display: block !important; }
   .round-main > .tabs button[data-tab="order"] { display: none; }
   .round-main[data-tab="order"] > .mine-pane { display: grid !important; } /* gemerkter Tab „Bestellliste“ aus schmaler Ansicht: links „Meine“ zeigen */
 }

@@ -83,6 +83,7 @@ export function createLogic(db, { admins = [] } = {}) {
         if (now < expires) throw new HttpError(400, 'Erst die Bestellung schließen');
         orderedAt = orderedAt ?? now;
       } else {
+        if (q.partAll.all(r.id).some((x) => x.paid)) throw new HttpError(400, 'Erst „bezahlt“ zurücknehmen'); // sonst ändern sich Beträge nach der Zahlung
         orderedAt = null;
         etaAt = null;
         etaMin = null;
@@ -280,6 +281,7 @@ export function createLogic(db, { admins = [] } = {}) {
     if (!self && !isBuyer(r, user)) throw new HttpError(403, 'Bezahlt setzt nur der User selbst oder der Besteller');
     const value = body.value ? 1 : 0;
     if (flag === 'done' && !value && isLocked(r, Date.now())) throw new HttpError(423, 'Bestellung ist geschlossen');
+    if (flag === 'paid' && value && !r.ordered_at) throw new HttpError(400, 'Bezahlen erst nach „Bestellt“'); // vorher stehen Liefer- und Servicekostenanteile nicht fest
     if (flag === 'paid' && value && !q.partGet.get(r.id, target)?.done) throw new HttpError(400, 'Erst ready setzen, dann bezahlen');
     if (r.ordered_at && !q.partGet.get(r.id, target)?.approved) throw new HttpError(423, 'Bestellt – keine neuen User mehr');
     if (self) admit(r, target);

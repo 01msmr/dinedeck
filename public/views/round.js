@@ -10,7 +10,6 @@ import { app, eur, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, 
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
 // Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
-const disclosureTriangle = () => h('span', { class: 'tri', 'aria-hidden': 'true' }, '›');
 
 export function roundView(id) {
   let d = null;
@@ -35,10 +34,6 @@ export function roundView(id) {
   const etaText = h('div', { class: 'semibold' });
   const orderCard = h('section', { class: 'card order-card hidden' });
   let wasOrdered = null;
-  const foldKey = `bb_fold_${id}`;
-  let foldOpen = false; // Details sind standardmäßig zugeklappt; die Wahl gilt je Bestellung für die Sitzung
-  try { foldOpen = sessionStorage.getItem(foldKey) === 'open'; } catch {}
-  const setFold = (open) => { foldOpen = open; try { sessionStorage.setItem(foldKey, open ? 'open' : 'closed'); } catch {} renderHead(); };
   let etaPrefilled = false;
 
   // Persistente Eingabezeile (wird bei Live-Updates nicht neu gebaut)
@@ -108,7 +103,7 @@ export function roundView(id) {
     h('div', { class: 'item-row item-labels muted' }, col('qty', t('Menge')), col('art', t('Artikel')), col('var', t('Variante (optional)')), col('price', t('Preis')), col('act')),
     h('div', { class: 'item-row' }, col('qty', inQty), col('art', inArticle), col('var', inVariant), col('price', h('div', { class: 'price-in' }, inPrice, h('span', { class: 'eur-box' }, '€'))), col('act', addBtn)),
     sugBox,
-    h('div', { class: 'price-hint' }, h('strong', null, t('Preise selbst prüfen. ')), t('Vorgeschlagene Preise stammen aus früheren Bestellungen und können veraltet sein.'))
+    h('div', { class: 'price-hint' }, t('Vorgeschlagene Preise stammen aus früheren Bestellungen und können veraltet sein.'))
   );
   const mineList = h('div', { class: 'card item-card mine-card' });
   mineList.addEventListener('focusout', () => { if (mineDeferred) setTimeout(renderMine, 0); });
@@ -131,7 +126,7 @@ export function roundView(id) {
 
   // Mobil untereinander; ab Desktop-Breite: links Tabs, rechts Frist/Banner/Bezahlen (siehe style.css)
   app.classList.add('wide');
-  head.classList.add('round-head');
+  head.classList.add('round-head', 'folded'); // der Kopf bleibt immer schmal, es gibt kein Aufklappen
   const roundMain = h('div', { class: 'round-main' }, tabsEl, usersPane, minePane, orderPane);
   const roundGrid = h('div', { class: 'round-grid' }, head, debtsHost, roundMain);
   app.replaceChildren(roundGrid);
@@ -162,7 +157,7 @@ export function roundView(id) {
   const eBuyer = h('input', { maxlength: LIMITS.userName, list: 'buyer-round', autocomplete: 'off' });
   const buyerList = h('datalist', { id: 'buyer-round' }); // Vorschläge: die Teilnehmer dieser Bestellung
   const ePaypal = h('input', { maxlength: LIMITS.paypal });
-  const eFee = h('input', { inputmode: 'decimal', form: 'head-form' }); // steht oben neben der Adresse, gehört zum Formular
+  const eFee = h('input', { inputmode: 'decimal' });
   const editInputs = [eBuyer, ePaypal, eFee];
   const saveBtn = h('button', { class: 'btn small', type: 'submit', disabled: true }, t('Speichern'));
   const editFill = h('i');
@@ -197,22 +192,12 @@ export function roundView(id) {
     tickEdit();
   }
   for (const i of editInputs) i.addEventListener('input', () => syncEdit(true));
-  const addrEl = h('div', { class: 'muted fold-item' });
-  const feeLabel = h('label', { class: 'fee-field fold-item' }, t('Lieferkosten (€)'), eFee);
-  const headTop = h('div', { class: 'head-top' }, addrEl, feeLabel); // Adresse links, Lieferkosten rechts
   const headBand = h('div', { class: 'head-band' });
-  const foldBtn = h('button', { class: 'fold-toggle', type: 'button', 'aria-label': t('Details ein-/ausklappen'), onclick: () => setFold(!foldOpen) }, disclosureTriangle()); // bleibt bestehen, damit sich der Pfeil animiert drehen kann
-  headBand.append(foldBtn);
-  headBand.addEventListener('click', (e) => {
-    if (!d || !e.target.closest('.round-name')) return; // nur Chevron (eigener Knopf) und Restaurantname klappen auf und zu
-    setFold(!foldOpen);
-  });
-  const headMeta = h('div', { class: 'muted mt-2 fold-item' });
   const headForm = h(
     'form',
     {
       id: 'head-form',
-      class: 'grid2 mt-4 fold-item',
+      class: 'head-form',
       onsubmit: async (e) => {
         e.preventDefault();
         const ok = await act(() => api('PATCH', `/rounds/${id}`, { buyer: eBuyer.value, paypal: ePaypal.value, delivery_fee: parseMoney(eFee.value) }));
@@ -225,10 +210,11 @@ export function roundView(id) {
     },
     h('label', null, t('Bestellt von'), eBuyer, buyerList),
     h('label', null, 'PayPal', ePaypal),
-    h('div', { class: 'form-actions inline' }, saveBtn), // Speichern am Ende der Zeile Besteller/PayPal
+    h('label', null, t('Lieferkosten (€)'), eFee),
+    saveBtn,
     editBar
   );
-  // Löschen: nur Ersteller oder Admin, nur im aufgeklappten Kopf, mit Sicherheitsabfrage
+  // Löschen: nur Ersteller oder Admin, mit Sicherheitsabfrage
   const deleteBtn = h('button', {
     class: 'btn small danger', type: 'button',
     onclick: async () => {
@@ -243,8 +229,7 @@ export function roundView(id) {
       location.hash = '#/';
     },
   }, t('Bestellung löschen'));
-  const deleteRow = h('div', { class: 'row end fold-item' }, deleteBtn);
-  head.append(headBand, h('div', { class: 'head-main' }, headTop, headMeta, h('div', { class: 'head-formrow' }, headForm, deleteRow)), h('div', { class: 'head-side' }, timerCard, orderCard));
+  head.append(headBand, h('div', { class: 'head-side' }, timerCard, orderCard));
 
   // Klick auf die Bestellnummer: Link zu dieser Bestellung in die Zwischenablage
   async function copyOrderUrl(e) {
@@ -258,28 +243,22 @@ export function roundView(id) {
   }
 
   function renderHead() {
-    headBand.classList.add('foldable');
-    foldBtn.setAttribute('aria-expanded', String(foldOpen));
-    for (const el of [...headBand.children]) if (el !== foldBtn) el.remove(); // foldBtn bleibt eingehängt, sonst gibt es keine Drehanimation
-    headBand.append(
+    const manage = d.viewer.can_manage;
+    const locked = !!d.ordered_at; // ab „Bestellt“ nicht mehr änderbar: Formular entfällt, das spart eine Zeile
+    const editable = manage && !locked;
+    const sub = [...(d.restaurant.address ? [h('span', { class: 'head-address muted' }, d.restaurant.address)] : []), ...(editable ? [headForm, ...(d.viewer.can_delete ? [deleteBtn] : [])] : [])];
+    headBand.replaceChildren(
       h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
-      h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }))) // Kontakt zum Bestellen: immer sichtbar, für alle
+      h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }), ...(d.viewer.can_delete && !editable ? [deleteBtn] : []))), // Kontakt zum Bestellen für alle; Löschen nur Ersteller/Admin
+      ...(sub.length ? [h('div', { class: 'head-sub' }, ...sub)] : []) // 2. Zeile: Adresse links, dahinter (Besteller, Ersteller, Admins) das schmale Formular
     );
     buyerList.replaceChildren(...d.users.map((u) => h('option', { value: u.user })));
-    addrEl.textContent = d.restaurant.address || '';
-    head.classList.toggle('folded', !foldOpen);
-    const manage = d.viewer.can_manage;
-    headMeta.replaceChildren(...(manage || !d.delivery_fee_cents ? [] : [t('Lieferkosten: {fee}', { fee: eur(d.delivery_fee_cents) })]));
-    headForm.classList.toggle('hidden', !manage);
-    deleteRow.classList.toggle('hidden', !d.viewer.can_delete);
-    feeLabel.classList.toggle('hidden', !manage);
     const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents)];
     saved = vals;
     editInputs.forEach((i, n) => {
       if (!i.dataset.dirty) i.value = vals[n];
     });
     syncEdit(false);
-    const locked = !!d.ordered_at; // ab „Bestellt“ nicht mehr änderbar
     for (const i of editInputs) i.disabled = locked;
     saveBtn.classList.toggle('hidden', locked);
     editBar.classList.toggle('hidden', locked || editBar.classList.contains('hidden'));
@@ -403,7 +382,6 @@ export function roundView(id) {
         sumRow(t('Summe Artikel'), mineU.excluded ? mineU.preview_cents : mineU.subtotal_cents), // nicht ready: Vorschau, zählt noch nicht
         mineU.fee_cents ? sumRow(`${t('Lieferanteil')} (${t('{fee} / {n} Besteller', { fee: eur(d.delivery_fee_cents), n: counted })})`, mineU.fee_cents) : null,
         sumRow(t('Summe'), mineU.excluded ? mineU.preview_cents : mineU.total_cents, 'total')),
-      h('div', { class: 'row mt-3' }, h('span', { class: 'muted' }, t('Ready = deine Bestellung ist komplett. Bezahlt = du hast dem Besteller dein Geld gegeben.'))),
       h(
         'div',
         { class: 'ready-bar' + (mineU.done ? ' is-done' : '') },

@@ -72,6 +72,5 @@ export function orderContent(d) {
     d.users.some((u) => u.excluded)
       ? h('p', { class: 'muted mt-3' }, t('{n} nicht ready – nicht enthalten: {names}', { n: d.users.filter((u) => u.excluded).length, names: d.users.filter((u) => u.excluded).map((u) => u.user).join(', ') }))
       : null,
-    placed ? null : h('div', { class: 'notice mt-4' }, h('strong', null, t('Preise sind nicht geprüft')))
   ];
 }

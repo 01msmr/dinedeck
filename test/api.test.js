@@ -56,12 +56,14 @@ test('Runde: Gruppierung, Liefergebühr, Schulden, Rechte', async () => {
     const anna = d.users.find((u) => u.user === 'anna');
     assert.equal(anna.done, true);
     assert.equal(anna.paid, false);
-    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true })).status, 200, 'Besteller darf bezahlt setzen');
+    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true })).status, 400, 'vor „Bestellt“ nicht bezahlbar');
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'bob', { user: 'anna', value: false })).status, 403);
 
     // Sperre per Ablauf
     assert.equal((await call('POST', `/api/rounds/${id}/time`, 'anna', { action: 'lock' })).status, 403);
     assert.equal((await call('POST', `/api/rounds/${id}/time`, 'root', { action: 'lock' })).status, 200);
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
+    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true })).status, 200, 'Besteller darf ab „Bestellt“ bezahlt setzen');
     assert.equal((await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Tiramisu', price: 4, qty: 1 })).status, 423);
 
     d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
@@ -69,7 +71,9 @@ test('Runde: Gruppierung, Liefergebühr, Schulden, Rechte', async () => {
     assert.equal(d.debts.length, 0, 'Besteller schuldet sich nichts, anna hat bezahlt');
     assert.equal(d.unpaid, false);
 
-    // Wieder öffnen
+    // Wieder öffnen: erst Bezahltes und „Bestellt“ zurücknehmen
+    await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: false });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: false });
     const re = await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'reopen', minutes: 5 });
     assert.equal(re.body.locked, false);
 
@@ -327,6 +331,8 @@ test('„ready“ kann nur der User selbst setzen, auch nicht Ersteller/Admin', 
       assert.equal((await call('POST', `/api/rounds/${id}/done`, who, { user: 'anna', value: true })).status, 403, `${who} darf nicht`);
     }
     assert.equal((await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true })).status, 200);
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true })).status, 200, 'bezahlt setzt weiter der Besteller');
   } finally {
     await close();
@@ -487,6 +493,8 @@ test('„Bezahlt“ setzt nur der User selbst oder der Besteller – nicht Erste
     assert.equal((await paid('root', 'anna')).status, 403, 'Admin nicht');
     assert.equal((await paid('clara', 'anna')).status, 403, 'Fremde nicht');
     await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    await call('PATCH', `/api/rounds/${id}`, 'bob', { ordered: true });
     assert.equal((await paid('bob', 'anna')).status, 200, 'Besteller darf');
     assert.equal((await paid('anna', 'anna', false)).status, 200, 'User selbst darf');
     const d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
@@ -524,7 +532,8 @@ test('Ab „Bestellt“: keine Artikeländerung, keine neuen User, Frist nicht n
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'zoe', value: true })).status >= 400, true, 'neuer User per Bezahlt');
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true })).status, 200, 'bestehende User weiter bezahlbar');
 
-    // Zurücknehmen öffnet wieder
+    // Zurücknehmen öffnet wieder (erst das Bezahlte zurücknehmen)
+    await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: false });
     await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: false });
     assert.equal((await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'reopen' })).status, 200);
     assert.equal((await call('POST', `/api/rounds/${id}/items`, 'alex', { article: 'X', price: '1' })).status, 201);
@@ -627,13 +636,16 @@ test('FRAME_ANCESTORS erlaubt das Einbetten nur für die genannten Seiten', asyn
   }
 });
 
-test('Bezahlt erst nach ready', async () => {
+test('Bezahlt erst nach ready und „Bestellt“', async () => {
   const { call, close } = await boot();
   try {
     const id = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza Roma' } })).body.id;
     await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: 3, qty: 1 });
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'anna', { value: true })).status, 400, 'noch nicht ready');
     await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'anna', { value: true })).status, 400, 'ready, aber noch nicht bestellt');
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
     assert.equal((await call('POST', `/api/rounds/${id}/paid`, 'anna', { value: true })).status, 200);
   } finally {
     await close();
@@ -821,6 +833,26 @@ test('Nummern: eine gelöschte Bestellung behält ihre Nummer reserviert und kom
     assert.equal(back.body.id, a, 'kommt mit der alten Nummer zurück');
     assert.equal((await call('GET', `/api/rounds/${b}`, 'alex')).body.restaurant.name, 'B');
     assert.equal((await call('GET', `/api/rounds/${a}`, 'alex')).body.restaurant.name, 'A');
+  } finally {
+    await close();
+  }
+});
+
+test('Bezahlt erst ab „Bestellt“; mit Bezahltem lässt sich „Bestellt“ nicht zurücknehmen', async () => {
+  const { call, close } = await boot();
+  try {
+    const { id } = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza' }, minutes: 20 })).body;
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2' });
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    const paid = (value = true) => call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value });
+    const unorder = () => call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: false });
+    assert.equal((await paid()).status, 400, 'vor „Bestellt“ nicht bezahlbar, die Anteile stehen noch nicht fest');
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
+    assert.equal((await paid()).status, 200, 'ab „Bestellt“ bezahlbar');
+    assert.equal((await unorder()).status, 400, 'mit Bezahltem nicht zurücknehmbar');
+    await paid(false);
+    assert.equal((await unorder()).status, 200, 'ohne Bezahltes wieder möglich');
   } finally {
     await close();
   }

@@ -1,10 +1,12 @@
 // Statusleiste oben: Ablaufzeile, Hinweise, offene Beträge
 import { t } from '/i18n.js';
-import { TIMING, DEFAULTS } from '/config.js';
+import { TIMING, DEFAULTS, STATUS } from '/config.js';
 import { isToday, beforeThisYear } from '/format.js';
 import { debtChipEl, debtsHead } from '/views/round/debt-row.js';
 import { payRows } from '/views/round/pay.js';
 import { fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
+
+const quiet = STATUS.quietButtons ? ' quiet' : '';
 
 export function createStatus({ banners, debtsHost, toggle, decide, undo, advance, etaField, time, autoClose }) {
   let d = null;
@@ -43,7 +45,7 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
     };
     const after = new Map(); // Schritt -> Knopf direkt dahinter
     const undoable = (el, body) => {
-      if (d.viewer.can_manage) after.set(el, h('button', { class: 'step-btn' + (asking('undo') ? ' confirm' : ''), type: 'button', title: typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), 'aria-label': typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), onclick: run('undo', () => (typeof body === 'function' ? body() : undo(body))) }, asking('undo') ? t('zurücknehmen?') : '↩'));
+      if (d.viewer.can_manage) after.set(el, h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), 'aria-label': typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), onclick: run('undo', () => (typeof body === 'function' ? body() : undo(body))) }, asking('undo') ? t('zurücknehmen?') : '↩'));
       return el;
     };
     const goStep = (key, label, ask, can = true, hint = '') =>
@@ -62,8 +64,8 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
         const pill = allReady ? step('now ready', `✓ ${readyTxt}`) : Object.assign(step('now unready', readyTxt), { title: names });
         const when = h('span', { class: 'step-left', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)); // Schloss + Schließzeit statt Restzeit
         if (!d.viewer.can_manage) return h('span', { class: 'step-group' }, pill, when);
-        const plus = h('button', { class: 'step-btn', type: 'button', disabled: true, title: t('Zum Verlängern erst wieder öffnen'), 'aria-label': t('Zum Verlängern erst wieder öffnen') }, `+${DEFAULTS.extendMinutes}`);
-        const reopen = h('button', { class: 'step-btn' + (asking('undo') ? ' confirm' : ''), type: 'button', title: t('Wieder öffnen'), 'aria-label': t('Wieder öffnen'), onclick: run('undo', () => time('reopen', DEFAULTS.extendMinutes)) }, asking('undo') ? t('öffnen?') : undoIcon());
+        const plus = h('button', { class: 'step-btn' + quiet, type: 'button', disabled: true, title: t('Zum Verlängern erst wieder öffnen'), 'aria-label': t('Zum Verlängern erst wieder öffnen') }, `+${DEFAULTS.extendMinutes}`);
+        const reopen = h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: t('Wieder öffnen'), 'aria-label': t('Wieder öffnen'), onclick: run('undo', () => time('reopen', DEFAULTS.extendMinutes)) }, asking('undo') ? t('öffnen?') : undoIcon());
         return h('span', { class: 'step-group' }, pill, plus, when, reopen); // am selben Platz wie vorher das Schloss
       }
       const hint = t('Schließen, wenn alle ready');
@@ -72,7 +74,7 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
       const left = h('span', { class: 'step-left', 'data-until': d.expires_at, title: t('Bestellfrist') }, fmtRemaining(d.expires_at - d.server_now)); // tickt zentral (side.js)
       const closeBtn = h('button', { class: 'step-btn' + (asking('close') ? ' confirm' : ''), type: 'button', title: t('Jetzt schließen'), 'aria-label': t('Jetzt schließen'), onclick: run('close', () => advance('close')) }, asking('close') ? t('schließen?') : lockIcon());
       if (!d.viewer.can_manage) return h('span', { class: 'step-group' }, pill, left);
-      const plus = h('button', { class: 'step-btn', type: 'button', title: t('Frist verlängern'), 'aria-label': t('Frist verlängern'), onclick: () => time('extend', DEFAULTS.extendMinutes) }, `+${DEFAULTS.extendMinutes}`);
+      const plus = h('button', { class: 'step-btn' + quiet, type: 'button', title: t('Frist verlängern'), 'aria-label': t('Frist verlängern'), onclick: () => time('extend', DEFAULTS.extendMinutes) }, `+${DEFAULTS.extendMinutes}`);
       return h('span', { class: 'step-group' }, pill, plus, left, closeBtn); // ready allein, dann +5, Restzeit, Schloss (Schließen)
     };
     // Ab „Bestellt“: ready erledigt, Schloss + Schließzeit bleiben sichtbar (zurückhaltend), kein +5; Öffnen geht erst nach „Bestellt zurücknehmen“

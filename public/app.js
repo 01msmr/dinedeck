@@ -13,6 +13,7 @@ import { allView } from '/views/all.js';
 
 const whoBtn = document.getElementById('who');
 const whoWrap = whoBtn.parentElement;
+const settingsSrc = document.getElementById('settings-src'); // Modus, Sprache, Farbe: erscheinen im Nutzer-Popup unter „Einstellungen“
 
 function askName(overlay = false) {
   return new Promise((resolve) => {
@@ -22,7 +23,8 @@ function askName(overlay = false) {
     const close = () => {
       document.removeEventListener('pointerdown', outside, true);
       document.removeEventListener('keydown', onKey);
-      form.remove();
+      for (const seg of settingsPanel?.querySelectorAll('.seg') ?? []) settingsSrc.append(seg); // Schalter zurück ins Versteck, theme.js findet sie dort
+      root.remove();
     };
     const outside = (e) => { if (!whoWrap.contains(e.target)) { close(); resolve(false); } };
     const onKey = (e) => { if (e.key === 'Escape') { close(); resolve(false); } };
@@ -35,28 +37,40 @@ function askName(overlay = false) {
     const form = h(
       'form',
       {
-        class: overlay ? 'card name-pop' : 'card',
+        class: overlay ? null : 'card',
         onsubmit: (e) => {
           e.preventDefault();
           done(false);
         },
       },
-      overlay ? h('span', { class: 'name-pop-arrow', 'aria-hidden': 'true' }) : null,
       h('h2', null, t('Wie heißt du?')),
       h('p', { class: 'muted' }, t('Gleicher Name = gleiche Person.')),
       h('div', { class: 'grow' }, input, known),
+      h('p', { class: 'guest-link' }, h('button', { class: 'link-quiet', type: 'button', title: t('Bestelle für jemand anderen'), onclick: () => done(true) }, t('Als Gast'))), // Gast: Nebensache, nur ein leiser Textlink
       h(
         'div',
         { class: 'form-actions mt-4 gap-3 wrap' },
         isGuest && homeName()
           ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { setMe(homeName()); if (overlay) close(); resolve(true); } }, `${t('Zurück zu')} ${homeName()}`)
           : null,
-        h('button', { class: 'btn ghost', type: 'button', title: t('Bestelle für jemand anderen'), onclick: () => done(true) }, t('Als Gast')),
         h('button', { class: 'btn', type: 'submit' }, t('Los'))
       )
     );
+    // Im Popup: zwei Reiter, „Name“ und „Einstellungen“ (Modus, Sprache, Farbe)
+    const settingsPanel = overlay
+      ? h('div', { class: 'pop-settings', hidden: true }, ...[...settingsSrc.querySelectorAll('.seg')].map((seg) => h('div', { class: 'pop-row' }, h('span', null, t(seg.dataset.i18nTitle)), seg)))
+      : null;
+    const tabName = h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': 'true', onclick: () => showTab(true) }, t('Name'));
+    const tabSet = h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': 'false', onclick: () => showTab(false) }, t('Einstellungen'));
+    const showTab = (name) => {
+      tabName.setAttribute('aria-selected', String(name));
+      tabSet.setAttribute('aria-selected', String(!name));
+      form.hidden = !name;
+      settingsPanel.hidden = name;
+    };
+    const root = overlay ? h('div', { class: 'card name-pop' }, h('span', { class: 'name-pop-arrow', 'aria-hidden': 'true' }), h('div', { class: 'pop-tabs', role: 'tablist' }, tabName, tabSet), form, settingsPanel) : form;
     if (overlay) {
-      whoWrap.append(form);
+      whoWrap.append(root);
       document.addEventListener('pointerdown', outside, true);
       document.addEventListener('keydown', onKey);
     } else app.replaceChildren(form);

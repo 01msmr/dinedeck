@@ -58,21 +58,22 @@
       for (const b of panel.querySelectorAll('[data-theme]')) b.setAttribute('aria-pressed', String(b.dataset.theme === theme));
       for (const b of panel.querySelectorAll('[data-lang]')) b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
     };
-    // Ein Klick schaltet die Gruppe auf den nächsten Zustand weiter; sichtbar ist nur der aktive
+    // Im Nutzer-Popup (Einstellungen) wählt ein Klick direkt den Wert; sonst schaltet er die Gruppe weiter
     const next = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
     panel.addEventListener('click', (e) => {
       const kind = e.target.closest('.seg')?.dataset.cycle;
+      const pick = e.target.closest('.pop-settings button');
       if (kind === 'lang') {
-        lang = next(LANGS, lang);
+        lang = pick ? pick.dataset.lang : next(LANGS, lang);
         save('bb_lang', lang);
         location.reload(); // Sprache wird beim Laden angewendet
         return;
       }
       if (kind === 'mode') {
-        mode = next(MODES, mode);
+        mode = pick ? pick.dataset.mode : next(MODES, mode);
         save('bb_mode', mode);
       } else if (kind === 'theme') {
-        theme = next(THEMES, theme);
+        theme = pick ? pick.dataset.theme : next(THEMES, theme);
         save('bb_theme', theme);
       } else return;
       apply();

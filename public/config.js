@@ -81,6 +81,11 @@ export const SOUND = {
   fadeSec: 0.2, // Ausblenden am Ende
 };
 
+/** Ablaufleiste. */
+export const STATUS = {
+  quietButtons: true, // ↩ und +5 erst beim Überfahren sichtbar (nur Geräte mit Maus); false = immer sichtbar wie vorher
+};
+
 /** Personen-Strips in „Alle Bestellungen“. */
 export const STRIPS = {
   namePadPx: 16, // Platz je Strip neben dem Namen (Innenabstand und Trenner); reicht der Platz nicht, wird in Zeilen umbrochen
