@@ -21,6 +21,13 @@
   --on-warn: #2b2000;
   --bad: light-dark(#e5322d, #f0504b);
   --on-bad: #ffffff;
+  --seg-paid: #1e7a3c; /* Balken in Alle Bestellungen: bezahlt, mit weißer Schrift mind. 4,5:1 */
+  --seg-open: #c4231f;
+  --on-seg: #ffffff;
+  --seg-rest: light-dark(#c4c5cc, #5a5b63); /* unbezahlter Rest im Kreis */
+  --seg-gap: 0.1875rem; /* durchsichtiger Spalt zwischen bezahlt und offen */
+  --seg-line-w: 0.0625rem; /* Strich zwischen Personen */
+  --seg-line: color-mix(in srgb, var(--seg-paid) 33%, transparent);
   /* Textfarben für Status auf neutralem Grund */
   --ok-text: light-dark(#1e7a3c, #4cb872);
   --bad-text: light-dark(#b3261e, #ee6b6b);
@@ -476,6 +483,26 @@ input[type="checkbox"] { width: auto; flex: none; }
 
 /* Heute-Bestellungen in „Alle Bestellungen“: hervorgehoben, vor der Monatsliste */
 .round-link.today .card { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color: var(--accent); }
+
+/* Alle Bestellungen ab „Bestellt“: Zeilenhintergrund als Personen-Balken; schmaler grüner Strich (33 %) zwischen Personen, durchsichtiger Spalt zwischen bezahlt und offen */
+.round-link.pay-bar { display: flex; align-items: center; gap: 0.75rem; }
+.pay-mark { flex: none; box-sizing: border-box; width: 2.5rem; height: 2.5rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; }
+.pay-mark.ring { border: 0.3125rem solid var(--bad); background: conic-gradient(var(--seg-paid) var(--paid), var(--seg-rest) 0); } /* Uhr-Sektor ab 12 Uhr: bezahlter Anteil */
+.pay-mark.done { background: var(--seg-paid); color: var(--on-seg); }
+.card.bar { flex: 1; min-width: 0; display: grid; padding: 0; overflow: hidden; background: transparent; border: 0; color: var(--on-seg); }
+.round-link.pay-bar:hover .card.bar { background: transparent; }
+.round-link.pay-bar:hover .pseg { filter: brightness(1.12); }
+.bar .psegs, .bar .bar-body { grid-area: 1 / 1; }
+.psegs { display: flex; }
+.psep { flex: none; }
+.psep.line { width: var(--seg-line-w); background: var(--seg-line); }
+.psep.gap { width: var(--seg-gap); }
+.pseg { flex: 1; min-width: 0; display: flex; align-items: flex-end; justify-content: center; padding: 0 0.25rem 0.375rem; }
+.pseg.paid { background: var(--seg-paid); }
+.pseg.open { background: var(--seg-open); }
+.pseg-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; }
+.bar-body { position: relative; padding: 0.875rem 0.875rem 1.75rem; display: grid; gap: 0.25rem; align-content: start; }
+.bar-meta { text-align: right; }
 
 /* Summenzeilen der Bestellliste: Bezeichnung rechtsbündig mit Abstand vor dem Wert */
 tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }

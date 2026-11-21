@@ -9,8 +9,37 @@ import { app, eur, fmtDate, lc, h, api, act, me, parseMoney, money } from '/util
 // „abc, def und xyz“ mit fetten Namen
 const boldNames = (names) => names.flatMap((n, i) => [i === 0 ? null : i === names.length - 1 ? ` ${t('und')} ` : ', ', h('strong', null, n)]).filter(Boolean);
 
+// Ab „Bestellt“: Zeilenhintergrund als Balken, ein Strip je Person (bezahlt links), Uhr-Kreis bzw. Haken davor
+function payBarItem(r, stage) {
+  const payers = [...r.payers].sort((a, b) => Number(b.paid) - Number(a.paid)); // Bezahlte links, sonst Reihenfolge wie im Tab „Alle“
+  const paidN = payers.filter((p) => p.paid).length;
+  const open = paidN < payers.length;
+  // Zwischen Personen ein schmaler Strich, beim Wechsel bezahlt/offen ein breiterer durchsichtiger Spalt
+  const strips = payers.flatMap((p, i) => [
+    i > 0 ? h('span', { class: 'psep ' + (payers[i - 1].paid === p.paid ? 'line' : 'gap') }) : null,
+    h('span', { class: 'pseg ' + (p.paid ? 'paid' : 'open') }, h('span', { class: 'pseg-name' }, p.paid ? `✓ ${p.user}` : p.user)),
+  ]);
+  return h(
+    'a',
+    { class: 'round-link pay-bar', href: `#/r/${r.id}` },
+    h('span', { class: 'pay-mark ' + (open ? 'ring' : 'done'), style: `--paid: ${(100 * paidN) / payers.length}%`, title: `${t('bezahlt')}: ${paidN}/${payers.length}`, role: 'img', 'aria-label': `${t('bezahlt')}: ${paidN}/${payers.length}` }, open ? null : '✓'),
+    h(
+      'div',
+      { class: 'card bar' },
+      h('div', { class: 'psegs' }, ...strips),
+      h(
+        'div',
+        { class: 'bar-body' },
+        h('div', { class: 'row between' }, h('strong', null, r.restaurant), h('span', { class: 'bar-meta' }, `${fmtDate(r.created_at)} · ${t('bestellt von')} ${r.buyer} · ${eur(r.total_cents)}`)),
+        stage === 'alles bezahlt' ? null : h('div', { class: 'row end' }, h('span', null, t(stage)))
+      )
+    )
+  );
+}
+
 export const roundItem = (r, highlight = false) => {
   const stage = roundStage(r);
+  if (r.ordered && r.payers?.length) return payBarItem(r, stage);
   const paid = stage === 'alles bezahlt';
   const payment = paid
     ? h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('bezahlt'))

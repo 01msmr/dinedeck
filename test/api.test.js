@@ -98,6 +98,10 @@ test('Unbezahlte Runde und Statistik', async () => {
     assert.equal(list[0].unpaid, true);
     assert.equal(list[0].all_paid, false);
     assert.deepEqual(list[0].debts_users.sort(), ['anna', 'bob']);
+    assert.deepEqual(list[0].payers, [{ user: 'anna', paid: false }, { user: 'bob', paid: false }], 'ein Segment je Person mit Bestellung');
+    await call('POST', `/api/rounds/${id}/paid`, 'alex', { user: 'anna', value: true });
+    list = (await call('GET', '/api/rounds', 'alex')).body;
+    assert.deepEqual(list[0].payers.map((p) => p.paid), [true, false]);
 
     const st = (await call('GET', '/api/stats?scope=last30', 'alex')).body;
     assert.equal(st.restaurants[0].name, 'Burger Hub');

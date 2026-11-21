@@ -103,6 +103,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
       grand_total_cents: itemsTotal + r.delivery_fee_cents,
       ready: { total: users.length, done: users.length - notReady.length, not_ready: notReady },
       debts,
+      payers: withOrders.map((u) => ({ user: u.user, paid: u.paid || lower(u.user) === lower(r.buyer) })), // Besteller schuldet sich nichts
       debts_total_cents: debts.reduce((a, d) => a + d.amount_cents, 0),
       unpaid: locked && !!r.ordered_at && debts.length > 0,
       viewer: viewer
@@ -172,6 +173,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
         total_cents: d.grand_total_cents,
         debts_total_cents: d.debts_total_cents,
         debts_users: d.debts.map((x) => x.user),
+        payers: d.payers,
       };
     });
   }
