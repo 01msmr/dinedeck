@@ -3,41 +3,45 @@ import { t } from '/i18n.js';
 import { TIMING } from '/config.js';
 import { eur, h, lc, me } from '/util.js';
 import { nbspUnits } from '/format.js';
+import { checkPill, filterPill } from '/views/check-pill.js';
 
 let payConfirm = null; // { user, timer }: wartet auf die zweite Bestätigung
 
 export function flagBadge(d, toggle, u, flag) {
-  const on = u[flag];
-  const editable = lc(u.user) === lc(me) || (flag === 'paid' && d.viewer.is_buyer);
-  // Zahlungsstand zeigt nur der Streifen der Karte in Farbe; die Marke bleibt neutral (Text), ready ist gelb/rot
-  const label = flag === 'done' ? (on ? t('✓ ready') : t('○ unready')) : on ? t('✓ bezahlt') : editable ? t('als bezahlt markieren') : t('nicht bezahlt');
-  const cls = flag === 'done' ? (on ? (d.ordered_at ? 'faded' : 'mid') : 'off') : 'faded'; // ready gelb (ab „Bestellt“ blass), unready rot, bezahlt/nicht bezahlt neutral grau
-  const klass = `badge ${cls}`;
-  const content = label;
-  if (flag === 'paid' && !on && !d.ordered_at) return h('span', { class: 'badge faded', title: t('Bezahlen erst nach „Bestellt“') }, t('nicht bezahlt')); // vor „Bestellt“ stehen die Anteile nicht fest: nicht klickbar
-  if (flag === 'paid' && !on && !u.done) return h('span', { class: 'badge faded', title: t('Erst ready setzen, dann bezahlen') }, t('nicht bezahlt')); // vor ready nicht klickbar und abgeschwächt (grau)
-  if (!editable || flag === 'done') return h('span', { class: klass }, content); // ready wird nur über den Button gesetzt
+  const on = !!u[flag];
+  if (flag === 'done') { // ready setzt nur der Nutzer selbst (auch hier, wie im Reiter); nach „bezahlt“ und ab „geliefert“ blass und fest
+    const fixed = !!u.paid || !!d.delivered_at;
+    const own = lc(u.user) === lc(me) && !fixed && !(on && d.locked);
+    return checkPill(t('ready'), { on, dim: fixed, title: own && !on ? t('Klicken: als ready bestätigen') : null, onclick: own ? () => toggle('done', { user: u.user, value: !on }) : null });
+  }
+  const editable = lc(u.user) === lc(me) || d.viewer.is_buyer;
+  const blocked = !d.ordered_at ? t('Bezahlen erst nach „Bestellt“') : !u.done ? t('Erst ready setzen, dann bezahlen') : null; // vorher stehen Anteile bzw. Artikel nicht fest
+  const clickable = editable && !blocked;
   const key = lc(u.user);
-  const confirming = flag === 'paid' && !on; // „bezahlt“ setzen braucht eine zweite Bestätigung
+  const confirming = !on; // „bezahlt“ setzen braucht eine zweite Bestätigung
   const asking = confirming && payConfirm?.user === key;
-  const btn = h('button', { class: asking ? `${klass} confirm` : klass, title: t('Umschalten') }, asking ? t('ist bezahlt?') : content);
-  btn.addEventListener('click', () => {
-    if (!confirming) return toggle(flag, { user: u.user, value: !on });
-    if (payConfirm?.user === key) {
-      clearTimeout(payConfirm.timer);
-      payConfirm = null;
-      return toggle(flag, { user: u.user, value: true });
-    }
-    clearTimeout(payConfirm?.timer);
-    payConfirm = { user: key, timer: setTimeout(() => { payConfirm = null; btn.textContent = label; btn.classList.remove('confirm'); }, TIMING.confirmMs) };
-    btn.textContent = t('ist bezahlt?');
-    btn.classList.add('confirm');
+  const pill = checkPill(asking ? t('ist bezahlt?') : t('bezahlt'), {
+    on, dim: !on && !!blocked, confirm: asking, title: blocked ?? (clickable ? t('Umschalten') : null),
+    onclick: clickable
+      ? () => {
+          if (!confirming) return toggle(flag, { user: u.user, value: false });
+          if (payConfirm?.user === key) {
+            clearTimeout(payConfirm.timer);
+            payConfirm = null;
+            return toggle(flag, { user: u.user, value: true });
+          }
+          clearTimeout(payConfirm?.timer);
+          payConfirm = { user: key, timer: setTimeout(() => { payConfirm = null; pill.querySelector('.cp-label').textContent = t('bezahlt'); pill.classList.remove('confirm'); }, TIMING.confirmMs) };
+          pill.querySelector('.cp-label').textContent = t('ist bezahlt?');
+          pill.classList.add('confirm');
+        }
+      : null,
   });
-  return btn;
+  return pill;
 }
 
-// Passive Marke „ist Besteller“ (grau, wie ein inaktives ready)
-export const buyerBadge = () => h('span', { class: 'badge idle', title: t('Der Besteller zahlt bei der Bestellung und bekommt das Geld von den anderen.') }, t('ist Besteller'));
+// „ist Besteller“: nur eine Anzeige, Text mit Haken davor, ab „geliefert“ blass
+export const buyerBadge = (d) => h('span', { class: 'role-note' + (d.delivered_at ? ' dim' : ''), title: t('Der Besteller zahlt bei der Bestellung und bekommt das Geld von den anderen.') }, `✓ ${t('ist Besteller')}`);
 
 // Spalten: Menge · Artikel · Einzelpreis · Gesamtsumme (nur in der Zeile des letzten Artikels); keine Zeilensummen
 function itemsTable(u, single, total) {
@@ -68,27 +72,32 @@ export function renderUsers(d, toggle, usersPane) {
     return h(
       'section',
       { class: `card user-card ${u.done ? (u.paid || lc(u.user) === lc(d.buyer) ? 'paid' : 'unpaid') : 'unready'}` },
-      h('div', { class: 'row between card-head' }, h('div', { class: 'row gap-3' }, h('strong', null, u.user + (lc(u.user) === lc(d.buyer) ? t(' (Besteller)') : '')), count > 1 || u.fee_cents ? h('span', { class: 'muted' }, [count > 1 ? t('{n} Artikel', { n: count }) : null, u.fee_cents ? `${t('Lieferanteil')} ${eur(u.fee_cents)}` : null].filter(Boolean).join(' · ')) : null), h('div', { class: 'row' }, flagBadge(d, toggle, u, 'done'), lc(u.user) === lc(d.buyer) ? buyerBadge() : null, !u.done || lc(u.user) === lc(d.buyer) ? null : flagBadge(d, toggle, u, 'paid'))),
+      h('div', { class: 'row between card-head' }, h('div', { class: 'row gap-3' }, h('strong', null, u.user + (lc(u.user) === lc(d.buyer) ? t(' (Besteller)') : '')), count > 1 || u.fee_cents ? h('span', { class: 'muted' }, [count > 1 ? t('{n} Artikel', { n: count }) : null, u.fee_cents ? `${t('Liefer- und Serviceanteil')} ${eur(u.fee_cents)}` : null].filter(Boolean).join(' · ')) : null), h('div', { class: 'row' }, flagBadge(d, toggle, u, 'done'), lc(u.user) === lc(d.buyer) ? buyerBadge(d) : null, !u.done || lc(u.user) === lc(d.buyer) ? null : flagBadge(d, toggle, u, 'paid'))),
       u.items.length
         ? itemsTable(u, u.done && count === 1 && !u.fee_cents, u.done && (count > 1 || u.fee_cents) ? eur(u.total_cents) : null) // bei nur 1 Artikel ohne Lieferanteil wäre die Summe doppelt
         : h('div', { class: 'muted' }, t('noch nichts'))
     );
   };
   const filterKey = 'bb_user_filter';
-  let onlyUnpaid = false;
-  try { onlyUnpaid = sessionStorage.getItem(filterKey) === 'unpaid'; } catch {}
-  onlyUnpaid = onlyUnpaid && !!d.ordered_at; // „unbezahlt“ gibt es erst nach „Bestellt“
+  const unreadyKey = 'bb_user_unready';
+  const stored = (key, on) => { try { return sessionStorage.getItem(key) === on; } catch { return false; } };
+  const onlyUnpaid = stored(filterKey, 'unpaid') && !!d.ordered_at; // „unbezahlt“ gibt es erst nach „Bestellt“
+  const onlyUnready = stored(unreadyKey, 'unready') && !d.locked; // „nicht ready“ nur solange die Bestellung läuft
   const debtors = new Set(d.debts.map((x) => lc(x.user)));
-  const keep = (u) => !onlyUnpaid || debtors.has(lc(u.user));
-  const box = h('input', { type: 'checkbox', checked: onlyUnpaid, onchange: (e) => { try { sessionStorage.setItem(filterKey, e.target.checked ? 'unpaid' : 'all'); } catch {} renderUsers(d, toggle, usersPane); } });
-  const bar = d.ordered_at ? h('label', { class: 'card filter-bar' }, box, t('Nur Unbezahlte')) : null;
+  const keep = (u) => (!onlyUnpaid || debtors.has(lc(u.user))) && (!onlyUnready || !u.done);
+  const filterBox = (key, on, checked, label) => filterPill(label, { on: checked, onchange: (v) => { try { sessionStorage.setItem(key, v ? on : 'all'); } catch {} renderUsers(d, toggle, usersPane); } });
+  const bars = [
+    ...(d.locked ? [] : [filterBox(unreadyKey, 'unready', onlyUnready, t('nur unready'))]),
+    ...(d.ordered_at ? [filterBox(filterKey, 'unpaid', onlyUnpaid, t('nur unbezahlt'))] : []),
+  ];
+  const bar = bars.length ? h('div', { class: 'filter-row' }, ...bars) : null;
   const shown = d.users.filter(keep);
   const orders = d.users.filter((u) => u.items?.length).length; // Bestellungen = Nutzer mit Artikeln
   const ready = shown.filter((u) => u.done);
   const unready = shown.filter((u) => !u.done);
   usersPane.replaceChildren(
     ...(bar ? [bar] : []),
-    ...(shown.length ? [] : [h('div', { class: 'card muted' }, onlyUnpaid ? t(orders === 1 ? 'die Bestellung ist bezahlt' : 'alle {n} Bestellungen sind bezahlt', { n: orders }) : t('Keine passenden Bestellungen.'))]),
+    ...(shown.length ? [] : [h('div', { class: 'card muted' }, onlyUnready ? t('alle sind ready') : onlyUnpaid ? t(orders === 1 ? 'die Bestellung ist bezahlt' : 'alle {n} Bestellungen sind bezahlt', { n: orders }) : t('Keine passenden Bestellungen.'))]),
     ...ready.map(card),
     ...(unready.length ? [h('div', { class: 'unready-gap' }), h('div', { class: 'unready-block' }, h('div', { class: 'unready-sep' }, t('Noch nicht ready – zählt nicht in der Bestellung')), ...unready.map(card))] : [])
   );

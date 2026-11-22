@@ -3,7 +3,7 @@ import { t } from '/i18n.js';
 import { LIMITS, DEFAULTS } from '/config.js';
 import { pendingRound } from '/group.js';
 import { roundStage, isToday, beforeThisYear } from '/format.js';
-import { payMark, payStrips, paidFirst } from '/views/pay-bar.js';
+import { payMark, payStrips, paidFirst, gapStyle } from '/views/pay-bar.js';
 import { tickCountdowns } from '/side.js';
 import { app, eur, fmtDay, fmtClock, lc, h, api, act, me, parseMoney, money } from '/util.js';
 
@@ -16,15 +16,16 @@ function payBarItem(r, stage) {
   const paidN = payers.filter((p) => p.paid).length;
   const day = fmtDay(r.created_at, beforeThisYear(r.created_at)); // Jahr nur bei früheren Jahren
   const when = isToday(r.created_at, Date.now(), DEFAULTS.nightEndHour) ? `${day}, ${fmtClock(r.created_at)}` : day; // Uhrzeit nur am Bestelltag (bis 4 Uhr des Folgetags)
-  const strips = payStrips(payers, (p) => (p.paid ? `✓ ${p.user}` : p.user));
+  const allPaid = paidN === payers.length;
+  const strips = allPaid ? null : payStrips(payers, (p) => (p.paid ? `✓ ${p.user}` : p.user)); // alle bezahlt: nur die erste Zeile
   return h(
     'a',
     { class: 'round-link pay-bar', href: `#/r/${r.id}` },
     payMark(payers),
     h(
       'div',
-      { class: 'card bar', style: `--gk: ${paidN}; --gn: ${payers.length}` },
-      h('div', { class: 'bar-top' + (paidN && paidN < payers.length ? ' mixed' : ''), style: `--share: ${(100 * paidN) / payers.length}%` }, h('div', { class: 'row between' }, h('span', { class: 'bar-line' }, h('span', null, when), h('strong', null, r.restaurant), stage === 'alles bezahlt' ? null : h('span', { class: 'badge ' + (stage === 'geliefert' ? 'on' : 'mid') }, t(stage)), h('span', null, `${t('bestellt von')} ${r.buyer}`)), h('span', { class: 'badge value' }, eur(r.total_cents)))),
+      { class: 'card bar', style: gapStyle(payers) },
+      h('div', { class: 'bar-top' + (allPaid ? ' done' : paidN ? ' mixed' : ''), style: `--share: ${(100 * paidN) / payers.length}%` }, h('div', { class: 'row between' }, h('span', { class: 'bar-line' }, h('span', null, when), h('strong', null, r.restaurant), stage === 'alles bezahlt' ? null : h('span', { class: 'badge ' + (stage === 'geliefert' ? 'on' : 'mid') }, t(stage)), h('span', null, `${t('bestellt von')} ${r.buyer}`)), h('span', { class: 'bar-right' }, h('span', { class: 'badge value' }, eur(r.total_cents)), allPaid ? h('span', { class: 'bar-done' }, `✓ ${t('alle bezahlt')}`) : null))),
       strips
     )
   );
@@ -63,10 +64,11 @@ export function homeView() {
     name: h('input', { list: 'rest-list', placeholder: t('z. B. Pizza Roma'), required: true, maxlength: LIMITS.restaurantName, autocomplete: 'off' }),
     url: h('input', { placeholder: 'https://…', maxlength: LIMITS.restaurantUrl }),
     phone: h('input', { type: 'tel', placeholder: '07531 …', maxlength: LIMITS.restaurantPhone }),
-    address: h('input', { placeholder: t('Straße Nr., Ort'), maxlength: LIMITS.restaurantAddress, autocomplete: 'off' }),
+    address: h('input', { placeholder: t('Straße, PLZ Ort'), maxlength: LIMITS.restaurantAddress, autocomplete: 'off' }),
     buyer: h('input', { value: me, maxlength: LIMITS.userName, required: true }),
     paypal: h('input', { value: '', placeholder: t('paypal.me/name oder E-Mail'), maxlength: LIMITS.paypal }),
     fee: h('input', { inputmode: 'decimal', placeholder: '0,00' }),
+    service: h('input', { inputmode: 'decimal', placeholder: '0,00' }),
     minutes: h('input', { type: 'number', min: LIMITS.deadlineMinMinutes, max: LIMITS.deadlineMaxMinutes, value: DEFAULTS.deadlineMinutes }),
   };
   f.name.addEventListener('change', () => {
@@ -82,7 +84,7 @@ export function homeView() {
     if (r.paypal && !f.paypal.value) f.paypal.value = r.paypal;
   }).catch(() => {});
 
-  const startBtn = h('button', { class: 'btn', type: 'submit' }, t('Bestellung starten'));
+  const startBtn = h('button', { class: 'btn', type: 'submit' }, t('Sammelbestellung eröffnen'));
   const blockReason = h('span', { class: 'block-reason hidden' });
   // Pro Restaurant nur eine Bestellung gleichzeitig: Button inaktiv, Grund steht links davor
   function updateBlock() {
@@ -112,12 +114,14 @@ export function homeView() {
       onsubmit: async (e) => {
         e.preventDefault();
         const fee = f.fee.value.trim() === '' ? 0 : parseMoney(f.fee.value);
+        const serviceFee = f.service.value.trim() === '' ? 0 : parseMoney(f.service.value);
         const res = await act(() =>
           api('POST', '/rounds', {
             restaurant: { name: f.name.value, url: f.url.value, phone: f.phone.value, address: f.address.value },
             buyer: f.buyer.value,
             paypal: f.paypal.value,
             delivery_fee: fee,
+            service_fee: serviceFee,
             minutes: Number(f.minutes.value),
           })
         );
@@ -132,13 +136,16 @@ export function homeView() {
     h('label', null, t('Webadresse'), f.url),
     h('label', null, t('Adresse'), f.address),
     h('label', null, t('Lieferkosten (€)'), f.fee),
+    h('label', null, t('Servicekosten (€)'), f.service),
     h('label', null, t('Bestellt von'), f.buyer),
     h('label', null, t('PayPal (Adresse/Link)'), f.paypal),
     h('label', null, t('Frist (Minuten)'), f.minutes),
     h('div', { class: 'form-actions gap-5' }, blockReason, startBtn)
   );
 
-  const head = h('section', { class: 'card' }, h('h2', { class: 'flush mb-4' }, t('Neue Bestellung')), form);
+  // Wer nur etwas dazubestellen will, findet die laufenden Bestellungen gleich oben und eröffnet keine zweite
+  const running = h('div', { class: 'running-hint hidden' });
+  const head = h('section', { class: 'card' }, h('h2', { class: 'flush mb-4' }, t('Neue Sammelbestellung')), running, form);
   app.classList.add('wide');
   app.replaceChildren(h('div', { class: 'round-grid' }, head));
 
@@ -151,6 +158,10 @@ export function homeView() {
       }
       if (!rounds) return;
       knownRounds = rounds;
+      const open = rounds.filter((r) => !r.locked);
+      running.classList.toggle('hidden', !open.length);
+      running.replaceChildren(...(open.length ? [h('p', { class: 'muted flush' }, t(open.length === 1 ? 'Es läuft schon eine Bestellung. Dort einfach mitbestellen:' : 'Es laufen schon Bestellungen. Dort einfach mitbestellen:')), h('div', { class: 'row gap-3 mt-2' }, ...open.map((r) => h('a', { class: 'btn ghost block-go', href: `#/r/${r.id}` }, h('strong', null, r.restaurant), h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…'))))] : []));
+      tickCountdowns();
       updateBlock();
     },
     destroy() {},

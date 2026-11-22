@@ -18,7 +18,7 @@ export function confirmDialog({ title, text, confirm, danger = true }) {
     const card = h('div', { class: 'card overlay-card', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'dialog-title', 'aria-describedby': 'dialog-text', tabindex: '-1' },
       h('button', { class: 'btn small ghost chip-btn overlay-close', type: 'button', 'aria-label': t('Abbrechen'), onclick: () => done(false) }, closeIcon()),
       h('strong', { id: 'dialog-title' }, title),
-      h('div', { id: 'dialog-text', class: 'dialog-text' }, ...[].concat(text).map((para) => h('p', { class: 'flush' }, para))), // text: ein Absatz oder eine Liste von Absätzen
+      h('div', { id: 'dialog-text', class: 'dialog-text', onclick: (e) => { if (e.target.closest('a')) done(false); } }, ...[].concat(text).map((para) => h('p', { class: 'flush' }, para))), // text: ein Absatz oder eine Liste von Absätzen
       h('div', { class: 'row end gap-3' },
         h('button', { class: 'btn small ghost', type: 'button', onclick: () => done(false) }, t('Abbrechen')),
         h('button', { class: `btn small ${danger ? 'danger solid' : ''}`, type: 'button', onclick: () => done(true) }, confirm)));

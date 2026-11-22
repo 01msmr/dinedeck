@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, nbspUnits, beforeThisYear, rowsNeeded, splitRows } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, bellPlan, nbspUnits, beforeThisYear, rowsNeeded, splitRows } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -43,14 +43,17 @@ test('isCurrentRound: der Abend zählt über Mitternacht bis 4 Uhr noch als heut
   assert.equal(isCurrentRound(evening, at(8, 5), 4), false, 'ab 4 Uhr: gestern');
 });
 
-test('startRound: neueste offene, sonst neueste von heute, sonst insgesamt neueste', () => {
+test('startRound: neueste offene, sonst neueste von heute, sonst keine (nie automatisch eine alte)', () => {
   const at = (d, h) => new Date(2026, 10, d, h).getTime();
   const now = at(8, 14);
   const r = (id, day, hour, locked) => ({ id, created_at: at(day, hour), locked });
   // Liste wie vom Server: neueste zuerst
   assert.equal(startRound([r(5, 8, 13, false), r(4, 8, 12, false), r(3, 8, 9, true)], now, 4).id, 5, 'neueste offene');
   assert.equal(startRound([r(4, 8, 13, true), r(3, 8, 9, true), r(2, 5, 9, true)], now, 4).id, 4, 'keine offene: neueste von heute');
-  assert.equal(startRound([r(2, 6, 12, true), r(1, 5, 9, true)], now, 4).id, 2, 'nichts von heute: insgesamt neueste');
+  assert.equal(startRound([r(2, 6, 12, true), r(1, 5, 9, true)], now, 4), null, 'nichts von heute: keine alte Bestellung');
+  const late = new Date(2026, 10, 9, 3).getTime();
+  assert.equal(startRound([r(4, 8, 20, true)], late, 4).id, 4, 'bis 4 Uhr nachts zählt der Abend davor noch als heute');
+  assert.equal(startRound([r(4, 8, 20, true)], new Date(2026, 10, 9, 5).getTime(), 4), null, 'ab 4 Uhr des Folgetags nicht mehr');
   assert.equal(startRound([], now, 4), null);
 });
 
@@ -196,4 +199,12 @@ test('splitRows: gleichmäßig, die oberen Zeilen bekommen den Überschuss', () 
   assert.deepEqual(splitRows([1, 2, 3, 4, 5, 6, 7, 8], 3), [[1, 2, 3], [4, 5, 6], [7, 8]]);
   assert.deepEqual(splitRows([1, 2, 3, 4], 1), [[1, 2, 3, 4]]);
   assert.deepEqual(splitRows([], 2), [[]], 'leer: eine leere Zeile');
+});
+
+test('bellPlan: nach Wiedereröffnen/Verlängern (silent) wird nur neu scharf gestellt, nicht geläutet', () => {
+  const at = [3 * MIN, MIN];
+  assert.deepEqual(bellPlan(170000, at, Infinity, false), { step: 180000, ring: true }, 'normal: läutet');
+  assert.deepEqual(bellPlan(170000, at, Infinity, true), { step: 180000, ring: false }, 'silent: merkt sich die Schwelle ohne Ton');
+  assert.deepEqual(bellPlan(5 * MIN, at, Infinity, true), { step: null, ring: false }, 'über allen Schwellen: nichts');
+  assert.deepEqual(bellPlan(50000, at, 180000, false), { step: 60000, ring: true }, 'nächste Schwelle läutet danach wieder');
 });

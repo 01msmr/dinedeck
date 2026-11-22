@@ -121,14 +121,15 @@ export function telHref(p) {
 export function contactLinks(r, { pill = false, linkPill = false } = {}) {
   const tel = telHref(r.phone);
   const web = webHref(r.url);
-  const noTel = h('span', { class: 'muted' }, pill ? `(${t('keine Telefon')})` : t('keine Telefon'));
+  const noTel = h('span', { class: 'muted' }, pill ? `(${t('Telefon fehlt')})` : t('Telefon fehlt'));
+  const noWeb = h('span', { class: 'muted' }, pill ? `(${t('Website fehlt')})` : t('Website fehlt'));
   const telEl = tel ? (linkPill ? h('a', { class: 'link-pill colored', href: tel }, phoneIcon(), '' + r.phone) : pill ? h('span', null, '(', h('a', { href: tel }, '' + r.phone), ')') : h('a', { href: tel }, '' + r.phone)) : noTel;
   return h(
     'div',
     { class: 'row' },
     linkPill ? h('strong', { class: 'contact-label desk-only' }, t('Bestellen:')) : null, // Kopf: „Bestellen: Telefon · Web“ (nicht auf dem Handy)
     telEl,
-    web ? h('a', { class: pill ? 'link-pill' : linkPill ? 'link-pill colored' : null, title: pill || linkPill ? r.url : null, href: web, target: '_blank', rel: 'noopener noreferrer' }, ...(pill ? [] : [extArrow()]), linkPill ? t('Webseite') : '' + r.url.replace(/^https?:\/\//i, '')) : null
+    web ? h('a', { class: pill ? 'link-pill' : linkPill ? 'link-pill colored' : null, title: pill || linkPill ? r.url : null, href: web, target: '_blank', rel: 'noopener noreferrer' }, ...(pill ? [] : [extArrow()]), linkPill ? t('Webseite') : '' + r.url.replace(/^https?:\/\//i, '')) : noWeb
   );
 }
 export { fmtRemaining } from '/format.js';

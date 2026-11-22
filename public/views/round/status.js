@@ -2,14 +2,12 @@
 import { t } from '/i18n.js';
 import { TIMING, DEFAULTS, STATUS } from '/config.js';
 import { isToday, beforeThisYear } from '/format.js';
-import { payMark, payStrips, paidFirst } from '/views/pay-bar.js';
-import { chevronIcon } from '/icons.js';
-import { payRows } from '/views/round/pay.js';
+import { payMark, payStrips, paidFirst, mergedVars } from '/views/pay-bar.js';
 import { eur, fmtDay, fmtClock, fmtRemaining, lockIcon, undoIcon, h, lc, me } from '/util.js';
 
 const quiet = STATUS.quietButtons ? ' quiet' : '';
 
-export function createStatus({ banners, debtsHost, toggle, decide, undo, advance, etaField, time, autoClose }) {
+export function createStatus({ banners, flowHost, debtsHost, toggle, decide, undo, advance, etaField, time, autoClose }) {
   let d = null;
   let payConfirm = null; // {user, timer}: Rückfrage im Button vor „bezahlt“
   let confirm = null; // {key, timer}: Rückfrage vor Zurücknehmen/Weitergehen
@@ -50,15 +48,14 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
       !d.viewer.can_manage
         ? step('todo', label)
         : h('button', { class: 'step todo step-go' + (asking(key) ? ' confirm' : ''), type: 'button', disabled: !can, title: can ? '' : hint, onclick: run(key, () => advance(key)) }, asking(key) ? ask : label);
-    const sep = () => h('span', { class: 'step-sep', 'aria-hidden': 'true' }, chevronIcon());
     const readyTxt = d.ready.total ? t('ready {done}/{total}', { done: d.ready.done, total: d.ready.total }) : t('ready');
-    const opened = step('done', `✓ ${t('eröffnet')}`);
-    const ordTxt = `✓ ${t('bestellt')}`;
+    const opened = step('done', t('eröffnet')); // vorige Ereignisse ohne Haken, nur der aktuelle Stand hat ihn
+    const ordTxt = t('bestellt');
     // „ready“: offen = Kästchen „Schließen, wenn alle ready“ in der Pille (Verwalter klicken, andere sehen es grau), davor +5, dahinter Schließen; geschlossen = Pille mit ↩ „Wieder öffnen“
     const readyStep = () => {
       const names = allReady ? '' : t('Noch nicht ready: {names}', { names: d.ready.not_ready.join(', ') });
       if (d.locked) {
-        const pill = allReady ? step('now ready', `✓ ${readyTxt}`) : Object.assign(step('now unready', readyTxt), { title: names });
+        const pill = allReady ? step('now ready', readyTxt) : Object.assign(step('now unready', readyTxt), { title: names });
         const when = h('span', { class: 'step-left', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)); // Schloss + Schließzeit statt Restzeit
         if (!d.viewer.can_manage) return h('span', { class: 'step-group' }, pill, when);
         const plus = h('button', { class: 'step-btn' + quiet, type: 'button', disabled: true, title: t('Zum Verlängern erst wieder öffnen'), 'aria-label': t('Zum Verlängern erst wieder öffnen') }, `+${DEFAULTS.extendMinutes}`);
@@ -75,33 +72,73 @@ export function createStatus({ banners, debtsHost, toggle, decide, undo, advance
       return h('span', { class: 'step-group' }, pill, plus, left, closeBtn); // ready allein, dann +5, Restzeit, Schloss (Schließen)
     };
     // Ab „Bestellt“: ready erledigt, Schloss + Schließzeit bleiben sichtbar (zurückhaltend), kein +5; Öffnen geht erst nach „Bestellt zurücknehmen“
-    const closedStep = () => h('span', { class: 'step-group' }, step('done', `✓ ${t('ready')}`), h('span', { class: 'step-left done', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)));
+    const closedStep = () => h('span', { class: 'step-group' }, step('done', t('ready')), h('span', { class: 'step-left done', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)));
     const flow = d.delivered_at
-      ? [opened, closedStep(), step('done', ordTxt), undoable(step('now', `✓ ${t('geliefert')}`, fmtClock(d.delivered_at)), { delivered: false })]
+      ? [opened, closedStep(), step('done', t('bestellt')), undoable(step('now', t('geliefert'), fmtClock(d.delivered_at)), { delivered: false })]
       : d.ordered_at
         ? [opened, closedStep(), undoable(step('now', ordTxt, fmtClock(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
-        : d.ready.total
-          ? [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked, t('Erst die Bestellung schließen')), step('todo', t('geliefert'))] // noch nicht alle ready: derselbe Ablauf, ready rot
-          : null;
-    const where = h('span', { class: 'step-where' }, h('span', null, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at)))); // links: am selben Tag nur die Uhrzeit, sonst das Datum, aus einem früheren Jahr mit Jahr
-    if (flow) b.push(h('div', { class: 'status-flow' }, where, h('div', { class: 'flow-steps' }, ...flow.flatMap((x, n) => {
-      const chip = after.get(x);
-      if (chip) chip.classList.add(x.classList.contains('now') ? 'tucked' : 'flush'); // hinter der Pille hervorkommend bzw. bündig am Text
-      return [...(n ? [sep()] : []), chip ? h('span', { class: 'step-pair' }, x, chip) : x]; // Schritt und ↩ bleiben zusammen (kein Umbruch dazwischen)
-    }))));
+        : [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked && d.ready.total > 0, d.locked ? t('Noch nichts bestellt') : t('Erst die Bestellung schließen')), step('todo', t('geliefert'))]; // auch ohne Bestellung: Wieder öffnen und +5 bleiben erreichbar
+    // Lange Pille wie ein Fortschrittsbalken mit Trennlinien: erledigte Abschnitte gefüllt, der aktuelle grün, offene ausgegraut (leerer Kreis);
+    // Besteller/Admins haben ihre Bedienelemente in den Abschnitten, passive Nutzer nur Text. Der Zahlungsstand ist der letzte Abschnitt (ab „geliefert“).
+    const owers = d.users.filter((u) => u.done && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)); // Besteller zahlt nicht an sich selbst
+    const paidOwers = owers.filter((u) => u.paid).length;
+    const allPaid = !!d.delivered_at && !d.debts.length;
+    const reached = d.delivered_at ? (allPaid ? 4 : 3) : d.ordered_at ? 2 : d.locked ? 2 : 0; // letzter erreichter Abschnitt; geschlossen: ready ist erledigt (dunkel), „bestellt“ der aktuelle Schritt
+    const seg = (i, ...kids) => {
+      const state = i < reached ? 'done' : i === reached && (i < 2 || d.ordered_at) ? 'now' : 'todo'; // geschlossen ist noch nicht bestellt: „bestellt“ bleibt offen, bis es gemeldet ist
+      return h('span', { class: `fp-seg fp-${state}` }, ...(state === 'done' ? [] : [h('span', { class: 'fp-mark', 'aria-hidden': 'true' }, state === 'todo' ? '○' : '✓')]), ...kids);
+    };
+    const plain = (el) => { for (const e of [el, ...el.querySelectorAll('.step')]) e.classList.remove('now', 'ready', 'unready', 'done', 'todo'); return el; }; // der Abschnitt gibt die Farbe vor
+    const readyTime = d.locked
+      ? h('span', { class: 'step-left done', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at))
+      : h('span', { class: 'step-left', 'data-until': d.expires_at, title: t('Bestellfrist') }, fmtRemaining(d.expires_at - d.server_now)); // tickt zentral (side.js)
+    const passive = (i) => [
+      [t('eröffnet')],
+      [readyTxt, readyTime],
+      [t('bestellt'), d.ordered_at ? h('span', { class: 'fp-when' }, fmtClock(d.ordered_at)) : null],
+      [t('geliefert'), d.delivered_at ? h('span', { class: 'fp-when' }, fmtClock(d.delivered_at)) : null],
+    ][i];
+    const pill = () => {
+      const timeSeg = (el, ...kids) => { // Frist/Schließzeit als eigener Abschnitt mit Trennlinie hinter „ready“
+        const t2 = seg(1, ...kids);
+        t2.querySelector('.fp-mark')?.remove();
+        t2.classList.add('fp-time');
+        if (d.locked) t2.classList.add('closed'); // Endzeit der geschlossenen Bestellung schwarz hinterlegt
+        return [el, t2];
+      };
+      const segs = [0, 1, 2, 3].flatMap((i) => {
+        if (!d.viewer.can_manage) return i === 1 ? timeSeg(seg(1, passive(1)[0]), passive(1)[1]) : [seg(i, ...passive(i))];
+        const x = flow[i];
+        const chip = after.get(x);
+        if (i === 1) { const [first, ...rest] = [...plain(x).children]; return timeSeg(seg(1, first), h('span', { class: 'step-group' }, ...rest)); }
+        const el = seg(i, chip ? h('span', { class: 'fp-pair' }, plain(x), chip) : plain(x));
+        if (x.matches('.step-go') || x.querySelector('.step-go')) el.classList.add('act'); // nächster Schritt als Knopf
+        return [el];
+      });
+      if (d.delivered_at) {
+        const pay = seg(4, allPaid ? t('alle bezahlt') : t('{paid}/{total} bezahlt', { paid: paidOwers, total: owers.length }));
+        pay.classList.add('fp-pay'); // Zahlungsstand: heller, weniger Kontrast
+        segs.push(pay);
+      }
+      return h('div', { class: 'flow-pill' }, ...segs);
+    };
+    flowHost.replaceChildren(...(flow ? [h('div', { class: 'status-flow' }, h('div', { class: 'flow-steps' }, pill()))] : [])); // Datum steht jetzt im Restaurant-Kopf
     // Zahlungen: Zeile wie in „Alle Bestellungen“ (Kreis, Kopfband, Personen-Strips); bleibt bei „alle bezahlt“ stehen, dann ganz grün
-    const payers = paidFirst(d.payers ?? []);
+    const payers = paidFirst((d.payers ?? []).map((p) => ({ ...p, isBuyer: lc(p.user) === lc(d.buyer) })));
     const owed = new Map(d.debts.map((x) => [lc(x.user), x.amount_cents]));
     const paidN = payers.filter((p) => p.paid).length;
+    const paidSum = d.users.filter((u) => u.paid && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)).reduce((a, u) => a + u.total_cents, 0); // Besteller zahlt nicht an sich selbst
+    const openSum = d.debts.reduce((a, x) => a + x.amount_cents, 0);
+    const redLabel = (p) => (p.paid ? '' : payConfirm?.user === p.user ? t('ist bezahlt?') : `${p.user} ${eur(owed.get(lc(p.user)) ?? 0)}`);
     const payBlock = d.ordered_at && payers.length
       ? h('div', { class: 'pay-block' },
           payMark(payers),
-          h('div', { class: 'card bar', style: `--gk: ${paidN}; --gn: ${payers.length}` },
-            h('div', { class: 'bar-top' + (paidN && paidN < payers.length ? ' mixed' : ''), style: `--share: ${(100 * paidN) / payers.length}%` },
+          h('div', { class: 'card bar', style: mergedVars(payers, redLabel) },
+            h('div', { class: 'bar-top' + (paidN === payers.length ? ' done' : paidN ? ' mixed-merged' : ''), style: `--share: ${(100 * paidN) / payers.length}%` },
               h('div', { class: 'row between' },
-                h('span', { class: 'bar-line' }, h('strong', null, d.debts.length ? t('Offene Zahlungen') : t('Zahlungen')), d.debts.length ? h('span', null, eur(d.debts.reduce((a, x) => a + x.amount_cents, 0))) : null),
-                h('div', { class: 'bar-right' }, ...(d.debts.length && payRows(d) ? [h('div', { class: 'head-pay' }, ...payRows(d))] : []), h('span', { class: 'badge value' }, eur(d.grand_total_cents))))), // rechts: Bezahllink, ganz rechts der Bestellwert wie in „Alle Bestellungen“
-            payStrips(payers, (p) => (p.paid ? `✓ ${p.user}` : payConfirm?.user === p.user ? t('ist bezahlt?') : `${p.user} ${eur(owed.get(lc(p.user)) ?? 0)}`), pickPay)))
+                h('span', { class: 'bar-line' }, h('strong', null, t('Bezahlt')), h('span', { class: 'badge value', title: t('bezahlt') }, eur(paidSum))), // links im grünen Bereich: Summe der Bezahlten
+                h('div', { class: 'bar-right' }, ...(paidN === payers.length ? [h('span', { class: 'bar-done' }, `✓ ${t('alle bezahlt')}`)] : [h('strong', null, t('Offen')), h('span', { class: 'badge value', title: t('unbezahlt') }, eur(openSum))])))), // ganz rechts im roten Bereich: Summe der Unbezahlten
+            ...(paidN === payers.length ? [] : [payStrips(payers, redLabel, pickPay, (n) => t(n === 1 ? '1 hat bezahlt' : '{n} haben bezahlt', { n }))])))
       : null;
     debtsHost.replaceChildren(...(payBlock ? [payBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {

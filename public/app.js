@@ -147,10 +147,20 @@ const setNav = (open) => {
   document.body.classList.toggle('nav-open', open);
   menuBtn.setAttribute('aria-expanded', String(open));
 };
+const wide = matchMedia('(min-width: 80em)'); // breit: schmale Leiste am Rand, ein Klick hinein öffnet sie, ein Klick außerhalb schließt sie
+const sideEl = document.getElementById('side');
+const placeMenu = () => (wide.matches ? sideEl : document.querySelector('header.top')).prepend(menuBtn); // breit: Hamburger in der Leiste, schmal: im Kopf
+placeMenu();
+wide.addEventListener('change', placeMenu);
 menuBtn.addEventListener('click', () => setNav(!document.body.classList.contains('nav-open')));
 document.getElementById('scrim').addEventListener('click', () => setNav(false));
-document.getElementById('side').addEventListener('click', (e) => e.target.closest('a') && setNav(false));
-window.addEventListener('hashchange', () => setNav(false));
+sideEl.addEventListener('click', (e) => {
+  if (wide.matches) { if (!document.body.classList.contains('nav-open') && !e.target.closest('.side-new, .rail-no, .side-link, #menu')) setNav(true); } else if (e.target.closest('a')) setNav(false); // „+“, Nummern, Alle und Statistik führen nur zur Seite, die Leiste bleibt zu
+});
+document.addEventListener('click', (e) => {
+  if (wide.matches && document.body.classList.contains('nav-open') && !sideEl.contains(e.target) && !menuBtn.contains(e.target)) setNav(false);
+});
+window.addEventListener('hashchange', () => { if (!wide.matches) setNav(false); });
 document.addEventListener('keydown', (e) => e.key === 'Escape' && setNav(false));
 
 // ---------- Start ----------

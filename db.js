@@ -51,6 +51,7 @@ export function createLogic(db, { admins = [] } = {}) {
     const buyer = cleanUser(body.buyer || user);
     const paypal = collapse(body.paypal).slice(0, LIMITS.paypal) || (q.profGet.get(lower(buyer))?.paypal ?? '');
     const fee = body.delivery_fee === undefined || body.delivery_fee === '' ? 0 : parseMoneyToCents(body.delivery_fee, { max: LIMITS.feeMaxEuro });
+    const serviceFee = body.service_fee === undefined || body.service_fee === '' ? 0 : parseMoneyToCents(body.service_fee, { max: LIMITS.feeMaxEuro });
     const minutes = body.minutes === undefined || body.minutes === '' ? DEFAULTS.deadlineMinutes : Number(body.minutes);
     if (!Number.isFinite(minutes) || minutes < LIMITS.deadlineMinMinutes || minutes > LIMITS.deadlineMaxMinutes) throw new HttpError(400, 'Ablaufzeit 1–240 Minuten');
     const now = Date.now();
@@ -59,7 +60,7 @@ export function createLogic(db, { admins = [] } = {}) {
     if (pending) throw new HttpError(409, 'Für dieses Restaurant läuft bereits eine Bestellung');
     purgeDeleted(); // abgelaufene Nummern werden dabei wieder frei
     const id = q.nextRoundId.get().id; // über der höchsten belegten Nummer, gelöschte im Papierkorb zählen mit
-    q.roundInsert.run(id, restaurantId, user, buyer, paypal, fee, now, now + minutes * 60000);
+    q.roundInsert.run(id, restaurantId, user, buyer, paypal, fee, serviceFee, now, now + minutes * 60000);
     if (paypal) q.profSet.run(lower(buyer), paypal);
     return id;
   }
@@ -71,7 +72,8 @@ export function createLogic(db, { admins = [] } = {}) {
     const buyer = body.buyer !== undefined ? cleanUser(body.buyer) : r.buyer;
     const paypal = body.paypal !== undefined ? collapse(body.paypal).slice(0, LIMITS.paypal) : r.paypal;
     const fee = body.delivery_fee !== undefined ? parseMoneyToCents(body.delivery_fee, { max: LIMITS.feeMaxEuro }) : r.delivery_fee_cents;
-    if (r.ordered_at && body.ordered !== false && (body.buyer !== undefined || body.paypal !== undefined || body.delivery_fee !== undefined)) throw new HttpError(400, 'Erst „Bestellt“ zurücknehmen');
+    const serviceFee = body.service_fee !== undefined ? parseMoneyToCents(body.service_fee, { max: LIMITS.feeMaxEuro }) : r.service_fee_cents;
+    if (r.ordered_at && body.ordered !== false && (body.buyer !== undefined || body.paypal !== undefined || body.delivery_fee !== undefined || body.service_fee !== undefined)) throw new HttpError(400, 'Erst „Bestellt“ zurücknehmen');
     let orderedAt = r.ordered_at ?? null;
     let etaAt = r.eta_at ?? null;
     let etaMin = r.eta_minutes ?? null; // zuletzt eingegebene Lieferzeit (Minuten)
@@ -101,7 +103,7 @@ export function createLogic(db, { admins = [] } = {}) {
       etaAt = now + Math.round(m) * 60000;
       etaMin = Math.round(m);
     }
-    q.roundUpdate.run(buyer, paypal, fee, r.id);
+    q.roundUpdate.run(buyer, paypal, fee, serviceFee, r.id);
     q.roundOrder.run(orderedAt, etaAt, etaMin, expires, deliveredAt, r.id);
     if (body.approve) {
       if (r.ordered_at) throw new HttpError(400, 'Bestellt – keine neuen User mehr');
@@ -256,7 +258,7 @@ export function createLogic(db, { admins = [] } = {}) {
     if (!row) throw new HttpError(404, 'Bestellung nicht gefunden');
     if (!canDelete(row, user)) throw new HttpError(403, 'Nur Ersteller oder Admins');
     const { round: r, participants, items } = JSON.parse(row.data);
-    const vals = [r.restaurant_id, r.creator, r.buyer, r.paypal, r.delivery_fee_cents, r.created_at, r.expires_at, r.close_when_ready, r.ordered_at, r.eta_at, r.eta_minutes, r.delivered_at];
+    const vals = [r.restaurant_id, r.creator, r.buyer, r.paypal, r.delivery_fee_cents, r.service_fee_cents ?? 0, r.created_at, r.expires_at, r.close_when_ready, r.ordered_at, r.eta_at, r.eta_minutes, r.delivered_at];
     q.roundInsertRaw.run(r.id, ...vals); // die Nummer war reserviert
     const newId = r.id;
     for (const p of participants) q.partInsertRaw.run(newId, p.user, p.done, p.paid, p.approved);

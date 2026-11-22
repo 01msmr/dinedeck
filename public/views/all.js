@@ -5,6 +5,7 @@ import { groupHistory, isCurrentRound } from '/group.js';
 import { app, h, api, fmtDay, recycleIcon, toast } from '/util.js';
 import { roundItem } from '/views/home.js';
 import { groupTitle } from '/side.js';
+import { filterPill } from '/views/check-pill.js';
 
 export function allView() {
   const overview = h('div', { class: 'debts-overview' });
@@ -13,13 +14,13 @@ export function allView() {
   let onlyUnpaid = false;
   try { onlyUnpaid = sessionStorage.getItem(filterKey) === 'unpaid'; } catch {}
   let rounds = [];
-  const box = h('input', { type: 'checkbox', checked: onlyUnpaid, onchange: (e) => { onlyUnpaid = e.target.checked; try { sessionStorage.setItem(filterKey, onlyUnpaid ? 'unpaid' : 'all'); } catch {} drawList(); } });
+  const box = filterPill(t('nur unbezahlt'), { on: onlyUnpaid, onchange: (v) => { onlyUnpaid = v; try { sessionStorage.setItem(filterKey, onlyUnpaid ? 'unpaid' : 'all'); } catch {} drawList(); } });
   // Aus der gefilterten Liste geöffnet: dieselbe Auswahl im Tab „Alle“ der Bestellung
   body.addEventListener('click', (e) => {
     if (onlyUnpaid && e.target.closest('a.round-link')) { try { sessionStorage.setItem('bb_user_filter', 'unpaid'); } catch {} }
   });
   const trash = h('div', { class: 'trash-bar' });
-  app.replaceChildren(h('div', { class: 'all-head' }, h('h2', null, t('Alle Bestellungen')), h('label', { class: 'card filter-bar' }, box, t('Nur Unbezahlte'))), overview, body, trash);
+  app.replaceChildren(h('div', { class: 'all-head' }, h('h2', null, t('Alle Bestellungen')), box), overview, body, trash);
   // Zuletzt gelöschte Bestellungen am unteren Fensterrand; das Symbol holt sie zurück, erst nach einer Rückfrage im Knopf selbst
   let deleted = [];
   let asking = null; // {id, timer}

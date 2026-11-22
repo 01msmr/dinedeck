@@ -95,6 +95,12 @@ export function bellStep(left, thresholds, last) {
   return hit.length ? Math.min(...hit) : null;
 }
 
+/** Wie bellStep, plus ob wirklich geläutet wird: `silent` (Frist wurde gerade verlängert/wieder geöffnet) merkt die Schwelle nur vor. */
+export function bellPlan(left, thresholds, last, silent) {
+  const step = bellStep(left, thresholds, last);
+  return { step, ring: step !== null && !silent };
+}
+
 const unitRe = () => new RegExp(`(\\d) (${VARIANT_SHORT.units.map((u) => u.replace('.', '\\.')).join('|')})(?![\\p{L}\\p{N}])`, 'giu');
 
 /** Zahl und Einheit („26 cm“) mit geschütztem Leerzeichen verbinden, damit sie nie am Zeilenende getrennt werden (nur Anzeige). */

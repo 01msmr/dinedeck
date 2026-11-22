@@ -10,14 +10,6 @@ export function orderText(d) {
   return lines.join('\n');
 }
 
-// Ein Nutzer oder keine Variante: alles in einer Zeile; sonst Artikel, darunter Variante · Namen
-function articleCell(g) {
-  const variant = nbspUnits(shortVariant(g.variant));
-  const who = g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ');
-  const unit = h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`);
-  if (!variant || g.users.length < 2) return [h('strong', { class: 'art-name' }, g.article), variant ? h('span', { class: 'art-var' }, `·\u00a0${variant}`) : '', unit, ' ', h('span', { class: 'muted who' }, who)];
-  return [h('strong', { class: 'art-name' }, g.article), unit, h('span', { class: 'who-line' }, h('span', { class: 'muted' }, `${variant} · ${who}`))];
-}
 
 // „Bestellliste kopieren“ steht im Kopf beim Restaurant (immer, für alle); angerufen wird über die Nummer dahinter
 export function orderActions(d) {
@@ -45,7 +37,7 @@ export function orderContent(d) {
       ? h(
           'table',
           { class: 'order-table mt-3' },
-          h('thead', null, h('tr', null, h('th', { class: 'num' }, t('Menge')), h('th', null, t('Artikel')), h('th', { class: 'num unit-q-head' }), h('th', { class: 'num unit-head' }, h('span', { class: 'unit-head-lbl' }, t('Einzelpreis'))), h('th', { class: 'num' }, t('Summe')))),
+          h('thead', null, h('tr', null, h('th', { class: 'num' }, t('Menge')), h('th', null, t('Artikel')), h('th', null, t('Variante')), h('th', null, t('Nutzer')), h('th', { class: 'num unit-q-head' }), h('th', { class: 'num unit-head' }, h('span', { class: 'unit-head-lbl' }, t('Einzelpreis'))), h('th', { class: 'num' }, t('Summe')))),
           h(
             'tbody',
             null,
@@ -54,7 +46,9 @@ export function orderContent(d) {
                 'tr',
                 null,
                 h('td', { class: 'num qty-cell' }, `${g.qty}×`),
-                h('td', null, ...articleCell(g), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
+                h('td', { class: 'art-cell' }, h('strong', { class: 'art-name' }, g.article), h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
+                h('td', { class: 'var-cell' }, nbspUnits(shortVariant(g.variant))), // Zusatz und Nutzer in eigenen, linksbündigen Spalten
+                h('td', { class: 'who-cell muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')),
                 h('td', { class: 'num unit-qty' }, `${g.qty}×`), h('td', { class: 'num unit-col' }, eur(g.price_cents)),
                 h('td', { class: 'num' }, eur(g.sum_cents))
               )
@@ -63,9 +57,9 @@ export function orderContent(d) {
           h(
             'tfoot',
             null,
-            h('tr', null, h('td', { class: 'num qty-cell qty-total', title: t('Anzahl aller Artikel') }, `${d.groups.reduce((a, g) => a + g.qty, 0)}×`), h('td', { colspan: 3, class: 'foot-lbl' }, t('Summe Artikel')), h('td', { class: 'num' }, eur(d.items_total_cents))),
-            h('tr', { class: 'foot-fees' }, h('td', { colspan: 4, class: 'foot-lbl' }, t('Liefer- und Servicekosten')), h('td', { class: 'num' }, eur(d.delivery_fee_cents ?? 0))), // immer, auch bei 0; Servicekosten haben noch kein Datenfeld
-            h('tr', null, h('td', { colspan: 4, class: 'foot-lbl' }, t('Gesamt')), h('td', { class: 'num' }, eur(d.grand_total_cents)))
+            h('tr', null, h('td', { colspan: 2, class: 'qty-total' }, t('{n} Artikel', { n: d.groups.reduce((a, g) => a + g.qty, 0) })), h('td', { colspan: 4, class: 'foot-lbl' }, t('Summe Artikel')), h('td', { class: 'num' }, eur(d.items_total_cents))),
+            h('tr', { class: 'foot-fees' }, h('td', { colspan: 6, class: 'foot-lbl' }, t('Liefer- und Servicekosten')), h('td', { class: 'num' }, eur((d.delivery_fee_cents ?? 0) + (d.service_fee_cents ?? 0)))), // Liefer- und Servicekosten zusammen, immer auch bei 0
+            h('tr', null, h('td', { colspan: 6, class: 'foot-lbl' }, t('Gesamt')), h('td', { class: 'num' }, eur(d.grand_total_cents)))
           )
         )
       : h('p', { class: 'muted' }, t('Noch keine Positionen.')),

@@ -57,7 +57,7 @@ export const LISTS = {
 export const TIMING = {
   toastMs: 2600,
   confirmMs: 4000, // so lange bleibt die Rückfrage „ist bezahlt?“ im Button
-  undoMs: 15 * 1000, // so lange bleibt „Rückgängig“ nach dem Löschen einer Zeile
+  undoMs: 10 * 1000, // so lange bleibt „Rückgängig“ nach dem Löschen einer Zeile
   refreshDebounceMs: 150,
   tickMs: 1000,
   lowTimeMs: 5 * 60 * 1000, // darunter wird der Countdown rot
@@ -73,7 +73,7 @@ export const TIMING = {
 
 /** Warnton (Telefonklingeln) bei den letzten Minuten einer Frist. */
 export const SOUND = {
-  bellAtMs: [5, 3, 1].map((m) => m * 60 * 1000), // klingelt alle 2 Minuten: bei 5, 3 und 1 min Restzeit
+  bellAtMs: [3, 1].map((m) => m * 60 * 1000), // klingelt bei 3 und 1 min Restzeit
   file: '/sounds/old-telephone-ringing.mp3', // Aufnahme (liegt nur lokal, nicht im Repository); ohne Datei bleibt es still
   volume: 0.3, // Lautstärke (0–1)
   fileStartSec: 0, // Anfang der Aufnahme überspringen (die Datei ist schon auf das erste Klingeln gekürzt)
@@ -88,6 +88,7 @@ export const STATUS = {
 
 /** Personen-Strips in „Alle Bestellungen“. */
 export const STRIPS = {
+  maxChars: 22, // längster Text eines roten Strips im Zahlungsblock (Zeichen), darüber wird mit „…“ gekürzt
   namePadPx: 16, // Platz je Strip neben dem Namen (Innenabstand und Trenner); reicht der Platz nicht, wird in Zeilen umbrochen
 };
 

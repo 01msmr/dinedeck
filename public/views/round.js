@@ -4,9 +4,11 @@ import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
 import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
-import { nbspUnits } from '/format.js';
+import { nbspUnits, payHref, isToday, beforeThisYear } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
-import { app, eur, fmtDate, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
+import { checkPill } from '/views/check-pill.js';
+import { payRows } from '/views/round/pay.js';
+import { app, eur, fmtDate, fmtDay, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
 // Pfeil als Schriftzeichen: skaliert mit der Schrift des Namens
@@ -25,10 +27,19 @@ export function roundView(id) {
   // Status-Zeilen (nicht ready, unbezahlt, Freigaben) als markante Leiste unter dem Kopf
   const banners = h('div', { class: 'status-lines' });
   const debtsHost = h('div', { class: 'debts-host' });
-  document.getElementById('statusbar').replaceChildren(banners);
+  // Ablaufleiste: breit im Kopf neben dem Logo, schmal als eigene Zeile unter dem Kopf
+  const flowHost = h('div', { class: 'flow-host' });
+  const wideQ = matchMedia('(min-width: 80em)');
+  const placeFlow = () => {
+    document.getElementById('flow-slot').replaceChildren(...(wideQ.matches ? [flowHost] : []));
+    document.getElementById('statusbar').replaceChildren(...(wideQ.matches ? [] : [flowHost]), banners);
+  };
+  placeFlow();
+  wideQ.addEventListener('change', placeFlow);
   const tabsEl = h('div', { class: 'tabs', role: 'tablist' });
   const usersPane = h('div', { class: 'users-pane' });
   const minePane = h('div', { class: 'stack-4 mine-pane' });
+  const payCard = h('section', { class: 'card band-card pay-card hidden' }); // „Bezahlen“: Bezahl-Link, QR-Code und Kopieren als letztes Element im eigenen Tab
   const orderPane = h('div', { class: 'card order-pane' });
   const inEta = h('input', { type: 'number', min: 1, max: LIMITS.etaMaxMinutes, value: DEFAULTS.etaMinutes, inputmode: 'numeric', class: 'w-eta' });
   const etaText = h('div', { class: 'semibold' });
@@ -56,11 +67,6 @@ export function roundView(id) {
     const q = fold(inArticle.value);
     const e = knownEntry();
     const parts = [];
-    if (q && !e) {
-      for (const c of catalog.filter((c) => fold(c.article).includes(q)).slice(0, LISTS.suggestMax)) {
-        parts.push(h('button', { type: 'button', class: 'pill', onmousedown: (ev) => ev.preventDefault(), onclick: () => { inArticle.value = c.article; updateAssist(); inVariant.focus(); } }, c.article));
-      }
-    }
     if (e) {
       for (const v of e.variants.filter((v) => v.variant).slice(0, LISTS.suggestMax)) {
         parts.push(h('button', { type: 'button', class: 'pill', onclick: () => { inVariant.value = v.variant; updateAssist(); } }, v.variant));
@@ -73,14 +79,38 @@ export function roundView(id) {
     }
     sugBox.replaceChildren(...parts);
   }
-  inArticle.addEventListener('input', updateAssist);
+  // Dropdown unter dem Artikelfeld: leeres Feld (Klick) zeigt alle bekannten Artikel des Restaurants, beim Tippen gefiltert
+  const artMenu = h('div', { class: 'art-menu', role: 'listbox', hidden: true });
+  let artActive = -1;
+  const artItems = () => [...artMenu.children];
+  const hideArtMenu = () => { artMenu.hidden = true; artActive = -1; };
+  const pickArt = (name) => { inArticle.value = name; hideArtMenu(); updateAssist(); inVariant.focus(); };
+  const markActive = (n) => { artActive = n; artItems().forEach((el, i) => { el.classList.toggle('active', i === n); if (i === n) el.scrollIntoView({ block: 'nearest' }); }); };
+  function showArtMenu() {
+    const q = fold(inArticle.value);
+    const list = catalog.filter((c) => !q || fold(c.article).includes(q)).filter((c) => fold(c.article) !== q);
+    artMenu.replaceChildren(...list.map((c) => h('button', { type: 'button', role: 'option', class: 'art-opt', tabindex: -1, onmousedown: (ev) => { ev.preventDefault(); pickArt(c.article); } }, c.article)));
+    artMenu.hidden = !list.length;
+    artActive = -1;
+  }
+  inArticle.addEventListener('click', showArtMenu);
+  inArticle.addEventListener('blur', hideArtMenu);
+  inArticle.addEventListener('keydown', (ev) => {
+    if (artMenu.hidden) { if (ev.key === 'ArrowDown') { ev.preventDefault(); showArtMenu(); } return; } // per Tastatur öffnet ↓ die Liste
+    const n = artItems().length;
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); markActive((artActive + 1) % n); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); markActive((artActive - 1 + n) % n); }
+    else if (ev.key === 'Enter' && artActive >= 0) { ev.preventDefault(); pickArt(artItems()[artActive].textContent); }
+    else if (ev.key === 'Escape') hideArtMenu();
+  });
+  inArticle.addEventListener('input', () => { updateAssist(); showArtMenu(); });
   inVariant.addEventListener('input', updateAssist);
 
   const col = (cls, ...kids) => h('div', { class: 'c-' + cls }, ...kids);
   const addForm = h(
     'form',
     {
-      class: 'card item-card add-card',
+      class: 'card band-card item-card add-card',
       onsubmit: async (e) => {
         e.preventDefault();
         const price = parseMoney(inPrice.value);
@@ -92,22 +122,23 @@ export function roundView(id) {
           inVariant.value = '';
           inPrice.value = '';
           inQty.value = 1;
-          inArticle.focus();
+          hideArtMenu();
+          inArticle.focus(); // Liste öffnet erst beim Klick ins Feld
           updateAssist();
           loadCatalog();
           nav.current.refresh();
         }
       },
     },
-    h('h3', { class: 'add-title' }, t('Artikel hinzufügen')),
+    h('div', { class: 'card-head' }, h('strong', null, t('Artikel hinzufügen'))), // abgetönte Kopfzeile wie bei den Nutzerkarten
     h('div', { class: 'item-row item-labels muted' }, col('qty', t('Menge')), col('art', t('Artikel')), col('var', t('Variante (optional)')), col('price', t('Preis')), col('act')),
-    h('div', { class: 'item-row' }, col('qty', inQty), col('art', inArticle), col('var', inVariant), col('price', h('div', { class: 'price-in' }, inPrice, h('span', { class: 'eur-box' }, '€'))), col('act', addBtn)),
+    h('div', { class: 'item-row' }, col('qty', inQty), col('art', inArticle, artMenu), col('var', inVariant), col('price', h('div', { class: 'price-in' }, inPrice, h('span', { class: 'eur-box' }, '€'))), col('act', addBtn)),
     sugBox,
     h('div', { class: 'price-hint' }, t('Vorgeschlagene Preise stammen aus früheren Bestellungen und können veraltet sein.'))
   );
-  const mineList = h('div', { class: 'card item-card mine-card' });
+  const mineList = h('div', { class: 'card band-card item-card mine-card' });
   mineList.addEventListener('focusout', () => { if (mineDeferred) setTimeout(renderMine, 0); });
-  minePane.append(addForm, mineList);
+  minePane.append(addForm, mineList, payCard);
 
   const panes = { users: usersPane, mine: minePane, order: orderPane };
   const tabDefs = [
@@ -122,7 +153,8 @@ export function roundView(id) {
     for (const [k, p] of Object.entries(panes)) p.classList.toggle('hidden', k !== t);
     for (const b of tabsEl.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   }
-  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, label));
+  const readySlot = h('span', { class: 'tab-ready' }); // ready-Pille im Reiter des eigenen Namens
+  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, label)));
 
   // Mobil untereinander; ab Desktop-Breite: links Tabs, rechts Frist/Banner/Bezahlen (siehe style.css)
   app.classList.add('wide');
@@ -149,7 +181,7 @@ export function roundView(id) {
   const etaField = h('label', { class: 'step-eta' }, t('Lieferzeit (min)'), inEta);
   inEta.addEventListener('change', () => { if (d?.ordered_at && !d.delivered_at && inEta.value !== '') patchRound({ eta_minutes: Number(inEta.value) }); });
   inEta.addEventListener('keydown', (e) => { if (e.key === 'Enter') inEta.blur(); });
-  const status = createStatus({ banners, debtsHost, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
+  const status = createStatus({ banners, flowHost, debtsHost, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
 
   const flagBadge = (u, flag) => flagBadgeOf(d, toggle, u, flag);
 
@@ -158,11 +190,12 @@ export function roundView(id) {
   const buyerList = h('datalist', { id: 'buyer-round' }); // Vorschläge: die Teilnehmer dieser Bestellung
   const ePaypal = h('input', { maxlength: LIMITS.paypal });
   const eFee = h('input', { inputmode: 'decimal' });
-  const editInputs = [eBuyer, ePaypal, eFee];
+  const eService = h('input', { inputmode: 'decimal' });
+  const editInputs = [eBuyer, ePaypal, eFee, eService];
   const saveBtn = h('button', { class: 'btn small', type: 'submit', disabled: true }, t('Speichern'));
   const editFill = h('i');
   const editBar = h('div', { class: 'edit-bar hidden' }, h('span', null, t('Nicht gespeichert – wird zurückgenommen')), h('div', { class: 'edit-track' }, editFill));
-  let saved = ['', '', ''];
+  let saved = ['', '', '', ''];
   let deadline = 0;
   let editTick = null;
   const stopEdit = () => {
@@ -193,6 +226,7 @@ export function roundView(id) {
   }
   for (const i of editInputs) i.addEventListener('input', () => syncEdit(true));
   const headBand = h('div', { class: 'head-band' });
+  const delSlot = h('span', { class: 'del-slot' });
   const headForm = h(
     'form',
     {
@@ -200,7 +234,7 @@ export function roundView(id) {
       class: 'head-form',
       onsubmit: async (e) => {
         e.preventDefault();
-        const ok = await act(() => api('PATCH', `/rounds/${id}`, { buyer: eBuyer.value, paypal: ePaypal.value, delivery_fee: parseMoney(eFee.value) }));
+        const ok = await act(() => api('PATCH', `/rounds/${id}`, { buyer: eBuyer.value, paypal: ePaypal.value, delivery_fee: parseMoney(eFee.value), service_fee: parseMoney(eService.value) }));
         if (ok) {
           saved = editInputs.map((i) => i.value);
           syncEdit(false);
@@ -210,17 +244,25 @@ export function roundView(id) {
     },
     h('label', null, t('Bestellt von'), eBuyer, buyerList),
     h('label', null, 'PayPal', ePaypal),
+    h('span', { class: 'form-break' }), // Liefer- und Servicekosten beginnen eine neue Zeile
+    delSlot, // Löschen links neben den Kosten
     h('label', null, t('Lieferkosten (€)'), eFee),
+    h('label', null, t('Servicekosten (€)'), eService),
     saveBtn,
     editBar
   );
+  // Hinweis im Löschen-Dialog: Archivzeit, dazu Link nach „Alle Bestellungen“ (der Dialog schließt beim Klick)
+  const archiveHint = () => {
+    const [before, after] = t('sie lassen sich in {link} wiederherstellen.').split('{link}');
+    return [t('Die gelöschten Bestellungen der letzten {weeks} Wochen werden archiviert,', { weeks: LISTS.deletedKeepDays / 7 }), h('br'), before, h('a', { href: '#/all' }, h('strong', null, t('Alle Bestellungen'))), after];
+  };
   // Löschen: nur Ersteller oder Admin, mit Sicherheitsabfrage
   const deleteBtn = h('button', {
     class: 'btn small danger', type: 'button',
     onclick: async () => {
       const ok = await confirmDialog({
         title: t('Bestellung löschen?'),
-        text: [t('„{name}“ vom {date} wird gelöscht.', { name: d.restaurant.name, date: fmtDate(d.created_at) }), t('Die letzten {n} gelöschten Bestellungen der letzten {weeks} Wochen bleiben archiviert und lassen sich in „Alle Bestellungen“ wiederherstellen.', { n: LISTS.deletedKept, weeks: LISTS.deletedKeepDays / 7 })],
+        text: [t('„{name}“ vom {date} wird gelöscht.', { name: d.restaurant.name, date: fmtDate(d.created_at) }), archiveHint()],
         confirm: t('Löschen'),
       });
       if (!ok) return;
@@ -246,14 +288,17 @@ export function roundView(id) {
     const manage = d.viewer.can_manage;
     const locked = !!d.ordered_at; // ab „Bestellt“ nicht mehr änderbar: Formular entfällt, das spart eine Zeile
     const editable = manage && !locked;
-    const sub = [...(d.restaurant.address ? [h('span', { class: 'head-address muted' }, d.restaurant.address)] : []), ...(editable ? [headForm, ...(d.viewer.can_delete ? [deleteBtn] : [])] : [])];
+    const payHref0 = d.paypal_visible && d.paypal && !d.viewer.is_buyer ? payHref(d.paypal, 0) : null; // allgemeiner Bezahllink ohne Betrag, für alle außer dem Besteller
+    const payLink = payHref0 ? [h('a', { class: 'head-paylink', href: payHref0, target: '_blank', rel: 'noopener noreferrer', title: t('Bezahlen') }, payHref0.replace(/^https?:\/\//, ''))] : [];
+    const sub = [...(d.restaurant.address ? [h('span', { class: 'head-address muted' }, d.restaurant.address)] : []), ...payLink, ...(editable ? [headForm] : [])];
+    delSlot.replaceChildren(...(editable && d.viewer.can_delete ? [deleteBtn] : []));
     headBand.replaceChildren(
-      h('h2', { class: 'round-title' }, h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('h2', { class: 'round-title' }, h('span', { class: 'round-date' }, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at))), h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
       h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }), ...(d.viewer.can_delete && !editable ? [deleteBtn] : []))), // Kontakt zum Bestellen für alle; Löschen nur Ersteller/Admin
       ...(sub.length ? [h('div', { class: 'head-sub' }, ...sub)] : []) // 2. Zeile: Adresse links, dahinter (Besteller, Ersteller, Admins) das schmale Formular
     );
     buyerList.replaceChildren(...d.users.map((u) => h('option', { value: u.user })));
-    const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents)];
+    const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents), money(d.service_fee_cents)];
     saved = vals;
     editInputs.forEach((i, n) => {
       if (!i.dataset.dirty) i.value = vals[n];
@@ -310,9 +355,9 @@ export function roundView(id) {
   const renderUsers = () => renderUsersList(d, toggle, usersPane);
 
   let undo = null;
-  function showUndo(item) {
+  function showUndo(item, at) {
     clearTimeout(undo?.timer);
-    undo = { item, timer: setTimeout(() => { undo = null; renderMine(); }, TIMING.undoMs) };
+    undo = { item, at, start: Date.now(), timer: setTimeout(() => { undo = null; renderMine(); }, TIMING.undoMs) };
   }
   async function doUndo() {
     const { item } = undo;
@@ -329,7 +374,8 @@ export function roundView(id) {
     for (const el of [inArticle, inVariant, inPrice, inQty, addBtn]) el.disabled = locked;
     const mineU = d.users.find((u) => lc(u.user) === lc(me));
     if (!mineU) {
-      mineList.replaceChildren(h('h3', null, t('Meine Artikel')), h('div', { class: 'muted' }, locked ? t('Bestellung ist geschlossen.') : t('Noch nichts eingetragen.')));
+      readySlot.replaceChildren();
+      mineList.replaceChildren(h('div', { class: 'card-head' }, h('strong', null, t('Meine Artikel'))), h('div', { class: 'muted' }, locked ? t('Bestellung ist geschlossen.') : t('Noch nichts eingetragen.')));
       return;
     }
     const stepper = (i, delta) =>
@@ -347,48 +393,52 @@ export function roundView(id) {
         delta > 0 ? '+' : '−'
       );
     const closed = locked || mineU.done;
-    // persönlicher Ablauf: ready › bezahlt (Besteller: statt bezahlt der Hinweis); der zuletzt erreichte Schritt als grüne Pille
-    const isBuyer = lc(mineU.user) === lc(d.buyer);
-    const stp = (cls, txt) => h('span', { class: `step ${cls}` }, txt);
-    const roleNote = h('span', { class: 'step role', title: t('Der Besteller zahlt bei der Bestellung und bekommt das Geld von den anderen.') }, `✓ (${t('ist Besteller')})`);
-    const fade = d.ordered_at ? ' faded' : ''; // ab „Bestellt“ ist ready nur noch blass markiert
-    const myFlow = mineU.done
-      ? isBuyer
-        ? [stp(`now ready${fade}`, t('✓ ready')), roleNote]
-        : [stp(mineU.paid ? 'done' : `now ready${fade}`, t('✓ ready')), h('span', { class: 'step-sep' }, '›'), mineU.paid ? stp('now', `✓ ${t('bezahlt')}`) : stp('todo', t('bezahlt'))]
-      : [t('unready – Artikel zählen nicht'), ...(isBuyer ? [roleNote] : [])];
     const priceCell = (c) => h('div', { class: 'price-in' }, h('span', { class: 'num-box' }, money(c)), h('span', { class: 'eur-box' }, '€'));
     const sumRow = (label, cents, cls = '') => h('div', { class: `sum-row ${cls}` }, h('div', { class: 'c-lbl' }, label), h('div', { class: 'c-amt' }, priceCell(cents)));
     const counted = d.users.filter((u) => u.subtotal_cents > 0).length;
+    // Gelöschter Artikel bleibt an seiner Stelle (durchgestrichen) mit „Rückgängig“; der Knopf leert sich in TIMING.undoMs von links nach rechts
+    const undoRow = () => {
+      const i = undo.item;
+      const btn = h('button', { class: 'btn small undo-btn', type: 'button', style: `--undo-ms: ${TIMING.undoMs}ms`, onclick: doUndo }, h('span', { class: 'undo-fill', style: `animation-delay: -${Date.now() - undo.start}ms`, 'aria-hidden': 'true' }), h('span', { class: 'undo-label' }, t('Rückgängig')));
+      return h('div', { class: 'item-row item-line undo-line' }, col('qty', h('span', { class: 'muted gone' }, `${i.qty}×`)), col('art', h('span', { class: 'muted gone' }, i.article)), col('var', h('span', { class: 'muted gone' }, nbspUnits(i.variant))), col('price', h('span', { class: 'muted gone' }, `${money(i.price_cents)} €`)), col('act', btn));
+    };
+    const withUndoRow = (rows) => (undo ? rows.toSpliced(Math.min(undo.at, rows.length), 0, undoRow()) : rows);
     const itemRow = (i) => {
       const qtyCol = col('qty', h('div', { class: 'row nowrap gap-1' }, stepper(i, -1), h('strong', null, String(i.qty)), stepper(i, 1)));
-      const del = h('button', { class: 'btn small danger', disabled: closed, title: t('Entfernen'), onclick: async () => { if ((await act(() => api('DELETE', `/items/${i.id}`))) !== null) showUndo(i); nav.current.refresh(); } }, '✕');
+      const del = h('button', { class: 'btn small danger', disabled: closed, title: t('Entfernen'), onclick: async () => { const at = mineU.items.indexOf(i); if ((await act(() => api('DELETE', `/items/${i.id}`))) !== null) showUndo(i, at); nav.current.refresh(); } }, '✕');
       if (closed) return h('div', { class: 'item-row item-line' }, qtyCol, col('art', i.article), col('var', h('span', { class: 'muted' }, nbspUnits(i.variant))), col('price', priceCell(i.price_cents)));
       const field = (key, value, max, extra) => h('input', { value, maxlength: max, autocomplete: 'off', ...extra, onchange: async (e) => { await act(() => api('PATCH', `/items/${i.id}`, { [key]: e.target.value })); nav.current.refresh(); } });
       return h('div', { class: 'item-row item-line' }, qtyCol, col('art', field('article', i.article, LIMITS.article, { required: true, 'aria-label': t('Artikel') })), col('var', field('variant', i.variant || '', LIMITS.variant, { 'aria-label': t('Variante (optional)') })), col('price', h('div', { class: 'price-in' }, field('price', money(i.price_cents), 12, { inputmode: 'decimal', 'aria-label': t('Preis') }), h('span', { class: 'eur-box' }, '€'))), col('act', del));
     };
+    const readyPill = checkPill(t('ready'), {
+      on: mineU.done,
+      dim: mineU.paid || !!d.delivered_at, // nach „bezahlt“ und ab „geliefert“ blasser (dann nicht mehr änderbar)
+      title: mineU.done ? null : t('Klicken: als ready bestätigen'),
+      nested: true,
+      onclick: mineU.paid || d.delivered_at || (mineU.done && locked) ? null : () => toggle('done', { user: mineU.user, value: !mineU.done }),
+    });
+    readySlot.replaceChildren(readyPill);
     mineList.replaceChildren(
-      h('div', { class: 'ready-strip flow' + (mineU.done ? '' : ' unready') }, ...myFlow),
-      h('div', { class: 'row between' }, h('h3', { class: 'flush' }, t('Meine Artikel')), h('div', { class: 'row' }, lc(mineU.user) === lc(d.buyer) ? null : flagBadge(mineU, 'paid'))),
-      ...(undo ? [h('div', { class: 'row between undo-row' }, h('span', { class: 'muted' }, t('Gelöscht: {name}', { name: undo.item.article })), h('button', { class: 'btn small', type: 'button', onclick: doUndo }, t('Rückgängig')))] : []),
-      mineU.items.length
+      ...(mineU.done ? [] : [h('div', { class: 'ready-strip flow unready' }, t('unready – Artikel zählen noch nicht'))]), // Hinweis nur solange nicht ready
+      h('div', { class: 'row between card-head' }, h('strong', null, t('Meine Artikel')), lc(mineU.user) === lc(d.buyer) ? null : h('div', { class: 'row' }, flagBadge(mineU, 'paid'))),
+      mineU.items.length || undo
         ? h(
             'div',
             { class: 'item-list' },
-            mineU.items.map(itemRow)
+            withUndoRow(mineU.items.map(itemRow))
           )
         : h('div', { class: 'muted' }, t('Noch nichts eingetragen.')),
       h('div', { class: 'mt-4 stack-1' },
         sumRow(t('Summe Artikel'), mineU.excluded ? mineU.preview_cents : mineU.subtotal_cents), // nicht ready: Vorschau, zählt noch nicht
-        mineU.fee_cents ? sumRow(`${t('Lieferanteil')} (${t('{fee} / {n} Besteller', { fee: eur(d.delivery_fee_cents), n: counted })})`, mineU.fee_cents) : null,
-        sumRow(t('Summe'), mineU.excluded ? mineU.preview_cents : mineU.total_cents, 'total')),
-      h(
-        'div',
-        { class: 'ready-bar' + (mineU.done ? ' is-done' : '') },
-        mineU.done ? h('span', null, t('✓ Ready')) : null,
-        mineU.done && locked ? null : h('button', { class: 'btn ready', type: 'button', title: mineU.done ? null : t('Klicken: als ready bestätigen'), onclick: () => toggle('done', { user: mineU.user, value: !mineU.done }) }, mineU.done ? t('Artikel ändern') : t('○ unready'))
-      )
+        mineU.fee_cents ? sumRow(`${t('Liefer- und Serviceanteil')} (${t('{fee} / {n} Besteller', { fee: eur(d.delivery_fee_cents + d.service_fee_cents), n: counted })})`, mineU.fee_cents) : null,
+        sumRow(t('Summe'), mineU.excluded ? mineU.preview_cents : mineU.total_cents, 'total'))
     );
+  }
+
+  function renderPay() {
+    const rows = d.ordered_at ? payRows(d) : null; // bezahlt wird erst ab „Bestellt“
+    payCard.classList.toggle('hidden', !rows);
+    if (rows) payCard.replaceChildren(h('div', { class: 'card-head' }, h('strong', null, t('Bezahlen'))), ...rows);
   }
 
   function renderOrder() {
@@ -433,13 +483,16 @@ export function roundView(id) {
       renderBanners();
       renderUsers();
       renderMine();
+      renderPay();
       renderOrder();
       updateTimer();
     },
     destroy() {
       clearInterval(tick);
       stopEdit();
+      wideQ.removeEventListener('change', placeFlow);
       document.getElementById('statusbar').replaceChildren();
+      document.getElementById('flow-slot').replaceChildren();
     },
   };
 }

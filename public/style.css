@@ -34,6 +34,7 @@
   --bar-top: 2.75rem; /* Höhe des oberen Bereichs (Text) */
   --strip-h: 2.25rem; /* Höhe einer Zeile mit Personen-Strips */
   --bar-gap: 0.75rem; /* Abstand zwischen Datum, Name, Chip und Besteller */
+  --dim: 0.4; /* blass = inaktiv oder nicht änderbar: Standard für alle ausgegrauten Elemente */
   --seg-gap: 0.1875rem; /* durchsichtiger Spalt zwischen bezahlt und offen */
   --seg-line-w: 0.0625rem; /* Strich zwischen Personen */
   --seg-line: color-mix(in srgb, var(--seg-paid) 33%, transparent);
@@ -68,16 +69,17 @@
   --tint-bg: light-dark(color-mix(in srgb, var(--accent) 55%, var(--black)), color-mix(in srgb, var(--accent) 40%, var(--white))); /* Namenspille, Link-Pillen */
   --tint-fg: light-dark(var(--white), var(--ink-dark));
   --head-bg: light-dark(var(--white), color-mix(in srgb, var(--black) 40%, var(--bg))); /* Bestellkopf */
-  --tab-bg: light-dark(color-mix(in srgb, var(--white) 55%, var(--surround-bg)), color-mix(in srgb, var(--white) 22%, var(--bg))); /* inaktive Tabs */
+  --tab-bg: light-dark(color-mix(in srgb, var(--black) 13%, var(--surround-bg)), color-mix(in srgb, var(--black) 22%, var(--surround-bg))); /* inaktive Tabs: dunkleres Grau als die Fläche */
   --band-bg: light-dark(color-mix(in srgb, var(--black) 9%, var(--surface)), color-mix(in srgb, var(--white) 7%, var(--surface))); /* Kopfband der Nutzerkarten */
   --side-muted: color-mix(in srgb, var(--fg) 96%, var(--side-bg)); /* Nebentext in der Seitenleiste, mind. 4,5:1 */
+  --today-bg: light-dark(#fff, color-mix(in srgb, var(--fg) 8%, var(--side-bg)));
   --side-item-bg: color-mix(in srgb, var(--fg) 5%, var(--side-bg));
   --side-item-hover: color-mix(in srgb, var(--fg) 10%, var(--side-bg));
   --trash-bg: light-dark(#76767d, #4a4a52); /* mittelgrau: gelöschte Bestellungen */
   --debts-fg: #fff; /* Schrift auf dem dunkelgrauen Block (in beiden Modi hell) */
   --debts-bg: light-dark(#4d4d52, #222227); /* dunkelgrauer Block der offenen Zahlungen */
-  --head-band-bg: #e3e5ea; /* hellgrauer Kopfbereich der Bestellung, in allen Modi gleich */
-  --head-band-fg: #121214;
+  --head-band-bg: light-dark(#ffffff, #2a2d33); /* Restaurant-Band: weiß, im Dark Mode angepasst */
+  --head-band-fg: light-dark(#121214, #ececef);
   --stripe: color-mix(in srgb, var(--fg) 8%, transparent); /* Zebra-Zeilen */
   --tab-fg: var(--fg); /* Beschriftung inaktiver Tabs */
   --surround-bg: light-dark(color-mix(in srgb, var(--accent) 12%, color-mix(in srgb, var(--black) 12%, var(--bg))), color-mix(in srgb, var(--white) 9%, var(--bg))); /* Fläche um den Inhalt der Bestellung: Mittelton */
@@ -87,14 +89,15 @@
   --faded-bg: color-mix(in srgb, var(--fg) 9%, var(--pane-bg)); /* erledigte Zustände: farblos blass (Grau) */
   --faded-fg: var(--pane-muted);
   --wide-max: 80rem; /* Breite der Bestellseite (main.wide) und der Zeilen offener Zahlungen */
-  --content-max-wide: 86rem; /* mehr Breite, wenn die Bestellliste rechts steht und der Platz da ist */
   --head-radius: 1.25rem; /* Rundung des Bestellkopfs, zu- und aufgeklappt gleich */
   --round-w: var(--content-max); /* tatsächliche Breite des Bestellinhalts (Ablaufzeile richtet sich daran aus) */
-  --content-max: 75rem; /* größte Breite des Inhalts der Bestellseite auf sehr breiten Bildschirmen */
+  --content-max: 60rem; /* größte Breite des Inhalts der Bestellseite auf sehr breiten Bildschirmen */
   --scrim: #0008;
   --shadow-side: #0006;
   --shadow-bar: rgb(0 0 0 / 0.5);
   --shadow-pop: rgb(0 0 0 / 0.4);
+  --shadow-tabs: rgb(0 0 0 / 0.3); /* Schatten um alle Tabs samt Inhalt */
+  --toast-ring: light-dark(#d4d4d8, #8a8a92); /* dünne hellgraue Outline um Toast und Rail-Blase */
   --shadow-qr: rgb(0 0 0 / 0.35);
   --shadow-notice: rgb(0 0 0 / 0.4);
   --shadow-notice-deep: rgb(0 0 0 / 0.65); /* zusätzlicher Schatten unter dem Hinweis-Overlay */
@@ -217,21 +220,21 @@ td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: t
 tbody tr:last-child td { border-bottom: 0; }
 tfoot td { font-weight: 650; border-bottom: 0; border-top: 1px solid var(--line); }
 /* Statusstreifen links: außen gerundet (Kartenradius), innen gerade; der Inhalt beginnt rechtwinklig daneben */
-.user-card.paid, .user-card.unpaid { position: relative; overflow: hidden; border-left: 0; --strip-w: calc(var(--radius) + 0.125rem); padding-left: calc(0.875rem + var(--strip-w)); } /* Streifen mindestens so breit wie der Eckenradius */
-.user-card.paid { --stat: var(--ok); }
-.user-card.unpaid { --stat: var(--bad); }
-.user-card.paid::before, .user-card.unpaid::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--strip-w); background: var(--stat); }
-.user-card.paid > .card-head, .user-card.unpaid > .card-head { margin-left: -0.875rem; border-radius: 0; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; }
 .round-link { display: block; text-decoration: none; color: inherit; }
 .round-link:hover .card { background: var(--wash); }
 details > summary { cursor: pointer; font-weight: 600; }
 
-#toast { position: fixed; left: 50%; bottom: 1.125rem; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.5rem 1rem; border-radius: var(--radius-pill); opacity: 0; pointer-events: none; transition: opacity .2s; font-size: var(--fs-md); }
+#toast { position: fixed; left: 50%; bottom: 1.125rem; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.5rem 1rem; border-radius: var(--radius-pill); opacity: 0; pointer-events: none; transition: opacity .2s; font-size: var(--fs-md); box-shadow: 0 0 0 0.125rem var(--toast-ring), 0 0.25rem 1rem var(--shadow-bar); }
 #toast.show { opacity: .94; }
 
 /* Vorschläge unter der Eingabe (Namen, Varianten, bekannter Preis) */
+.item-row .c-art { position: relative; }
+.art-menu { position: absolute; z-index: 20; top: calc(100% + 0.25rem); left: 0; min-width: 100%; max-width: 24rem; max-height: 14rem; overflow-y: auto; display: grid; padding: 0.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 0.375rem 1rem var(--shadow-bar); }
+.art-menu[hidden] { display: none; }
+.art-opt { text-align: left; padding: 0.375rem 0.625rem; border: 0; border-radius: 0.375rem; background: none; color: var(--fg); font: inherit; cursor: pointer; }
+.art-opt:hover, .art-opt.active { background: color-mix(in srgb, var(--fg) 10%, transparent); }
 .assist { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 .assist:empty { display: none; }
 .pill { border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: var(--radius-pill); padding: 0.1875rem 0.75rem; font: inherit; font-size: var(--fs-md); cursor: pointer; }
@@ -291,6 +294,25 @@ a.btn { text-decoration: none; text-align: center; }
 .layout { display: block; }
 #side { display: none; }
 .side-new { display: block; margin-top: 0.625rem; }
+.rail-orders { display: none; }
+body:not(.nav-open) #side > .rail-orders { display: grid; gap: 0.5rem; align-content: start; }
+.rail-tip { --tip-bg: var(--fg); position: fixed; z-index: 40; transform: translateY(-50%); padding: 0.25rem 0.75rem; border-radius: 0.375rem; background: var(--tip-bg); color: var(--bg); font-size: var(--fs-md); font-weight: 600; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.08s; filter: drop-shadow(0.0625rem 0 0 var(--toast-ring)) drop-shadow(-0.0625rem 0 0 var(--toast-ring)) drop-shadow(0 0.0625rem 0 var(--toast-ring)) drop-shadow(0 -0.0625rem 0 var(--toast-ring)) drop-shadow(0 0.1875rem 0.5rem var(--shadow-bar)); } /* Sprechblase mit Pfeil zur Leiste hin */
+.rail-tip.show { opacity: 1; }
+.rail-tip::before { content: ''; position: absolute; left: -0.375rem; top: 50%; width: calc(0.375rem + 1px); height: 0.75rem; margin-top: -0.375rem; background: var(--tip-bg); clip-path: polygon(0 50%, 100% 0, 100% 100%); } /* Pfeil ragt 1 px in die Blase: keine Lücke an der Kante */
+.rail-tip.paid { --tip-bg: var(--seg-paid); color: var(--on-seg); }
+.rail-tip.unpaid { --tip-bg: var(--seg-open); color: var(--on-seg); }
+.rail-no { display: block; padding: 0.375rem 0; border: 0; border-radius: var(--radius); background: var(--side-item-bg); color: var(--fg); font-size: var(--fs-md); font-weight: 600; text-align: center; text-decoration: none; }
+.rail-no:hover { background: var(--side-item-hover); } /* leichtes Highlight, keine Umkehrung */
+.rail-today { display: grid; gap: 0.5rem; margin: 0 -0.5rem 1rem; padding: 0.5rem; border-radius: var(--radius); background: var(--today-bg); } /* „Heute“: eigene weiße Fläche, mit Abstand zu den übrigen; ragt seitlich über die Items hinaus */
+.rail-no.unpaid { background: var(--seg-open); color: var(--on-seg); } /* offene Zahlungen: rot, weiße Schrift */
+.rail-no.paid { background: var(--seg-paid); color: var(--on-seg); } /* alles bezahlt: grün, weiße Schrift */
+.rail-no.unpaid:hover, .rail-no.paid:hover { filter: brightness(1.15); }
+.side-link { display: flex; align-items: center; gap: 0.625rem; }
+.side-link .nav-icon { flex: none; width: 1.25rem; height: 1.25rem; }
+.side-link .count-dot { margin-left: auto; }
+.side-new .side-plus { font-size: 1.125rem; font-weight: 700; margin-right: 0.375rem; }
+body:not(.nav-open) .side-new .side-plus { margin: 0; font-size: 1.5rem; }
+.check-circle.bad { background: var(--bad); color: var(--on-bad); }
 #side h4 { margin: 0.875rem 0.25rem 0.25rem; font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--side-muted); }
 .side-item { display: block; padding: 0.5rem 0.625rem; border: 1px solid transparent; border-radius: var(--radius); background: var(--side-item-bg); color: var(--fg); text-decoration: none; }
 .side-item:hover { background: var(--side-item-hover); }
@@ -304,11 +326,19 @@ a.btn { text-decoration: none; text-align: center; }
 .side-item .sub { margin-top: 0.125rem; font-size: var(--fs-sm); font-weight: 400; color: var(--side-muted); }
 /* Seitenleiste angedockt ab 80 em (Platz für 17,5 rem Leiste + 60 rem Inhalt); darunter als Drawer mit Menü-Knopf */
 @media (min-width: 80em) {
-  :root { --side-w: 17rem; }
-  .layout { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); }
-  #side { display: flex; flex-direction: column; position: sticky; top: 0; height: 100lvh; overflow: auto; padding: 0.75rem; background: var(--side-bg); }
+  :root { --rail-w: 4.25rem; --side-w: 17rem; }
+  .layout { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); }
+  #side { display: flex; flex-direction: column; position: sticky; top: 0; z-index: 30; width: var(--rail-w); height: 100lvh; overflow-x: hidden; overflow-y: auto; padding: 0.75rem; box-sizing: border-box; background: var(--side-bg); transition: width .2s ease, margin .2s ease; } /* standardmäßig schmale Leiste; geöffnet überlagert sie den Inhalt */
+  body.nav-open #side { width: var(--side-w); margin-right: calc(var(--rail-w) - var(--side-w)); box-shadow: 0 0 1.875rem var(--shadow-side); }
+  body.nav-open #side > :not(.menu-btn) { flex: none; width: calc(var(--side-w) - 1.5rem); } /* Inhalt behält beim Ein- und Ausklappen seine volle Breite und wird nur beschnitten: kein Umbruch, keine wachsende Höhe */
+  body:not(.nav-open) #side > :not(.side-foot):not(.menu-btn):not(.rail-orders) { display: none; } /* eingekürzt: keine Bestellungen */
+  body:not(.nav-open) .side-label { display: none; }
+  body:not(.nav-open) .side-foot .side-item.side-link { display: grid; place-items: center; position: relative; padding: 0.625rem 0; }
+  body:not(.nav-open) .count-dot { position: absolute; top: 0.125rem; right: 0.125rem; }
+  body:not(.nav-open) .side-new { padding: 0.5rem 0; font-size: 1.5rem; line-height: 1; text-align: center; }
+  #side > .menu-btn { display: flex; order: -2; position: sticky; top: 0; left: auto; z-index: 2; flex: none; margin: -0.125rem 0 -2.75rem; } /* breit: der Hamburger wandert (app.js) oben in die Leiste, über das Band auf Höhe des Kopfs */
   .home-lists { display: none; }
-  #side::before { content: ''; flex: none; position: sticky; top: -0.75rem; z-index: 1; height: var(--top-h); margin: -0.75rem -0.75rem 0.75rem; background: var(--side-bg); } /* Band auf Höhe des Kopfs: Inhalt der Leiste beginnt darunter */
+  #side::before { content: ''; order: -1; flex: none; position: sticky; top: -0.75rem; z-index: 1; height: var(--top-h); margin: -0.75rem -0.75rem 0.75rem; background: var(--side-bg); } /* Band auf Höhe des Kopfs: Inhalt der Leiste beginnt darunter */
   body.alarm #side::before { animation: side-alarm var(--alarm-period) linear infinite; }
 }
 
@@ -320,19 +350,29 @@ a.btn { text-decoration: none; text-align: center; }
 .dot { display: block; width: 0.875rem; height: 0.875rem; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 1px var(--line); }
 .seg button[aria-pressed="true"] .dot { box-shadow: 0 0 0 0.125rem var(--on-accent); }
 
-/* „Fertig“-Pflichtaktion: immer sichtbar, deutlich aktiv, rechtsbündig */
-.ready-bar { display: flex; flex-wrap: wrap; gap: 0.625rem 1rem; align-items: center; justify-content: flex-end; margin-top: 0.75rem; font-weight: 600; }
-.ready-bar > span { flex: 0 0 auto; }
-button.btn.ready { margin-left: 0; padding: 0.6875rem 1.625rem; font-size: 1.0625rem; box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--accent) 28%, transparent); animation: ready-pulse 2s ease-in-out infinite; }
-.ready-bar.is-done button.btn.ready { background: var(--warn); border-color: var(--warn); color: var(--on-warn); box-shadow: none; animation: none; }
-@keyframes ready-pulse { 50% { box-shadow: 0 0 0 0.4375rem color-mix(in srgb, var(--accent) 12%, transparent); } }
-@media (prefers-reduced-motion: reduce) { button.btn.ready { animation: none; } }
+.check-pill { display: inline-flex; align-items: center; gap: 0.5rem; box-sizing: border-box; padding: 0.1875rem 0.75rem 0.1875rem 0.5rem; border: 2px solid var(--black); border-radius: var(--radius-pill); background: var(--white); color: var(--black); font: inherit; font-size: var(--fs-md); font-weight: 600; line-height: 1.3; white-space: nowrap; } /* aus: weiß, schwarzer Rand */
+.check-pill .cp-box { display: grid; place-items: center; box-sizing: border-box; width: 1.0625rem; height: 1.0625rem; border: 2px solid currentColor; border-radius: 0.25rem; font-size: 0.75rem; line-height: 1; }
+.check-pill.on { background: var(--seg-paid); border-color: var(--seg-paid); color: var(--on-seg); } /* an: grün mit grünem Rand */
+.check-pill.on .cp-box { background: var(--white); border-color: var(--white); color: var(--seg-paid); }
+.check-pill.dim { opacity: var(--dim); } /* blasser, nicht änderbar; die Box bleibt ausgegraut */
+.check-pill.dim .cp-box { filter: grayscale(1); }
+.check-pill.confirm { background: var(--black); border-color: var(--black); color: var(--white); }
+.check-pill.act { cursor: pointer; }
+.check-pill.filter.on { background: var(--black); border-color: var(--black); color: var(--white); } /* Filter an: schwarz */
+.check-pill.filter.on .cp-box { background: var(--white); border-color: var(--white); color: var(--black); }
+.all-head .check-pill { margin-left: auto; }
+.round-main > .tabs button[data-tab="mine"] { position: relative; }
+.round-main > .tabs .tab-ready { position: absolute; left: 0.625rem; top: 50%; transform: translateY(-50%); display: inline-flex; } /* Pille links, der Name bleibt mittig in der Reiterbreite */
+.round-main > .tabs .tab-ready .check-pill { font-size: inherit; } /* gleiche Schrift wie der Name */
+@media (max-width: 30em) { .round-main > .tabs .tab-ready .cp-label { display: none; } .round-main > .tabs .tab-ready .check-pill { padding: 0.1875rem 0.4375rem; } .round-main > .tabs .tab-ready { left: 0.25rem; } } /* Handy: nur das Kästchen, damit der Name Platz hat */
+.round-main > .tabs button[aria-selected="false"] .check-pill { filter: brightness(0.8); } /* inaktiver Reiter: Pille mit abgedunkelt */
 
+.check-pill.act:hover { filter: brightness(0.96); }
 #side h4:first-letter { text-transform: uppercase; }
 
 /* Sidebar: heutige/aktuelle Bestellung deutlich hervorgehoben */
 .soft-note { font-style: italic; font-size: var(--fs-md); color: color-mix(in srgb, var(--fg) 58%, var(--side-bg)); } /* abgeschwächter Hinweis (wie die Einzelpreise): leere Bereiche */
-.side-today { margin: 0; padding: 0; border: 0; background: none; }
+.side-today { margin: 0 0 1rem; padding: 0.625rem; border: 0; border-radius: var(--radius); background: var(--today-bg); }
 #side .side-today h4 { font-size: var(--fs-base); font-weight: 700; color: var(--fg); }
 
 @media (max-width: 30em) { .tabs button { font-size: var(--fs-sm); padding: 0.5rem 0.125rem; } }
@@ -343,7 +383,7 @@ button.btn.ready { margin-left: 0; padding: 0.6875rem 1.625rem; font-size: 1.062
 .edit-track i { display: block; height: 100%; width: 100%; background: var(--bad); border-radius: var(--radius-pill); }
 
 /* „Alle“: nicht ready ausgegraut, unten angedockt (sticky), mindestens 200 px Abstand zu den gültigen Einträgen */
-.users-pane { display: flex; flex-direction: column; gap: 0.625rem; min-height: 70lvh; }
+.users-pane { display: flex; flex-direction: column; gap: 1.75rem; min-height: 70lvh; }
 .unready-gap { flex: 1 0 12.5rem; }
 .unready-block { position: sticky; bottom: 0.5rem; display: grid; gap: 0.625rem; max-height: 45lvh; overflow: auto; padding: 0.625rem; border-top: 0.125rem dashed var(--line); background: var(--bg); filter: grayscale(1); color: var(--muted); }
 .unready-block .user-card { background: transparent; border-style: dashed; color: var(--muted); }
@@ -404,9 +444,7 @@ input[type="checkbox"] { width: auto; flex: none; }
 .statusbar:not(:empty), .status-lines:not(:empty) { display: contents; }
 .status-lines > * + * { margin-top: 0.1875rem; }
 .status-flow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: baseline; align-content: center; padding: 0 max(0.875rem, calc((100% - var(--round-w)) / 2)); height: var(--flow-h); box-sizing: border-box; overflow: hidden; font-size: var(--fs-base); position: sticky; top: var(--top-h); z-index: 5; background: var(--bg); }
-.status-flow .step-sep, .ready-strip .step-sep { color: var(--muted); }
-.status-flow .step-sep { font-size: 0.8em; } /* Pfeil-Zeichnung 0,8 × so hoch wie die Schrift */
-.status-flow .step-sep .chevron-icon { display: block; vertical-align: middle; }
+.ready-strip .step-sep { color: var(--muted); }
 .status-flow .done, .ready-strip .done { font-weight: 600; color: var(--fg); }
 .status-flow .done { opacity: 0.6; } /* abgelaufene Zustände zurückgenommen */
 .status-flow .now, .ready-strip .now { font-weight: 700; background: var(--ok); color: var(--on-ok); padding: var(--pill-pad-lg); border-radius: var(--radius-pill); }
@@ -437,34 +475,50 @@ input[type="checkbox"] { width: auto; flex: none; }
 }
 @media (prefers-reduced-motion: reduce) { .status-flow .step-left.glow { animation: none; box-shadow: 0 0 0.5rem 0.125rem var(--bad); } }
 .status-flow .step-btn:not(.tucked):not(.flush):not(.confirm) { display: inline-grid; place-items: center; width: var(--chip); height: var(--chip); padding: 0; border-radius: 50%; } /* +5 und Icons: runde Knöpfe gleicher Größe */
-.status-flow .step-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.status-flow .step-btn:disabled { opacity: var(--dim); cursor: not-allowed; }
 .status-flow .step-btn .lock-icon { display: block; width: 1.25em; height: 1.25em; stroke-width: 2.6; }
 .status-flow .step-go { font-style: normal; color: var(--muted); }
 .status-flow .step-btn:hover:not(:disabled), .status-flow .step-go:hover:not(:disabled) { background: var(--wash); color: var(--fg); }
-.status-flow .step-go:disabled { cursor: not-allowed; border-style: dashed; opacity: 0.7; }
+.status-flow .step-go:disabled { cursor: not-allowed; border-style: dashed; opacity: var(--dim); }
 @media (hover: hover) { /* ↩ und +5 erst beim Überfahren der Leiste (STATUS.quietButtons in config.js) */
   .status-flow .step-btn.quiet:not(.confirm) { opacity: 0; transition: opacity 0.15s; }
   .status-flow:hover .step-btn.quiet, .status-flow:focus-within .step-btn.quiet { opacity: 1; }
-  .status-flow:hover .step-btn.quiet:disabled, .status-flow:focus-within .step-btn.quiet:disabled { opacity: 0.45; }
+  .status-flow:hover .step-btn.quiet:disabled, .status-flow:focus-within .step-btn.quiet:disabled { opacity: var(--dim); }
 }
 .status-flow .step-btn.confirm, .status-flow .step-go.confirm { background: var(--black); color: var(--white); border-color: var(--black); }
+.flow-pill { --fp-done-bg: light-dark(#8e949f, #4b505b); --fp-done-fg: light-dark(#3a3f48, #dde0e7); --fp-todo-bg: light-dark(#eceef2, #2b2e35); --fp-todo-fg: light-dark(#5b606b, #9aa0ab); display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; min-height: 2.25rem; align-items: stretch; gap: var(--seg-gap); border-radius: var(--radius-pill); overflow: hidden; font-weight: 600; white-space: nowrap; } /* eine lange Pille wie ein Fortschrittsbalken */
+.fp-seg { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; padding: 0.1875rem 0.75rem; }
+
+.fp-seg.fp-done { background: var(--fp-done-bg); color: var(--fp-done-fg); } /* erledigt: dunkelgrau gefüllt, etwas dunklere Schrift, ohne Haken */
+.fp-seg.fp-now { background: var(--ok); color: var(--on-ok); font-weight: 700; } /* aktuell: „OK“-Grün mit Haken */
+.fp-seg.fp-todo { background: var(--fp-todo-bg); color: var(--fp-todo-fg); font-weight: 400; } /* offen: hellgrau, dunkelgraue Schrift, leerer Kreis */
+.fp-seg.fp-todo.fp-pay { color: light-dark(#9a9fa9, #6f7581); } /* „x/y bezahlt“: Schrift heller, weniger Kontrast */
+.fp-seg.act:hover { filter: brightness(0.95); }
+.fp-when { font-weight: 400; }
+.flow-pill .step { background: none; padding: 0; border-radius: 0; color: inherit; font: inherit; font-style: normal; }
+.flow-pill .step-go { border: 0; background: none; padding: 0; color: inherit; font: inherit; font-style: normal; cursor: pointer; }
+.flow-pill .step-go:disabled { cursor: not-allowed; opacity: var(--dim); }
+.flow-pill .step-left, .flow-pill .step-left.done, .flow-pill .step-left.low { background: none; color: inherit; padding: 0; border-radius: 0; font-weight: 700; animation: none; box-shadow: none; } /* Zeiten nur Text, keine eigenen Chips */
+.flow-pill .step-left.low { color: var(--bad-text); }
+.flow-pill .step-left.blink { animation: time-text 2.4s ease-in-out infinite; } /* in der Pille pulsiert nur der Text, kein schwarzer Chip */
+.flow-pill .step-left.glow { animation: time-text 1.2s ease-in-out infinite; }
+@keyframes time-text { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .flow-pill .step-left.blink, .flow-pill .step-left.glow { animation: none; } }
+.flow-pill .step-btn:not(.confirm) { background: none; border: 0; padding: 0 0.125rem; width: auto; height: auto; border-radius: 0; color: inherit; }
+.flow-pill .step-btn:not(.confirm):hover:not(:disabled) { background: none; text-decoration: underline; }
+.flow-pill .step-btn:not(.tucked):not(.flush):not(.confirm) { width: auto; height: auto; min-width: 1.25rem; } .flow-pill .step-btn .lock-icon { width: 1.05em; height: 1.05em; } .flow-pill .step-btn.confirm, .flow-pill .step-go.confirm { position: absolute; z-index: 3; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); min-width: 100%; width: auto; height: auto; padding: 0 0.75rem; border-radius: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; } /* Rückfrage liegt als Overlay über dem Abschnitt, die Leiste verändert sich nicht */
+.fp-seg.fp-time { padding-inline: 0.25rem; }
+.fp-seg.fp-time.closed { background: var(--black); color: var(--white); font-weight: 700; } .fp-time .step-group { gap: 0.25rem; } /* +5 und Wieder öffnen brauchen wenig Rand, damit der Abschnitt nicht viel breiter wird als bei Zuschauern */
+.flow-pill .step-group, .fp-pair { display: inline-flex; align-items: center; gap: 0.5rem; }
 .status-flow .step-time { font-weight: 400; }
 .flow-steps { grid-column: 2; display: flex; justify-content: center; align-items: baseline; gap: 0.625rem; flex-wrap: wrap; } /* Schritte bleiben mittig, links steht das Restaurant */
-.status-flow .step-where { grid-column: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; min-width: 0; height: 1.2em; overflow: hidden; padding-right: 0.75rem; white-space: nowrap; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; line-height: 1.2; } /* eine Zeile; was nicht passt, bricht um und ist abgeschnitten: erst Uhrzeit, dann Datum (ganz), der Name zuletzt */
-.status-flow .step-where > strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-base); font-weight: 700; }
-.status-flow .step-where strong { color: var(--fg); }
-@media (max-width: 63.9375em) { .status-flow .step-where { display: none; } } /* schmal: kein Platz, der Name steht im Kopf */
-@media (max-width: 43.6875em) { .status-flow { display: block; } }
+@media (max-width: 43.6875em) { .status-flow { display: block; } .flow-pill { display: inline-flex; flex-wrap: wrap; border-radius: 0.9375rem; } .fp-when { display: none; } }
 .status-flow .now.ready { background: var(--warn); color: var(--on-warn); }
 .status-flow .todo, .ready-strip .todo { font-weight: 300; font-style: italic; color: var(--muted); }
 .status-lines .banner { border: 0; border-radius: 0; padding: 0.625rem 1rem; font-size: var(--fs-base); font-weight: 700; text-align: center; }
 .status-lines .banner.warn { background: var(--warn); color: var(--on-warn); }
 .status-lines .banner.ok { background: var(--ok); color: var(--on-ok); }
 .status-lines .banner.bad { background: var(--bad); color: var(--on-bad); }
-
-/* „Ich bin ready“ solange nicht ready: rot wie unready, danach gelb wie ready */
-.ready-bar:not(.is-done) button.btn.ready { background: var(--bad); color: var(--on-bad); border-color: var(--bad); box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--bad) 30%, transparent); animation-name: ready-pulse-grey; }
-@keyframes ready-pulse-grey { 50% { box-shadow: 0 0 0 0.4375rem color-mix(in srgb, var(--bad) 12%, transparent); } }
 
 /* Ready-Status über „Meine Artikel“: Rechteck ohne Radius, volle Kartenbreite */
 .mine-card { overflow: hidden; }
@@ -477,7 +531,12 @@ input[type="checkbox"] { width: auto; flex: none; }
 .add-card { padding-bottom: 0.375rem; }
 
 
-.undo-row { margin: 0.5rem 0; padding: 0.375rem 0.625rem; border: 1px dashed var(--line); border-radius: var(--radius); }
+.undo-line .gone { text-decoration: line-through; }
+button.btn.undo-btn { position: relative; overflow: hidden; background: color-mix(in srgb, var(--on-accent) 35%, var(--accent)); border-color: transparent; } /* geleerter Teil (links): die hellere Knopffarbe; rechts bleibt die normale */
+.undo-btn .undo-label { position: relative; }
+.undo-fill { position: absolute; inset: 0; background: var(--accent); transform-origin: right; animation: undo-drain var(--undo-ms) linear forwards; } /* Fortschrittsbalken läuft rückwärts: leert sich von links */
+@keyframes undo-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .undo-fill { animation: none; } }
 
 /* Listenzeilen: leicht wechselnder Hintergrund statt Trennlinien */
 .item-list { gap: 0; }
@@ -497,28 +556,32 @@ input[type="checkbox"] { width: auto; flex: none; }
 .round-link.pay-bar:hover .card.bar { background: transparent; }
 .round-link.pay-bar:hover .pseg, .round-link.pay-bar:hover .bar-top { filter: brightness(1.12); }
 .bar-top { box-sizing: border-box; min-height: var(--bar-top); display: flex; flex-direction: column; justify-content: center; padding: 0.4375rem 0.875rem; color: var(--on-seg-top); background: linear-gradient(to right, var(--seg-paid-top) var(--share), var(--seg-open-top) var(--share)); } /* oben: Statusfarben abgetönt, Wechsel bei bezahltem Anteil */
-.bar-top.mixed { --gx: calc((100% - (var(--gn) - 2) * var(--seg-line-w) - var(--seg-gap)) * var(--gk) / var(--gn) + (var(--gk) - 1) * var(--seg-line-w)); background: linear-gradient(to right, var(--seg-paid-top) var(--gx), var(--gap-top) var(--gx), var(--gap-top) calc(var(--gx) + var(--seg-gap)), var(--seg-open-top) calc(var(--gx) + var(--seg-gap))); } /* Spalt oben genau wie unten: gleiche Breite und Lage */
+.bar-top.mixed-merged { background: linear-gradient(to right, var(--seg-paid-top) calc(100% - var(--red-w)), var(--gap-top) calc(100% - var(--red-w)), var(--gap-top) calc(100% - var(--red-w) + var(--seg-gap)), var(--seg-open-top) calc(100% - var(--red-w) + var(--seg-gap))); } /* Zahlungsblock: Spalt oben genau über dem unten */
+.pstrips .reds { display: flex; flex: none; width: var(--red-w); }
+.pstrips .reds .pseg { flex: 1 1 0; }
+.pstrips .prow > .pseg.paid { flex: 1 1 0; }
+.bar-top.mixed { --gx: calc((100% - var(--gt) * var(--seg-line-w) - var(--seg-gap)) * var(--gk) / var(--gn) + var(--gb) * var(--seg-line-w)); background: linear-gradient(to right, var(--seg-paid-top) var(--gx), var(--gap-top) var(--gx), var(--gap-top) calc(var(--gx) + var(--seg-gap)), var(--seg-open-top) calc(var(--gx) + var(--seg-gap))); } /* Spalt oben genau wie unten: gleiche Breite und Lage */
 .pstrips { display: flex; flex-direction: column; border-top: var(--seg-line-w) solid var(--gap-top); } /* 1 px Linie über den Personen */
 .prow { display: flex; height: var(--strip-h); }
 .prow + .prow { border-top: var(--seg-line-w) solid var(--gap-top); }
 .psep { flex: none; }
 .psep.line { width: var(--seg-line-w); background: var(--seg-line); }
 .psep.gap { width: var(--seg-gap); }
-.pseg { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 0 0.25rem; }
+.pseg { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 0; } /* kein Innenabstand: die Breiten sind reine Anteile, der Spalt oben liegt genau auf dem unten */
 button.pseg { border: 0; font: inherit; color: inherit; cursor: pointer; }
 button.pseg:hover { filter: brightness(1.12); }
-.prow.all-paid { background: var(--seg-paid); align-items: center; justify-content: flex-end; padding: 0 0.5rem; }
-.paid-pill { padding: 0.125rem 0.75rem; border-radius: var(--radius-pill); background: var(--white); color: var(--seg-paid); font-size: var(--fs-sm); font-weight: 700; } /* alle bezahlt: weiße Pille, grüne Schrift, rechts unten */
 .pseg.paid { background: var(--seg-paid); }
 .pseg.open { background: var(--seg-open); }
-.pseg-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; }
+.pseg.merged { justify-content: flex-start; } /* „x haben bezahlt“ vorn links */
+.pseg.merged .pseg-name { padding-left: 0.75rem; }
+.pseg-name { box-sizing: border-box; padding-inline: 0.25rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); font-weight: 600; }
 .bar-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--bar-gap); }
 .bar-right { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+.bar-top.done { background: var(--seg-paid); color: var(--on-seg); } /* alle bezahlt: nur die erste Zeile, im helleren Grün */
+.bar-done { font-weight: 700; color: var(--on-seg); } /* weißer Text, keine Pille (wirkt sonst wie ein Knopf) */
+.bar-top.done .badge { border-color: var(--on-seg); }
 .bar .badge.value { background: var(--black); color: var(--white); font-weight: 700; }
 .bar .badge { border-color: var(--on-seg-top); } /* 1 px Kontur gegen den Balken */
-
-/* Bestellliste: eckig, rundum 1 px schwarze Linie */
-.order-pane, .round-main > .order-pane, .round-main > .tabs ~ .card.order-pane { border: 1px solid var(--black); border-radius: 0; }
 
 /* Summenzeilen der Bestellliste: Bezeichnung rechtsbündig mit Abstand vor dem Wert */
 tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
@@ -532,20 +595,6 @@ tfoot td.foot-lbl { text-align: right; padding-right: 1.5rem; }
 .debts-head-sum { margin-left: 0.75rem; font-size: var(--fs-sm); font-weight: 400; white-space: nowrap; } /* Summe klein hinter dem Titel */
 .debts-head-rest { font-weight: 400; white-space: nowrap; } /* zweiter Teil normal, bricht nur als Ganzes um */
 .debts-head.with-pay { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; align-items: center; } /* Text links, Bezahllink rechtsbündig, alles vertikal zentriert */
-.debts-head.with-pay .head-pay { margin-left: auto; }
-.head-pay { display: grid; gap: 0.5rem; justify-items: end; color: var(--debts-fg); font-weight: 400; } /* Farben für den dunklen Kopf */
-.bar-top .head-pay { --debts-fg: var(--on-seg-top); --debts-bg: var(--seg-open-top); gap: 0; align-items: center; } /* im Kopfband: Farben des Bands, rechter Bereich so hoch wie die Textzeile links */
-.bar-top .head-pay .copy-btn, .bar-top .head-pay .btn { height: 1.45rem; min-height: 0; padding-block: 0; line-height: 1; }
-.bar-top .head-pay .copy-btn svg { width: 1rem; height: 1rem; }
-.bar-top .head-pay .pay-title { margin: 0; }
-.bar-top .head-pay .qr-pop { width: 1.45rem; height: 1.45rem; margin: 0; }
-.bar-top .head-pay .pay-go, .bar-top .head-pay .link-pill { height: 1.45rem; min-height: 0; padding-block: 0; display: inline-flex; align-items: center; }
-.head-pay a { color: inherit; }
-.head-pay .qr-pop { color: var(--debts-fg); }
-.head-pay .muted { color: color-mix(in srgb, var(--debts-fg) 70%, transparent); }
-.head-pay button.btn.copy-btn { background: transparent; color: var(--debts-fg); border-color: color-mix(in srgb, var(--debts-fg) 60%, transparent); }
-.head-pay button.btn.copy-btn:hover { background: var(--debts-fg); color: var(--debts-bg); border-color: transparent; }
-.head-pay .pay-go { background: var(--debts-fg); color: var(--debts-bg); border-color: transparent; }
 .status-debts { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; }
 .debt-chip { display: inline-flex; align-items: center; gap: 0.625rem; background: var(--bad); color: var(--on-bad); border-radius: var(--radius-pill); padding: 0.25rem 0.375rem 0.25rem 0.875rem; font-size: var(--fs-base); } /* offene Zahlung: roter Chip */
 .debt-card { padding-block: 0; background: var(--pane-bg); border-color: color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); color: var(--fg); text-decoration: none; display: block; } /* offene Zahlung im Overlay: im Design der Nutzerkarten */
@@ -562,9 +611,17 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 
 
 /* Tabs angedockt an das folgende Panel, zwei Zeilen Abstand darüber; aktiv = Farbe des Panels, passiv = dunkler */
+.round-main > .users-pane, .round-main > .mine-pane { background: var(--pane-bg); padding: 0.875rem; border-radius: 0 0 var(--radius) var(--radius); } /* Alle drei Tabs: umfassender Bereich mit demselben hellen Hintergrund */
+.round-main > .tabs ~ .users-pane > .card:first-child, .round-main > .tabs ~ .mine-pane > .card:first-child { border-radius: var(--radius); }
+.round-main > .tabs ~ .users-pane > .card:first-child > .card-head, .round-main > .tabs ~ .mine-pane > .card:first-child > .card-head { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.round-main > .users-pane, .round-main > .mine-pane, .round-main > .order-pane { box-shadow: 0 0.625rem 1.25rem -0.125rem var(--shadow-tabs); } /* mittelgroßer Schatten um Tabs und Inhalt; nicht mehr per filter, sonst bekäme die Fläche über den Tabs einen abgesetzten Rand */
+.round-main > .tabs button { box-shadow: 0 -0.125rem 0.625rem -0.125rem var(--shadow-tabs); clip-path: inset(-1rem -1rem 0 -1rem); }
+.round-main > .tabs button[aria-selected="false"] { box-shadow: inset 0 -0.875rem 0.875rem -0.625rem var(--shadow-tabs), 0 -0.125rem 0.625rem -0.125rem var(--shadow-tabs); } /* inaktive Tabs: mittlerer Innenschatten nach oben, sie liegen „dahinter“ */ /* der Schatten fällt nur nach oben und zur Seite, nie auf den Inhalt darunter */
+.role-note { font-size: var(--fs-md); font-weight: 600; color: var(--muted); }
+.role-note.dim { opacity: var(--dim); }
 .round-main > .tabs { margin-top: 0.5rem; margin-bottom: -1rem; gap: 0.25rem; position: relative; z-index: 1; }
 .round-main > .tabs button { padding: 0.625rem 0.375rem; border-radius: 0.9375rem 0.9375rem 0 0; border: 1px solid var(--line); border-bottom: 0; background: var(--tab-bg); color: var(--tab-fg); font-weight: 600; }
-.round-main > .tabs button[aria-selected="true"] { position: relative; z-index: 2; margin-bottom: -0.0625rem; padding-bottom: 0.6875rem; background: var(--surface); color: var(--fg); font-weight: 700; }
+.round-main > .tabs button[aria-selected="true"] { position: relative; z-index: 2; margin-bottom: -0.0625rem; padding-bottom: 0.6875rem; background: var(--surface); color: var(--fg); font-weight: 700; border-color: transparent; } /* aktiver Tab: keine Linie zum Inhalt */
 /* erste Karte unter den Tabs: obere Ecken eckig, damit nirgends ein Spalt entsteht */
 .round-main > .tabs ~ .card, .round-main > .tabs ~ * > .card:first-child { border-top-left-radius: 0; border-top-right-radius: 0; }
 
@@ -580,7 +637,10 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .round-main > .tabs { align-items: flex-end; }
 .round-main > .tabs button { font-size: min(1.2rem, 3.2cqw); flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .round-main > .tabs { container-type: inline-size; }
+.round-main > .tabs button { flex: 2 1 0; } /* Breiten 2 | 2 | 1: Bestellliste schmaler */
+.round-main > .tabs button[data-tab="order"] { flex: 1 1 0; }
 .round-main > .tabs button[aria-selected="true"] { font-size: min(1.44rem, 3.84cqw); }
+@media (max-width: 30em) { .round-main > .tabs button[data-tab="order"], .round-main > .tabs button[data-tab="order"][aria-selected="true"] { font-size: min(0.75rem, 3.1cqw); padding-inline: 0; font-weight: 600; text-overflow: clip; } } /* schmalster Tab: Schrift kleiner, damit „Bestellliste“ hineinpasst */
 @media (max-width: 30em) { /* Handy: Tabschrift etwa wie „Artikel hinzufügen“, aber so, dass auch „Bestellliste“ hineinpasst */
   .round-main > .tabs button { padding-inline: 0.125rem; font-size: min(0.9375rem, 4.2cqw); }
   .round-main > .tabs button[aria-selected="true"] { font-size: min(1rem, 4.6cqw); }
@@ -595,6 +655,19 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 @media (max-width: 43.6875em) {
   .status-flow { position: static; height: auto; padding-block: 0.5rem; overflow: visible; }
   .round-main > .tabs { top: var(--top-h); }
+}
+
+.flow-slot { display: none; }
+.running-hint a.btn.ghost.block-go { background: light-dark(var(--white), var(--surface)); } /* Bestellungs-Chips mit weißem Grund */
+.running-hint { margin: 0 0 1rem; padding-bottom: 0.875rem; border-bottom: 1px solid var(--line); } /* laufende Bestellungen vor dem Formular */
+.head-band .round-date { font-size: var(--fs-base); font-weight: 400; color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); } /* Datum vor dem Restaurantnamen */
+@media (min-width: 80em) { /* breit: Logo links, Ablaufleiste rechts daneben im Kopf, die eigene Zeile entfällt */
+  .top { grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); } /* Leiste mittig, solange der Platz neben Logo und Namen reicht */
+  .brand { grid-column: 1; justify-self: start; }
+  .flow-slot { display: block; grid-column: 2; justify-self: center; }
+  :root { --flow-h: 0px; }
+  .flow-slot .status-flow { position: static; display: block; height: auto; padding: 0; background: none; animation: none; overflow: visible; }
+  .flow-slot .flow-steps { grid-column: auto; justify-content: center; flex-wrap: nowrap; }
 }
 
 /* Webseiten-Link als Pille: Schriftfarbe = Hintergrund, Hintergrund = Schriftfarbe */
@@ -635,7 +708,7 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 /* Gemeinsame getönte Pillenfarbe (Nutzer-Pille, Link im Restaurant-Kopf): hell dunkel getönt, dunkel hell getönt */
 
 /* Erste Zeile einer User-Karte: farblich abgesetzt (hell: dunkler, dunkel: heller), über die volle Kartenbreite */
-.user-card > .card-head { margin: -0.875rem -0.875rem 0.5rem; padding: 0.25rem 0.875rem; background: var(--band-bg); border-radius: var(--radius) var(--radius) 0 0; }
+.user-card > .card-head, .band-card > .card-head { margin: -0.875rem -0.875rem 0.5rem; padding: 0.25rem 0.875rem; background: var(--band-bg); border-radius: var(--radius) var(--radius) 0 0; } /* abgetönte Kopfzeile je Karte: Nutzerkarten, Artikel hinzufügen, Meine Artikel, Bezahlen */
 /* Erste Karte direkt unter den Tabs: auch das Kopfband eckig, damit keine Radien gestapelt sind */
 .round-main > .tabs ~ * > .card:first-child > .card-head { border-top-left-radius: 0; border-top-right-radius: 0; }
 .end { justify-content: flex-end; }
@@ -687,11 +760,10 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .ready-strip.flow.unready { background: var(--bad); color: var(--on-bad); border-bottom: 0; }
 .ready-strip .now.ready { background: var(--warn); color: var(--on-warn); }
 .ready-strip .role { font-weight: 400; }
-.all-head { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; }
+.all-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .all-head h2 { margin: 0; }
 .unpaid-line { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.25rem; }
-.add-title { margin: 0 0 0.5rem; font-size: var(--fs-base); }
-.filter-bar { font-size: 1.0625rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; cursor: pointer; }
+.filter-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
 .overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 1rem; background: var(--scrim); } /* Overlay in der Mitte, Klick daneben schließt */
 .overlay:empty { display: none; }
 .overlay-card { position: relative; border-radius: 0; width: min(28rem, 100%); max-height: calc(100lvh - 2rem); overflow: auto; font-size: var(--fs-lg); display: grid; gap: 1rem; padding: 1.5rem; background: var(--surface); box-shadow: 0 0.75rem 2rem var(--shadow-notice), 0 2rem 3.5rem -0.5rem var(--shadow-notice-deep); }
@@ -738,6 +810,10 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 
 .round-main > .tabs ~ * > .card, .round-main > .tabs ~ .card { background: var(--pane-bg); border-color: color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); }
 .round-main > .tabs button[aria-selected="true"] { background: var(--pane-bg); }
+.round-main > .tabs button[aria-selected="true"] { border-color: color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); } /* aktiver Tab: derselbe Rand wie der Inhalt, oben und seitlich */
+.round-main > .tabs button[aria-selected="true"] { box-shadow: none; clip-path: none; } /* aktiver Tab ohne eigenen Schatten: keine helle Linie zum Inhalt */
+.round-main > .users-pane, .round-main > .mine-pane { border: 1px solid color-mix(in srgb, var(--fg) 24%, var(--surround-bg)); border-top: 0; } /* Inhaltsbereich: Rand links, rechts und unten wie der aktive Tab */
+.round-main > .tabs ~ .order-pane { border-top: 0; } /* Bestellliste: keine Linie unter dem aktiven Tab */
 .round-main > .tabs ~ * .muted, .round-main > .tabs ~ .card .muted, .order-table th { color: var(--pane-muted); }
 #app.wide { background: var(--surround-bg); }
 .round-main > .tabs { background: var(--surround-bg); }
@@ -786,6 +862,8 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .head-form input { width: 7rem; padding: 0.125rem 0.5rem; }
 .head-form input[inputmode="decimal"] { width: 4rem; }
 .head-form .edit-bar { flex-basis: 100%; }
+.head-form .form-break { flex-basis: 100%; height: 0; }
+.head-band a.head-paylink { color: inherit; font-size: var(--fs-sm); font-weight: 600; text-decoration: underline; } /* allgemeiner Bezahllink, ausgeschrieben */
 .head-band .head-address { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); } /* Adresse klein in der ersten Zeile des Kopfbands */
 .head-band .head-contact .row { justify-content: flex-end; }
 .order-table thead th { border-bottom: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); padding-bottom: 0.5rem; }
@@ -793,9 +871,7 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table tfoot tr:first-child td { border-top: 0; padding-top: 1.5rem; } /* Leerzeile vor „Summe Artikel“ */
 .order-table tfoot tr:last-child td { font-size: 1.25rem; font-weight: 700; padding-top: 0.5rem; } /* „Gesamt“ größer */
 .order-table tfoot tr:last-child td { border-top: 2px solid color-mix(in srgb, var(--fg) 45%, var(--pane-bg)); }
-.order-table .art-var { display: inline-block; max-width: 100%; margin-right: 0.625rem; } /* fester Abstand zwischen Zusatz und erstem Namen */
 .order-table .art-name { display: inline-block; max-width: 100%; margin-right: 0.625rem; } /* Gerichtname bleibt in einer Zeile, solange er allein passt; Namen brechen um */
-.order-table .who-line { display: block; } /* Variante und Namen mehrerer Nutzer in der Zeile darunter */
 .order-table .lbl-short { display: none; }
 .order-table .unit-inline { display: none; }
 @media (max-width: 30em) {
@@ -804,9 +880,13 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
   .order-table thead { display: none; }
   .order-table tbody tr { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; column-gap: 0.5rem; border-bottom: 1px solid var(--line); }
   .order-table tbody td { display: block; border-bottom: 0; }
-  .order-table tbody td:nth-child(3), .order-table tbody td:nth-child(4) { display: none; }
-  .order-table tbody td:nth-child(5) { align-self: end; }
-  .order-table .who-line { display: block; }
+  .order-table tbody td:nth-child(1) { grid-column: 1; grid-row: 1 / span 3; }
+  .order-table tbody td:nth-child(2) { grid-column: 2; grid-row: 1; }
+  .order-table tbody td:nth-child(3) { grid-column: 2; grid-row: 2; }
+  .order-table tbody td:nth-child(4) { grid-column: 2; grid-row: 3; }
+  .order-table tbody td:nth-child(5), .order-table tbody td:nth-child(6) { display: none; }
+  .order-table tbody td:nth-child(7) { grid-column: 3; grid-row: 1 / span 3; align-self: end; }
+  .order-table tbody td:empty { display: none; }
   .order-table .unit-inline { display: inline; white-space: nowrap; margin-left: 0.625rem; }
   .order-table tfoot tr { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
 }
@@ -816,17 +896,22 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table thead th.unit-head { position: relative; }
 .order-table .unit-head-lbl { position: absolute; right: 1.5rem; top: 0.375rem; } /* Überschrift ragt nach links, ohne die Spalte zu verbreitern */
 @media (max-width: 30em) { .order-table td.unit-col { padding: 0; } }
-.order-table tbody td:nth-child(5) { font-size: 1.0625rem; } /* Summen je Gericht */
+.order-table tbody td:nth-child(7) { font-size: 1.0625rem; } /* Summen je Gericht */
+.order-table td.art-cell, .order-table td.var-cell, .order-table td.who-cell { text-align: left; padding-right: 1.25rem; } /* Zusatz und Nutzer: eigene linksbündige Spalten */
+.order-table td.var-cell, .order-table td.who-cell { font-size: var(--fs-md); }
+.order-table td.art-cell { width: 1%; white-space: nowrap; }
+@media (max-width: 30em) { .order-table td.art-cell { width: auto; white-space: normal; padding-right: 0; } }
 .order-table tfoot tr:not(:last-child) td { font-size: var(--fs-lg); font-weight: 400; } /* „Summe Artikel“, nicht fett */
 .order-table thead th:first-child, .order-table td.qty-cell, .user-items td:first-child { text-align: right; padding-right: 1.25rem; } /* Anzahl: eigene rechtsbündige Spalte mit mehr Abstand zum Namen */
 @media (max-width: 30em) { .order-table tbody tr { column-gap: 0.75rem; } .order-table td.qty-cell { padding-right: 0; } }
-.order-table tfoot td.qty-total { font-weight: 700; color: var(--fg); }
+.order-table tfoot td.qty-total { font-weight: 700; color: var(--fg); text-align: left; padding-left: 0.25rem; }
 @media (max-width: 30em) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
 .order-table tfoot tr:not(:last-child) td:last-child, .order-table tfoot tr:not(:last-child) td.qty-total { font-weight: 700; } /* Betrag und Gesamtzahl fett, nur das Wort „Summe Artikel“ normal */
 /* Dunkler Kopfbereich: alle Texte auf einer gemeinsamen Grundlinie */
-.round-head .head-band { align-items: center; }
-.head-band .round-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.625rem; }
-.head-band .head-contact .row { align-items: center; }
+.round-head .head-band { align-items: baseline; } /* alle Elemente des Restaurant-Bands auf einer Grundlinie */
+.head-band .round-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.625rem; }
+.head-band .head-contact .row { align-items: baseline; }
+.head-band .head-sub, .head-band .head-form { align-items: baseline; }
 @media (max-width: 30em) { /* Handy: Name, Besteller, Kontakt, Adresse und Formular untereinander */
   .round-head .head-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem 0.5rem; }
   .round-head { --round-title-size: 1.5rem; }
@@ -846,19 +931,8 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; font-size: var(--fs-md); font-weight: 600; color: var(--fg); }
 .round-grid { width: 100%; max-width: var(--content-max); margin-inline: auto; container: roundgrid / inline-size; }
 
-@media (min-width: 100rem) { .round-grid { max-width: var(--content-max-wide); } :root { --round-w: min(var(--content-max-wide), calc(var(--wide-max) - 1.75rem)); } }
-
-/* Breit: links Tabs „Meine“/„Alle“, rechts dauerhaft die Bestellliste (bleibt beim Scrollen sichtbar) */
-@container roundgrid (min-width: 60rem) {
-  .round-main { grid-template-columns: minmax(28rem, 1fr) minmax(31rem, 40rem); column-gap: 1rem; } /* Bestellliste wächst bis 40 rem, links bleiben mindestens 28 rem */
-  .round-main > :not(.order-pane) { grid-column: 1; }
-  .round-main > .order-pane { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: sticky; top: calc(var(--top-h) + var(--flow-h)); display: block !important; }
-  .round-main > .tabs button[data-tab="order"] { display: none; }
-  .round-main[data-tab="order"] > .mine-pane { display: grid !important; } /* gemerkter Tab „Bestellliste“ aus schmaler Ansicht: links „Meine“ zeigen */
-}
-
 /* Bestellliste: Tabelle nur so breit wie nötig (bis zum Rand des Blocks); Abstand zwischen den Spalten bleibt */
-.order-table { width: max-content; max-width: 100%; margin-left: auto; } /* rechtsbündig in der Karte */
+.order-table { width: 100%; } /* nutzt die ganze Breite der Karte */
 @media (max-width: 30em) { .order-table { width: 100%; } }
 .status-flow .now.unready { background: var(--bad); color: var(--on-bad); }
 button.confirm, button.btn.confirm, button.badge.confirm { background: var(--black); color: var(--white); border-color: color-mix(in srgb, var(--white) 35%, var(--black)); } /* Rückfrage „ist bezahlt?“: schwarz */

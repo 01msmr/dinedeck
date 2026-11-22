@@ -22,9 +22,9 @@ export function isCurrentRound(r, now, nightEndHour = DEFAULTS.nightEndHour) {
   return isToday(r.created_at, now, nightEndHour);
 }
 
-// Welche Bestellung beim Start gezeigt wird: neueste offene, sonst neueste von heute, sonst insgesamt neueste (Liste: neueste zuerst).
+// Welche Bestellung beim Start gezeigt wird: neueste offene, sonst neueste von heute (bis 4 Uhr nachts noch der Abend davor), sonst keine – nie automatisch eine alte (Liste: neueste zuerst).
 export function startRound(rounds, now, nightEndHour = DEFAULTS.nightEndHour) {
-  return rounds.find((r) => !r.locked) ?? rounds.find((r) => isCurrentRound(r, now, nightEndHour)) ?? rounds[0] ?? null;
+  return rounds.find((r) => !r.locked) ?? rounds.find((r) => isCurrentRound(r, now, nightEndHour)) ?? null;
 }
 
 // Bestellung desselben Restaurants, die eine neue blockiert (Regel wie db.js createRound).

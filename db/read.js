@@ -37,7 +37,8 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
       };
     });
 
-    const shares = distribute(r.delivery_fee_cents, users.map((u) => (u.subtotal_cents > 0 ? 1 : 0)));
+    const feesCents = r.delivery_fee_cents + r.service_fee_cents; // Liefer- und Servicekosten gleichmäßig auf die User mit Artikeln
+    const shares = distribute(feesCents, users.map((u) => (u.subtotal_cents > 0 ? 1 : 0)));
     users.forEach((u, i) => {
       u.fee_cents = shares[i];
       u.total_cents = u.subtotal_cents + shares[i];
@@ -86,6 +87,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
       paypal: canSeePay ? r.paypal : '',
       paypal_visible: canSeePay,
       delivery_fee_cents: r.delivery_fee_cents,
+      service_fee_cents: r.service_fee_cents,
       created_at: r.created_at,
       expires_at: r.expires_at,
       close_when_ready: !!r.close_when_ready,
@@ -100,7 +102,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
       users,
       groups,
       items_total_cents: itemsTotal,
-      grand_total_cents: itemsTotal + r.delivery_fee_cents,
+      grand_total_cents: itemsTotal + feesCents,
       ready: { total: users.length, done: users.length - notReady.length, not_ready: notReady },
       debts,
       payers: withOrders.map((u) => ({ user: u.user, paid: u.paid || lower(u.user) === lower(r.buyer) })), // Besteller schuldet sich nichts
@@ -124,7 +126,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
     const iso = (ms) => (ms ? new Date(ms).toISOString() : null);
     return db
       .prepare(
-        `SELECT r.id, r.created_at, s.name AS restaurant, r.creator, r.buyer, r.delivery_fee_cents, r.ordered_at, r.delivered_at,
+        `SELECT r.id, r.created_at, s.name AS restaurant, r.creator, r.buyer, r.delivery_fee_cents, r.service_fee_cents, r.ordered_at, r.delivered_at,
                 i.user, i.article, i.variant, i.price_cents, i.qty, COALESCE(p.done, 0) AS done, COALESCE(p.paid, 0) AS paid
          FROM items i JOIN rounds r ON r.id = i.round_id JOIN restaurants s ON s.id = r.restaurant_id
          LEFT JOIN participants p ON p.round_id = r.id AND lower(p.user) = lower(i.user)
@@ -146,6 +148,7 @@ export function createReads({ db, q, getRound, isLocked, isAdmin, canManage, can
         Ready: !!x.done,
         Bezahlt: !!x.paid,
         Lieferkosten: x.delivery_fee_cents / 100,
+        Servicekosten: x.service_fee_cents / 100,
         Bestellt: iso(x.ordered_at),
         Geliefert: iso(x.delivered_at),
         Lieferzeit_min: x.ordered_at && x.delivered_at ? Math.round((x.delivered_at - x.ordered_at) / 60000) : null,

@@ -857,3 +857,28 @@ test('Bezahlt erst ab „Bestellt“; mit Bezahltem lässt sich „Bestellt“ n
     await close();
   }
 });
+
+test('Servicekosten: mit den Lieferkosten zusammen gleichmäßig auf die User verteilt, ab „Bestellt“ gesperrt', async () => {
+  const { call, close } = await boot();
+  try {
+    const { id } = (await call('POST', '/api/rounds', 'alex', { restaurant: { name: 'Pizza' }, delivery_fee: '3,00', service_fee: '1,00', minutes: 20 })).body;
+    await call('POST', `/api/rounds/${id}/items`, 'anna', { article: 'Cola', price: '2' });
+    await call('POST', `/api/rounds/${id}/items`, 'bob', { article: 'Cola', price: '2' });
+    await call('POST', `/api/rounds/${id}/done`, 'anna', { value: true });
+    await call('POST', `/api/rounds/${id}/done`, 'bob', { value: true });
+    let d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.delivery_fee_cents, 300);
+    assert.equal(d.service_fee_cents, 100);
+    assert.equal(d.users.reduce((a, u) => a + u.fee_cents, 0), 400, 'beide Kosten verteilt');
+    assert.equal(d.grand_total_cents, d.items_total_cents + 400);
+    assert.deepEqual(d.users.map((u) => u.total_cents), [400, 400], 'je User 2,00 Artikel + 2,00 Anteil');
+    assert.equal((await call('PATCH', `/api/rounds/${id}`, 'alex', { service_fee: '2,00' })).status, 200);
+    d = (await call('GET', `/api/rounds/${id}`, 'alex')).body;
+    assert.equal(d.service_fee_cents, 200);
+    await call('POST', `/api/rounds/${id}/time`, 'alex', { action: 'lock' });
+    await call('PATCH', `/api/rounds/${id}`, 'alex', { ordered: true });
+    assert.equal((await call('PATCH', `/api/rounds/${id}`, 'alex', { service_fee: '5,00' })).status, 400, 'nach „Bestellt“ gesperrt');
+  } finally {
+    await close();
+  }
+});

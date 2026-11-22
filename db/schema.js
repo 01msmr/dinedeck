@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   buyer TEXT NOT NULL,
   paypal TEXT NOT NULL DEFAULT '',
   delivery_fee_cents INTEGER NOT NULL DEFAULT 0,
+  service_fee_cents INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL,
   close_when_ready INTEGER NOT NULL DEFAULT 0,
@@ -75,6 +76,7 @@ export function openDb(file = ':memory:') {
   if (!rcols.includes('eta_at')) db.exec('ALTER TABLE rounds ADD COLUMN eta_at INTEGER');
   if (!rcols.includes('eta_minutes')) db.exec('ALTER TABLE rounds ADD COLUMN eta_minutes INTEGER');
   if (!rcols.includes('delivered_at')) db.exec('ALTER TABLE rounds ADD COLUMN delivered_at INTEGER');
+  if (!rcols.includes('service_fee_cents')) db.exec('ALTER TABLE rounds ADD COLUMN service_fee_cents INTEGER NOT NULL DEFAULT 0');
   const scols = db.prepare('PRAGMA table_info(restaurants)').all().map((c) => c.name);
   if (!scols.includes('address')) db.exec("ALTER TABLE restaurants ADD COLUMN address TEXT NOT NULL DEFAULT ''");
   const pcols = db.prepare('PRAGMA table_info(participants)').all().map((c) => c.name);
