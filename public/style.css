@@ -456,7 +456,7 @@ input[type="checkbox"] { width: auto; flex: none; }
 .status-flow .step-pair { display: inline-flex; align-items: center; gap: 0.625rem; white-space: nowrap; }
 .status-flow .step-group { display: inline-flex; align-items: center; gap: 0.5rem; }
 .status-flow .step-eta { display: inline-flex; align-items: center; gap: 0.375rem; color: var(--muted); font-size: var(--fs-md); }
-.status-flow .step-eta input { width: 4rem; padding: 0.125rem 0.375rem; }
+.status-flow .step-eta input, .status-flow .step-eta input.w-eta { width: 3.25rem; padding: 0.125rem 0.375rem; }
 .status-flow .step input[type="checkbox"] { margin: 0 0.375rem 0 0; vertical-align: middle; }
 .status-flow .step-left { font-weight: 700; font-variant-numeric: tabular-nums; padding: var(--pill-pad-lg); border-radius: var(--radius-pill); background: var(--fg); color: var(--bg); } /* Zeit als Markierung, kontrastierend (Hell/Dunkel umgekehrt) */
 .status-flow .step-left .lock-icon { display: inline-block; width: 1em; height: 1em; margin-right: 0.3125rem; vertical-align: -0.125em; stroke-width: 2.6; }
@@ -486,19 +486,19 @@ input[type="checkbox"] { width: auto; flex: none; }
   .status-flow:hover .step-btn.quiet:disabled, .status-flow:focus-within .step-btn.quiet:disabled { opacity: var(--dim); }
 }
 .status-flow .step-btn.confirm, .status-flow .step-go.confirm { background: var(--black); color: var(--white); border-color: var(--black); }
-.flow-pill { --fp-done-bg: light-dark(#8e949f, #4b505b); --fp-done-fg: light-dark(#3a3f48, #dde0e7); --fp-todo-bg: light-dark(#eceef2, #2b2e35); --fp-todo-fg: light-dark(#5b606b, #9aa0ab); display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; min-height: 2.25rem; align-items: stretch; gap: var(--seg-gap); border-radius: var(--radius-pill); overflow: hidden; font-weight: 600; white-space: nowrap; } /* eine lange Pille wie ein Fortschrittsbalken */
-.fp-seg { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; padding: 0.1875rem 0.75rem; }
+.flow-pill { --fp-done-bg: light-dark(#8e949f, #4b505b); --fp-done-fg: light-dark(#3a3f48, #dde0e7); --fp-todo-bg: light-dark(#eceef2, #2b2e35); --fp-todo-fg: light-dark(#5b606b, #9aa0ab); display: inline-flex; min-height: 2.25rem; --fp-seg-w: 7.5rem; align-items: stretch; gap: var(--seg-gap); border-radius: var(--radius-pill); overflow: hidden; font-weight: 600; white-space: nowrap; } /* eine lange Pille wie ein Fortschrittsbalken */
+.fp-seg { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: var(--fp-seg-w); gap: 0.375rem; padding: 0.1875rem 0.75rem; }
 
 .fp-seg.fp-done { background: var(--fp-done-bg); color: var(--fp-done-fg); } /* erledigt: dunkelgrau gefüllt, etwas dunklere Schrift, ohne Haken */
 .fp-seg.fp-now { background: var(--ok); color: var(--on-ok); font-weight: 700; } /* aktuell: „OK“-Grün mit Haken */
 .fp-seg.fp-todo { background: var(--fp-todo-bg); color: var(--fp-todo-fg); font-weight: 400; } /* offen: hellgrau, dunkelgraue Schrift, leerer Kreis */
-.fp-seg.fp-todo.fp-pay { color: light-dark(#9a9fa9, #6f7581); } /* „x/y bezahlt“: Schrift heller, weniger Kontrast */
 .fp-seg.act:hover { filter: brightness(0.95); }
 .fp-when { font-weight: 400; }
 .flow-pill .step { background: none; padding: 0; border-radius: 0; color: inherit; font: inherit; font-style: normal; }
 .flow-pill .step-go { border: 0; background: none; padding: 0; color: inherit; font: inherit; font-style: normal; cursor: pointer; }
 .flow-pill .step-go:disabled { cursor: not-allowed; opacity: var(--dim); }
 .flow-pill .step-left, .flow-pill .step-left.done, .flow-pill .step-left.low { background: none; color: inherit; padding: 0; border-radius: 0; font-weight: 700; animation: none; box-shadow: none; } /* Zeiten nur Text, keine eigenen Chips */
+.flow-pill .step-left.done { opacity: 1; font-weight: inherit; } /* erledigte Zeit: volle Deckkraft und Schrift wie der Abschnitt */
 .flow-pill .step-left.low { color: var(--bad-text); }
 .flow-pill .step-left.blink { animation: time-text 2.4s ease-in-out infinite; } /* in der Pille pulsiert nur der Text, kein schwarzer Chip */
 .flow-pill .step-left.glow { animation: time-text 1.2s ease-in-out infinite; }
@@ -506,7 +506,10 @@ input[type="checkbox"] { width: auto; flex: none; }
 @media (prefers-reduced-motion: reduce) { .flow-pill .step-left.blink, .flow-pill .step-left.glow { animation: none; } }
 .flow-pill .step-btn:not(.confirm) { background: none; border: 0; padding: 0 0.125rem; width: auto; height: auto; border-radius: 0; color: inherit; }
 .flow-pill .step-btn:not(.confirm):hover:not(:disabled) { background: none; text-decoration: underline; }
-.flow-pill .step-btn:not(.tucked):not(.flush):not(.confirm) { width: auto; height: auto; min-width: 1.25rem; } .flow-pill .step-btn .lock-icon { width: 1.05em; height: 1.05em; } .flow-pill .step-btn.confirm, .flow-pill .step-go.confirm { position: absolute; z-index: 3; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); min-width: 100%; width: auto; height: auto; padding: 0 0.75rem; border-radius: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; } /* Rückfrage liegt als Overlay über dem Abschnitt, die Leiste verändert sich nicht */
+.flow-pill .step-btn:not(.tucked):not(.flush):not(.confirm) { width: auto; height: auto; min-width: 1.25rem; } .flow-pill .step-btn .lock-icon { width: 1.05em; height: 1.05em; } .flow-pill .step-btn.confirm { background: none; border: 0; padding: 0 0.125rem; width: auto; height: auto; min-width: 1.25rem; border-radius: 0; color: inherit; }
+.flow-pill .step-go.confirm { background: none; border: 0; padding: 0; border-radius: 0; color: inherit; } /* Rückfrage: der Knopf selbst bleibt unverändert im Fluss */
+.flow-pill .ask-keep { visibility: hidden; display: contents; }
+.flow-pill .confirm-label { position: absolute; z-index: 3; left: 50%; top: 0; bottom: 0; transform: translateX(-50%); min-width: 100%; padding: 0 0.75rem; box-sizing: border-box; display: flex; align-items: center; justify-content: center; white-space: nowrap; background: var(--black); color: var(--white); font-weight: 700; } /* Overlay über dem Abschnitt, die Leiste verändert sich nicht */
 .fp-seg.fp-time { padding-inline: 0.25rem; }
 .fp-seg.fp-time.closed { background: var(--black); color: var(--white); font-weight: 700; } .fp-time .step-group { gap: 0.25rem; } /* +5 und Wieder öffnen brauchen wenig Rand, damit der Abschnitt nicht viel breiter wird als bei Zuschauern */
 .flow-pill .step-group, .fp-pair { display: inline-flex; align-items: center; gap: 0.5rem; }
@@ -659,6 +662,7 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 
 .flow-slot { display: none; }
 .running-hint a.btn.ghost.block-go { background: light-dark(var(--white), var(--surface)); } /* Bestellungs-Chips mit weißem Grund */
+.running-hint:not(.hidden) + .new-title { margin-top: 0.75rem; } /* „Neue Sammelbestellung“ mit Abstand unter dem Trennstrich */
 .running-hint { margin: 0 0 1rem; padding-bottom: 0.875rem; border-bottom: 1px solid var(--line); } /* laufende Bestellungen vor dem Formular */
 .head-band .round-date { font-size: var(--fs-base); font-weight: 400; color: color-mix(in srgb, var(--head-band-fg) 70%, var(--head-band-bg)); } /* Datum vor dem Restaurantnamen */
 @media (min-width: 80em) { /* breit: Logo links, Ablaufleiste rechts daneben im Kopf, die eigene Zeile entfällt */

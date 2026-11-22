@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, bellPlan, nbspUnits, beforeThisYear, rowsNeeded, splitRows } from '../public/format.js';
+import { fmtRemaining, genitive, payHref, joinList, isToday, centsToInput, roundStage, owedByMe, owedToMe, shortVariant, bellStep, bellPlan, usableEta, nbspUnits, beforeThisYear, rowsNeeded, splitRows } from '../public/format.js';
 import { isCurrentRound, startRound } from '../public/group.js';
 
 const MIN = 60000;
@@ -207,4 +207,12 @@ test('bellPlan: nach Wiedereröffnen/Verlängern (silent) wird nur neu scharf ge
   assert.deepEqual(bellPlan(170000, at, Infinity, true), { step: 180000, ring: false }, 'silent: merkt sich die Schwelle ohne Ton');
   assert.deepEqual(bellPlan(5 * MIN, at, Infinity, true), { step: null, ring: false }, 'über allen Schwellen: nichts');
   assert.deepEqual(bellPlan(50000, at, 180000, false), { step: 60000, ring: true }, 'nächste Schwelle läutet danach wieder');
+});
+
+test('usableEta: nur Werte im erlaubten Bereich werden als Lieferzeit vorbelegt', () => {
+  assert.equal(usableEta(40, 240), 40);
+  assert.equal(usableEta(240, 240), 240);
+  assert.equal(usableEta(952, 240), null, 'Ausreißer über dem Maximum');
+  assert.equal(usableEta(0, 240), null);
+  assert.equal(usableEta(null, 240), null);
 });

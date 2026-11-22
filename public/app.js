@@ -34,9 +34,11 @@ function askName(overlay = false) {
       if (overlay) close();
       resolve(true);
     };
-    const goHome = isGuest && homeName()
-      ? h('button', { class: 'btn ghost', type: 'button', onclick: () => { setMe(homeName()); if (overlay) close(); resolve(true); } }, `${t('Zurück zu')} ${homeName()}`)
+    // Gast fertig: zurück zum persönlichen Namen (Knopf im Reiter „Name“ und im Reiter „Gastbestellung“)
+    const goHomeBtn = () => isGuest && homeName()
+      ? h('button', { class: 'btn ghost', type: 'button', title: `${t('Zurück zu')} ${homeName()}`, onclick: () => { setMe(homeName()); if (overlay) close(); resolve(true); } }, t('Gastbestellung abgeschlossen'))
       : null;
+    const goHome = goHomeBtn();
     const go = h('button', { class: 'btn', type: 'submit' }, t('Los'));
     // Popup: knapp, Name und „Los“ in einer Zeile; die erste Seite (ohne Popup) behält Titel und Gast-Link
     const form = h(
@@ -58,10 +60,12 @@ function askName(overlay = false) {
       ? h('div', { class: 'pop-settings', hidden: true }, ...[...settingsSrc.querySelectorAll('.seg')].map((seg) => h('div', { class: 'pop-row' }, h('span', null, t(seg.dataset.i18nTitle)), seg)))
       : null;
     const guestInput = h('input', { placeholder: t('Name des Gasts'), maxlength: LIMITS.userName, autocomplete: 'off' });
+    const goHome2 = goHomeBtn();
     const guestPanel = overlay
       ? h('form', { hidden: true, onsubmit: (e) => { e.preventDefault(); if (!guestInput.value.trim()) return guestInput.focus(); setMe(guestInput.value, { guest: true }); close(); resolve(true); } },
         h('p', { class: 'muted pop-hint' }, t('Bestelle für jemand anderen')),
-        h('div', { class: 'pop-inline' }, guestInput, h('button', { class: 'btn', type: 'submit' }, t('Los'))))
+        h('div', { class: 'pop-inline' }, guestInput, h('button', { class: 'btn', type: 'submit' }, t('Los'))),
+        goHome2 ? h('div', { class: 'mt-2' }, goHome2) : null)
       : null;
     const tab = (label, which) => h('button', { class: 'pop-tab', type: 'button', role: 'tab', 'aria-selected': String(which === 0), onclick: () => showTab(which) }, label);
     const tabs = [tab(t('Name'), 0), tab(t('Einstellungen'), 1), tab(t('Gastbestellung'), 2)];
@@ -80,7 +84,7 @@ function askName(overlay = false) {
 }
 
 whoBtn.addEventListener('click', async () => {
-  if (whoWrap.querySelector('.name-pop')) return;
+  if (whoWrap.querySelector('.name-pop')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); return; } // zweiter Klick schließt das Menü
   if (await askName(true)) { route(); showOpenPayments(); }
 });
 

@@ -33,6 +33,8 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
     const step = (cls, text, time) => h('span', { class: `step ${cls}` }, text, time ? [' \u00A0\u00A0', h('span', { class: 'step-time' }, time)] : null);
     // Verwalter: ↩ hinter dem letzten Schritt (nimmt ihn zurück), der nächste Schritt ist der Knopf (vor); erster Klick fragt, zweiter führt aus
     const asking = (key) => confirm?.key === key;
+    // Rückfrage: der Knopfinhalt bleibt (unsichtbar) im Fluss, damit sich die Leiste nicht verändert; die Frage liegt als Overlay darüber
+    const keepAsk = (on, normal, text) => (on ? [h('span', { class: 'ask-keep' }, normal), h('span', { class: 'confirm-label' }, text)] : normal);
     const run = (key, fn) => () => {
       if (asking(key)) { clearTimeout(confirm.timer); confirm = null; fn(); return; }
       clearTimeout(confirm?.timer);
@@ -41,13 +43,13 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
     };
     const after = new Map(); // Schritt -> Knopf direkt dahinter
     const undoable = (el, body) => {
-      if (d.viewer.can_manage) after.set(el, h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), 'aria-label': typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), onclick: run('undo', () => (typeof body === 'function' ? body() : undo(body))) }, asking('undo') ? t('zurücknehmen?') : '↩'));
+      if (d.viewer.can_manage) after.set(el, h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), 'aria-label': typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), onclick: run('undo', () => (typeof body === 'function' ? body() : undo(body))) }, keepAsk(asking('undo'), '↩', t('zurücknehmen?'))));
       return el;
     };
     const goStep = (key, label, ask, can = true, hint = '') =>
       !d.viewer.can_manage
         ? step('todo', label)
-        : h('button', { class: 'step todo step-go' + (asking(key) ? ' confirm' : ''), type: 'button', disabled: !can, title: can ? '' : hint, onclick: run(key, () => advance(key)) }, asking(key) ? ask : label);
+        : h('button', { class: 'step todo step-go' + (asking(key) ? ' confirm' : ''), type: 'button', disabled: !can, title: can ? '' : hint, onclick: run(key, () => advance(key)) }, keepAsk(asking(key), label, ask));
     const readyTxt = d.ready.total ? t('ready {done}/{total}', { done: d.ready.done, total: d.ready.total }) : t('ready');
     const opened = step('done', t('eröffnet')); // vorige Ereignisse ohne Haken, nur der aktuelle Stand hat ihn
     const ordTxt = t('bestellt');
@@ -59,14 +61,14 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
         const when = h('span', { class: 'step-left', title: t('Geschlossen um') }, lockIcon(), fmtClock(d.expires_at)); // Schloss + Schließzeit statt Restzeit
         if (!d.viewer.can_manage) return h('span', { class: 'step-group' }, pill, when);
         const plus = h('button', { class: 'step-btn' + quiet, type: 'button', disabled: true, title: t('Zum Verlängern erst wieder öffnen'), 'aria-label': t('Zum Verlängern erst wieder öffnen') }, `+${DEFAULTS.extendMinutes}`);
-        const reopen = h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: t('Wieder öffnen'), 'aria-label': t('Wieder öffnen'), onclick: run('undo', () => time('reopen', DEFAULTS.extendMinutes)) }, asking('undo') ? t('öffnen?') : undoIcon());
+        const reopen = h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: t('Wieder öffnen'), 'aria-label': t('Wieder öffnen'), onclick: run('undo', () => time('reopen', DEFAULTS.extendMinutes)) }, keepAsk(asking('undo'), undoIcon(), t('öffnen?')));
         return h('span', { class: 'step-group' }, pill, plus, when, reopen); // am selben Platz wie vorher das Schloss
       }
       const hint = t('Schließen, wenn alle ready');
       const cb = h('input', { type: 'checkbox', checked: !!d.close_when_ready, disabled: !d.viewer.can_manage, title: hint, 'aria-label': hint, onchange: () => autoClose(cb.checked) });
       const pill = h('span', { class: `step now ${allReady ? 'ready' : 'unready'}`, title: names }, cb, readyTxt);
       const left = h('span', { class: 'step-left', 'data-until': d.expires_at, title: t('Bestellfrist') }, fmtRemaining(d.expires_at - d.server_now)); // tickt zentral (side.js)
-      const closeBtn = h('button', { class: 'step-btn' + (asking('close') ? ' confirm' : ''), type: 'button', title: t('Jetzt schließen'), 'aria-label': t('Jetzt schließen'), onclick: run('close', () => advance('close')) }, asking('close') ? t('schließen?') : lockIcon());
+      const closeBtn = h('button', { class: 'step-btn' + (asking('close') ? ' confirm' : ''), type: 'button', title: t('Jetzt schließen'), 'aria-label': t('Jetzt schließen'), onclick: run('close', () => advance('close')) }, keepAsk(asking('close'), lockIcon(), t('schließen?')));
       if (!d.viewer.can_manage) return h('span', { class: 'step-group' }, pill, left);
       const plus = h('button', { class: 'step-btn' + quiet, type: 'button', title: t('Frist verlängern'), 'aria-label': t('Frist verlängern'), onclick: () => time('extend', DEFAULTS.extendMinutes) }, `+${DEFAULTS.extendMinutes}`);
       return h('span', { class: 'step-group' }, pill, plus, left, closeBtn); // ready allein, dann +5, Restzeit, Schloss (Schließen)
@@ -79,11 +81,8 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
         ? [opened, closedStep(), undoable(step('now', ordTxt, fmtClock(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
         : [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked && d.ready.total > 0, d.locked ? t('Noch nichts bestellt') : t('Erst die Bestellung schließen')), step('todo', t('geliefert'))]; // auch ohne Bestellung: Wieder öffnen und +5 bleiben erreichbar
     // Lange Pille wie ein Fortschrittsbalken mit Trennlinien: erledigte Abschnitte gefüllt, der aktuelle grün, offene ausgegraut (leerer Kreis);
-    // Besteller/Admins haben ihre Bedienelemente in den Abschnitten, passive Nutzer nur Text. Der Zahlungsstand ist der letzte Abschnitt (ab „geliefert“).
-    const owers = d.users.filter((u) => u.done && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)); // Besteller zahlt nicht an sich selbst
-    const paidOwers = owers.filter((u) => u.paid).length;
-    const allPaid = !!d.delivered_at && !d.debts.length;
-    const reached = d.delivered_at ? (allPaid ? 4 : 3) : d.ordered_at ? 2 : d.locked ? 2 : 0; // letzter erreichter Abschnitt; geschlossen: ready ist erledigt (dunkel), „bestellt“ der aktuelle Schritt
+    // Besteller/Admins haben ihre Bedienelemente in den Abschnitten, passive Nutzer nur Text.
+    const reached = d.delivered_at ? 3 : d.ordered_at ? 2 : d.locked ? 2 : 0; // letzter erreichter Abschnitt; geschlossen: ready ist erledigt (dunkel), „bestellt“ der aktuelle Schritt
     const seg = (i, ...kids) => {
       const state = i < reached ? 'done' : i === reached && (i < 2 || d.ordered_at) ? 'now' : 'todo'; // geschlossen ist noch nicht bestellt: „bestellt“ bleibt offen, bis es gemeldet ist
       return h('span', { class: `fp-seg fp-${state}` }, ...(state === 'done' ? [] : [h('span', { class: 'fp-mark', 'aria-hidden': 'true' }, state === 'todo' ? '○' : '✓')]), ...kids);
@@ -103,7 +102,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
         const t2 = seg(1, ...kids);
         t2.querySelector('.fp-mark')?.remove();
         t2.classList.add('fp-time');
-        if (d.locked) t2.classList.add('closed'); // Endzeit der geschlossenen Bestellung schwarz hinterlegt
+        if (d.locked && !d.ordered_at) t2.classList.add('closed'); // Endzeit schwarz, solange geschlossen der aktuelle Stand ist; ab „bestellt“ erledigt wie die Abschnitte davor
         return [el, t2];
       };
       const segs = [0, 1, 2, 3].flatMap((i) => {
@@ -115,11 +114,6 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
         if (x.matches('.step-go') || x.querySelector('.step-go')) el.classList.add('act'); // nächster Schritt als Knopf
         return [el];
       });
-      if (d.delivered_at) {
-        const pay = seg(4, allPaid ? t('alle bezahlt') : t('{paid}/{total} bezahlt', { paid: paidOwers, total: owers.length }));
-        pay.classList.add('fp-pay'); // Zahlungsstand: heller, weniger Kontrast
-        segs.push(pay);
-      }
       return h('div', { class: 'flow-pill' }, ...segs);
     };
     flowHost.replaceChildren(...(flow ? [h('div', { class: 'status-flow' }, h('div', { class: 'flow-steps' }, pill()))] : [])); // Datum steht jetzt im Restaurant-Kopf

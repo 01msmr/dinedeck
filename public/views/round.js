@@ -4,7 +4,7 @@ import { LIMITS, DEFAULTS, LISTS, TIMING } from '/config.js';
 import { orderContent, orderActions } from '/views/round/order.js';
 import { createStatus } from '/views/round/status.js';
 import { confirmDialog } from '/dialog.js';
-import { nbspUnits, payHref, isToday, beforeThisYear } from '/format.js';
+import { nbspUnits, payHref, isToday, beforeThisYear, usableEta } from '/format.js';
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
 import { checkPill } from '/views/check-pill.js';
 import { payRows } from '/views/round/pay.js';
@@ -178,7 +178,7 @@ export function roundView(id) {
     return patchRound(key === 'ordered' ? { ordered: true, ...eta } : { delivered: true });
   };
   // Lieferzeit: erst nach „Bestellt“ in der Ablaufzeile vor „geliefert“; Eingabe wird sofort übernommen
-  const etaField = h('label', { class: 'step-eta' }, t('Lieferzeit (min)'), inEta);
+  const etaField = h('label', { class: 'step-eta' }, t('Lieferung'), inEta, t('min.'));
   inEta.addEventListener('change', () => { if (d?.ordered_at && !d.delivered_at && inEta.value !== '') patchRound({ eta_minutes: Number(inEta.value) }); });
   inEta.addEventListener('keydown', (e) => { if (e.key === 'Enter') inEta.blur(); });
   const status = createStatus({ banners, flowHost, debtsHost, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
@@ -315,7 +315,8 @@ export function roundView(id) {
     const ordered = !!d.ordered_at;
     if (!etaPrefilled) {
       etaPrefilled = true;
-      if (d.restaurant.delivery_minutes >= 1) inEta.value = d.restaurant.delivery_minutes;
+      const eta = usableEta(d.restaurant.delivery_minutes, LIMITS.etaMaxMinutes);
+      if (eta !== null) inEta.value = eta;
     }
     if (d.eta_minutes && document.activeElement !== inEta) inEta.value = d.eta_minutes; // gespeicherte Lieferzeit anzeigen (auch nach Neuladen)
     orderCard.classList.toggle('hidden', !ordered && !manage);

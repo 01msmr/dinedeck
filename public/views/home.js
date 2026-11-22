@@ -145,7 +145,7 @@ export function homeView() {
 
   // Wer nur etwas dazubestellen will, findet die laufenden Bestellungen gleich oben und eröffnet keine zweite
   const running = h('div', { class: 'running-hint hidden' });
-  const head = h('section', { class: 'card' }, h('h2', { class: 'flush mb-4' }, t('Neue Sammelbestellung')), running, form);
+  const head = h('section', { class: 'card' }, running, h('h2', { class: 'flush mb-4 new-title' }, t('Neue Sammelbestellung')), form);
   app.classList.add('wide');
   app.replaceChildren(h('div', { class: 'round-grid' }, head));
 
@@ -160,7 +160,7 @@ export function homeView() {
       knownRounds = rounds;
       const open = rounds.filter((r) => !r.locked);
       running.classList.toggle('hidden', !open.length);
-      running.replaceChildren(...(open.length ? [h('p', { class: 'muted flush' }, t(open.length === 1 ? 'Es läuft schon eine Bestellung. Dort einfach mitbestellen:' : 'Es laufen schon Bestellungen. Dort einfach mitbestellen:')), h('div', { class: 'row gap-3 mt-2' }, ...open.map((r) => h('a', { class: 'btn ghost block-go', href: `#/r/${r.id}` }, h('strong', null, r.restaurant), h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…'))))] : []));
+      running.replaceChildren(...(open.length ? [h('h2', { class: 'flush mb-4' }, t(open.length === 1 ? 'Bestellung heute:' : 'Bestellungen heute:')), h('div', { class: 'row gap-3 mt-2' }, ...open.map((r) => h('a', { class: 'btn ghost block-go', href: `#/r/${r.id}` }, h('strong', null, r.restaurant), h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…'))))] : []));
       tickCountdowns();
       updateBlock();
     },

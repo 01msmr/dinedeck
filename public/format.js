@@ -95,6 +95,11 @@ export function bellStep(left, thresholds, last) {
   return hit.length ? Math.min(...hit) : null;
 }
 
+/** Statistische Lieferzeit nur vorbelegen, wenn sie im erlaubten Bereich 1–max liegt (sonst lehnt der Server „Bestellt“ ab); sonst null. */
+export function usableEta(minutes, max) {
+  return Number.isFinite(minutes) && minutes >= 1 && minutes <= max ? minutes : null;
+}
+
 /** Wie bellStep, plus ob wirklich geläutet wird: `silent` (Frist wurde gerade verlängert/wieder geöffnet) merkt die Schwelle nur vor. */
 export function bellPlan(left, thresholds, last, silent) {
   const step = bellStep(left, thresholds, last);
