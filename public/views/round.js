@@ -352,6 +352,7 @@ export function roundView(id) {
       return;
     }
     const left = d.eta_at - (Date.now() + skew);
+    for (const el of document.querySelectorAll('.eta-left')) el.replaceChildren(...(left > 0 ? [h('span', { class: 'eta-at' }, `${t('ca. {time}', { time: fmtClock(d.eta_at) })} · `), `${t('noch')} ${fmtRemaining(left)}`] : [t('sollte da sein')]));
     etaText.textContent = `${t('Lieferung ca. {time}', { time: fmtClock(d.eta_at) })} · ${left > 0 ? `${t('noch')} ${fmtRemaining(left)}` : t('sollte da sein')}`;
   }
 

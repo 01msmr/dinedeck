@@ -33,6 +33,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
       if (d.viewer.can_manage) after.set(el, h('button', { class: 'step-btn' + quiet + (asking('undo') ? ' confirm' : ''), type: 'button', title: typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), 'aria-label': typeof body === 'function' ? t('Wieder öffnen') : t('Schritt zurücknehmen'), onclick: run('undo', () => (typeof body === 'function' ? body() : undo(body))) }, keepAsk(asking('undo'), '↩', t('zurücknehmen?'))));
       return el;
     };
+    const etaLeft = () => (d.ordered_at && !d.delivered_at && d.eta_at ? h('span', { class: 'eta-left' }) : null); // Restzeit bis zur Lieferung (Text setzt updateEta in round.js jede Sekunde)
     const goStep = (key, label, ask, can = true, hint = '') =>
       !d.viewer.can_manage
         ? step('todo', label)
@@ -65,7 +66,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
     const flow = d.delivered_at
       ? [opened, closedStep(), step('done', t('bestellt')), undoable(step('now', t('geliefert'), fmtClock(d.delivered_at)), { delivered: false })]
       : d.ordered_at
-        ? [opened, closedStep(), undoable(step('now', ordTxt, fmtClock(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
+        ? [opened, closedStep(), undoable(step('now', ordTxt, fmtClock(d.ordered_at)), { ordered: false }), d.viewer.can_manage ? h('span', { class: 'step-group' }, etaField, etaLeft(), goStep('delivered', t('geliefert'), t('geliefert melden?'))) : goStep('delivered', t('geliefert'), t('geliefert melden?'))]
         : [opened, readyStep(), goStep('ordered', t('bestellt'), t('bestellt melden?'), d.locked && d.ready.total > 0, d.locked ? t('Noch nichts bestellt') : t('Erst die Bestellung schließen')), step('todo', t('geliefert'))]; // auch ohne Bestellung: Wieder öffnen und +5 bleiben erreichbar
     // Lange Pille wie ein Fortschrittsbalken mit Trennlinien: erledigte Abschnitte gefüllt, der aktuelle grün, offene ausgegraut (leerer Kreis);
     // Besteller/Admins haben ihre Bedienelemente in den Abschnitten, passive Nutzer nur Text.
@@ -82,7 +83,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
       [t('eröffnet')],
       [readyTxt, readyTime],
       [t('bestellt'), d.ordered_at ? h('span', { class: 'fp-when' }, fmtClock(d.ordered_at)) : null],
-      [t('geliefert'), d.delivered_at ? h('span', { class: 'fp-when' }, fmtClock(d.delivered_at)) : null],
+      [t('geliefert'), etaLeft(), d.delivered_at ? h('span', { class: 'fp-when' }, fmtClock(d.delivered_at)) : null],
     ][i];
     const pill = () => {
       const timeSeg = (el, ...kids) => { // Frist/Schließzeit als eigener Abschnitt mit Trennlinie hinter „ready“
@@ -120,7 +121,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
               h('div', { class: 'row between' },
                 h('span', { class: 'bar-line' }, h('strong', null, t('Bezahlt')), h('span', { class: 'badge value', title: t('bezahlt') }, eur(paidSum))), // links im grünen Bereich: Summe der Bezahlten
                 h('div', { class: 'bar-right' }, ...(paidN === payers.length ? [h('span', { class: 'bar-done' }, `✓ ${t('alle bezahlt')}`)] : [h('strong', null, t('Offen')), h('span', { class: 'badge value', title: t('unbezahlt') }, eur(openSum))])))), // ganz rechts im roten Bereich: Summe der Unbezahlten
-            ...(paidN === payers.length ? [] : [payStrips(payers, redLabel, pickPay, () => null)])))
+            ...(paidN === payers.length ? [] : [payStrips(payers, (p) => (p.paid ? '' : p.user), pickPay, () => null, (p) => eur(owed.get(lc(p.user)) ?? 0))])))
       : null;
     debtsHost.replaceChildren(...(payBlock ? [payBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {

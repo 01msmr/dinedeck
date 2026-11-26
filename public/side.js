@@ -23,10 +23,13 @@ export function renderSide() {
   const hash = location.hash || '#/';
   // Einheitlicher Eintrag: Name links, Stand als Pille rechts, darunter Zeit · Ersteller
   const state = (r) => {
-    if (r.unpaid) return h('span', { class: 'side-paid' }, h('span', { class: 'check-circle bad', 'aria-hidden': 'true' }, '!'), t('{n} unbezahlt', { n: (r.debts_users ?? []).length })); // wie „alle bezahlt“, aber Ausrufezeichen auf Rot
+    if (r.unpaid) { // wie „alle bezahlt“, aber Ausrufezeichen auf Rot; Handy: nur die Zahl im roten Kreis
+      const n = (r.debts_users ?? []).length;
+      return h('span', { class: 'side-paid', title: t('{n} unbezahlt', { n }) }, h('span', { class: 'check-circle bad', 'aria-hidden': 'true' }, h('span', { class: 'mk-excl' }, '!'), h('span', { class: 'mk-n' }, String(n))), h('span', { class: 'side-paid-txt' }, t('{n} unbezahlt', { n })));
+    }
     if (!r.locked) return h('span', { class: 'badge on', 'data-expires': r.expires_at }, '…');
     const stage = roundStage(r);
-    if (stage === 'alles bezahlt') return h('span', { class: 'side-paid' }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), t('alle bezahlt')); // Häkchen im grünen Kreis, Text wie der Name
+    if (stage === 'alles bezahlt') return h('span', { class: 'side-paid', title: t('alle bezahlt') }, h('span', { class: 'check-circle', 'aria-hidden': 'true' }, '✓'), h('span', { class: 'side-paid-txt' }, t('alle bezahlt'))); // Häkchen im grünen Kreis, Text wie der Name (Handy: nur der Kreis)
     return h('span', { class: stage === 'geliefert' ? 'badge on' : 'badge mid' }, t(stage)); // geliefert grün wie in der Ablaufzeile
   };
   const item = (r) =>

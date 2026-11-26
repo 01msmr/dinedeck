@@ -1092,7 +1092,6 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .pay-block .bar-top .badge.value { padding-block: 0; line-height: 1.25; }
   .pay-block .pseg-name { font-size: var(--fs-xs); }
 }
-.round-main > .tabs, .round-main > .tabs *, .round-main > .users-pane, .round-main > .mine-pane, .round-main > .order-pane { transition: none !important; animation: none !important; } /* Reiter und Flächen wechseln sofort */
 @media (max-width: 30em) { /* Bestellliste: etwas engere Abstände bei zweizeiligen Artikeln und im Summenbereich */
   .order-table tbody td.m-title { padding-bottom: 0; }
   .order-table tbody td.m-unit { padding-top: 0; }
@@ -1108,3 +1107,37 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .order-table tbody tr:not(.single) td.sum-cell { font-size: 1rem; }
 }
 @media (max-width: 30em) { .round-main > .order-pane { padding-top: 0.375rem; } .round-main > .order-pane .order-table { margin-top: 0; } } /* Bestellen: weniger Platz über dem ersten Artikel */
+@media (min-width: 30.0625em) and (max-width: 43.6875em) { /* schmal, aber über Handy-Breite: Ablaufleiste einzeilig über die volle Breite */
+  .flow-pill { display: flex; flex-wrap: nowrap; width: 100%; box-sizing: border-box; border-radius: var(--radius-pill); }
+  .flow-pill .fp-seg { flex: 1 1 auto; min-width: 0; padding: 0.1875rem 0.375rem; gap: 0.25rem; justify-content: center; white-space: nowrap; }
+}
+@media (max-width: 43.6875em) { .pay-block .pay-amt { display: none; } } /* schmal: im roten Bereich nur der Name, der Betrag steht bei „Offen“ */
+.round-main > .tabs button { -webkit-tap-highlight-color: transparent; } /* kein blauer Aufblitz-Rahmen beim Antippen eines Reiters */
+
+.flow-pill .eta-left { font-weight: 400; white-space: nowrap; } /* Restzeit bis zur Lieferung, ohne Uhrzeit */
+@media (max-width: 30em) { .flow-pill .eta-left { display: none; } } /* Handy: kein Platz neben dem Lieferzeit-Feld */
+@media (min-width: 80em) and (max-width: 90em) { .flow-pill .step-eta .eta-lbl { display: none; } } /* mittlere Breite: das Wort „Lieferung“ entfällt, sonst läuft die Leiste in den Nutzerknopf */
+@media (min-width: 80em) and (max-width: 90em) { .flow-pill .fp-seg { padding-inline: 0.5rem; } .flow-pill .fp-seg.fp-time { padding-inline: 0.25rem; } .flow-pill .step-eta { gap: 0.125rem; } } /* mittlere Breite: schmalere Abschnitte */
+@media (min-width: 80em) and (max-width: 86em) { .flow-pill .eta-at { display: none; } } /* mittlere Breite: nur „noch X min“, die Uhrzeit entfällt, sonst passt die Leiste nicht neben den Nutzerknopf */
+@media (max-width: 30em) { /* Handy-Kopf niedriger, Logo so groß wie die Breite zulässt */
+  :root { --top-h: 3.25rem; }
+  .top { min-height: 0; padding-block: 0.25rem; gap: 0.375rem; }
+  .top .menu-btn { width: 2.5rem; height: 2.5rem; }
+  .top .brand { width: 100%; }
+  .top .brand .wordmark { width: 100%; max-width: 13rem; height: auto; }
+  #who.chip { height: 2.25rem; }
+}
+
+.mk-n, .g-short { display: none; }
+@media (max-width: 30em) { /* Seitenleiste und Kopf kürzer; #Nr links, Besteller rechtsbündig */
+  .side-paid-txt, .mk-excl, .g-long { display: none; }
+  .mk-n, .g-short { display: inline; }
+  .head-band .round-buyer { margin-left: auto; }
+}
+@media (max-width: 30em) { .top .brand .wordmark { transform: translateY(-0.09375rem); } } /* Logo etwas höher (1,5 px) */
+@media (max-width: 30em) { /* Summenbereich der Bestellliste noch etwas kompakter */
+  .order-table tfoot tr:first-child td { padding-top: 0.5rem; padding-bottom: 0.125rem; }
+  .order-table tfoot tr.foot-fees td { padding-block: 0.0625rem; }
+  .order-table tfoot tr:last-child td { padding-top: 0.25rem; padding-bottom: 0; }
+  .round-main > .order-pane { padding-bottom: 0.125rem; }
+}

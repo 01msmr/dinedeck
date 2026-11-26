@@ -33,16 +33,17 @@ export function mergedVars(payers, label) {
 /**
  * Strips je Person (bezahlt links); `label(p)` ist der Text, `pick(p)` liefert bei offenen Personen eine Klick-Funktion oder null.
  * Mit `merge(n)` bilden die Bezahlten einen einzigen Strip ohne Trennlinien (Text optional: `merge` kann null liefern); zum roten Bereich bleibt der Spalt.
+ * `detail(p)` ist ein Zusatz hinter dem Namen (Betrag), der auf schmalen Geräten ausgeblendet wird.
  * Reicht die Breite nicht, werden die Namen auf Zeilen verteilt (oben ggf. einer mehr).
  */
-export function payStrips(payers, label, pick = null, merge = null) {
+export function payStrips(payers, label, pick = null, merge = null, detail = null) {
   if (merge) { // eine Zeile: Bezahlte als ein Strip vorn, dahinter die Unbezahlten gleich breit; die Namen werden bei Bedarf mit „…“ gekürzt
     const paid = payers.filter((p) => p.paid);
     const open = payers.filter((p) => !p.paid);
     const owed = paid.filter((p) => !p.isBuyer).length;
     const openSeg = (p) => {
       const onclick = pick ? pick(p) : null;
-      return h(onclick ? 'button' : 'span', { class: 'pseg open', type: onclick ? 'button' : null, onclick }, h('span', { class: 'pseg-name' }, label(p)));
+      return h(onclick ? 'button' : 'span', { class: 'pseg open', type: onclick ? 'button' : null, onclick }, h('span', { class: 'pseg-name' }, label(p), detail ? [' ', h('span', { class: 'pay-amt' }, detail(p))] : null));
     };
     const reds = open.flatMap((p, i) => [i > 0 ? h('span', { class: 'psep line' }) : null, openSeg(p)]);
     return h('div', { class: 'pstrips' }, h('div', { class: 'prow' },
@@ -57,7 +58,7 @@ export function payStrips(payers, label, pick = null, merge = null) {
     const sep = (cls) => h('span', { class: 'psep ' + cls });
     const openSeg = (p) => {
       const onclick = pick ? pick(p) : null;
-      return h(onclick ? 'button' : 'span', { class: 'pseg open', type: onclick ? 'button' : null, onclick }, h('span', { class: 'pseg-name' }, label(p)));
+      return h(onclick ? 'button' : 'span', { class: 'pseg open', type: onclick ? 'button' : null, onclick }, h('span', { class: 'pseg-name' }, label(p), detail ? [' ', h('span', { class: 'pay-amt' }, detail(p))] : null));
     };
     if (merge) {
       if (paid.length) {
