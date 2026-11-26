@@ -650,8 +650,8 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 }
 
 /* Statuszeile (1) und Tabs (2) haften gemeinsam unter dem Kopf; feste Höhe der Statuszeile je Breite (ein- oder zweizeilig) */
-:root { --flow-h: 3.0625rem; }
-@media (min-width: 43.75em) and (max-width: 52.0625em) { :root { --flow-h: 4.125rem; } }
+:root { --flow-h: 2.5rem; }
+@media (min-width: 43.75em) and (max-width: 52.0625em) { :root { --flow-h: 2.5rem; } }
 .round-main > .tabs { top: calc(var(--top-h) + var(--flow-h)); }
 
 /* Schmal: Statuszeile scrollt mit (zu hoch zum Haften), nur die Tabs haften */
@@ -1167,3 +1167,16 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
 @media (max-width: 43.6875em) { .pay-block .card.bar { --red-min: 9.75rem; } }
 #side > .side-item + .side-item { margin-top: 0.25rem; } /* ältere Bestellungen mit etwas Abstand */
 @media (min-width: 30.0625em) and (max-width: 43.75em) { .name-pop { left: auto; right: 0.625rem; width: max-content; min-width: 15rem; max-width: calc(100vw - 1.25rem); } } /* Nutzermenü nur so breit wie nötig, rechts unter dem Nutzerknopf */
+@media (max-width: 56.1875em) { /* Logo exakt mittig in der Seitenbreite, solange Hamburger und Nutzerknopf gleich breit sein können (gleich breite Seitenspalten); nie kleiner als vorher */
+  .top { --logo-w: clamp(7.5rem, calc(100vw - 13.5rem), 13rem); grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); }
+  .top .menu-btn { justify-self: start; }
+  .top .brand { width: var(--logo-w); min-width: 0; justify-self: center; }
+  .top .brand .wordmark { width: 100%; max-width: none; height: auto; }
+  .top .tools { justify-self: end; }
+}
+
+/* Bestellseite: Kopf und Ablaufleiste auf demselben Grund wie die Fläche darunter; lange Pille mit 1 px weißem Rand, engere Abstände */
+.layout:has(#app.round) .top { background: var(--surround-bg); border-bottom: 0; }
+.layout:has(#app.round) .status-flow { background: var(--surround-bg); padding-block: 1px; }
+.flow-pill { outline: 1px solid var(--white); }
+.layout:has(#app.round) main#app.round { padding-top: 0.5rem; }
