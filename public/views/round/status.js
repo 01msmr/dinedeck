@@ -116,7 +116,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
     const payBlock = d.ordered_at && payers.length
       ? h('div', { class: 'pay-block' },
           payMark(payers),
-          h('div', { class: 'card bar', style: mergedVars(payers, redLabel) },
+          h('div', { class: 'card bar', style: mergedVars(payers, redLabel, (p) => (p.paid ? '' : p.user)) },
             h('div', { class: 'bar-top' + (paidN === payers.length ? ' done' : paidN ? ' mixed-merged' : ''), style: `--share: ${(100 * paidN) / payers.length}%` },
               h('div', { class: 'row between' },
                 h('span', { class: 'bar-line' }, h('strong', null, t('Bezahlt')), h('span', { class: 'badge value', title: t('bezahlt') }, eur(paidSum))), // links im grünen Bereich: Summe der Bezahlten

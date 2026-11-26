@@ -23,11 +23,12 @@ export function gapStyle(payers, merge = false) {
 }
 
 /** Variablen für den Zahlungsblock (eine Zeile): Rote gleich breit, so breit wie der längste Text (höchstens STRIPS.maxChars Zeichen); der Spalt oben liegt genau auf dem unten. */
-export function mergedVars(payers, label) {
+export function mergedVars(payers, label, nameLabel = label) { // nameLabel: schmale Geräte zeigen nur den Namen, ohne Betrag
   const open = payers.filter((p) => !p.paid);
   const chars = Math.min(Math.max(0, ...open.map((p) => label(p).length)), STRIPS.maxChars);
-  const red = payers.length > open.length ? 'min(calc(var(--nred) * var(--strip-w) + (var(--nred) - 1) * var(--seg-line-w) + var(--seg-gap)), 72%)' : '100%';
-  return `--strip-w: calc(${chars}ch + 1.25rem); --nred: ${open.length}; --red-w: ${red}`;
+  const red = payers.length > open.length ? 'max(min(calc(var(--nred) * var(--sw) + (var(--nred) - 1) * var(--seg-line-w) + var(--seg-gap)), 72%), var(--red-min, 0px))' : '100%';
+  const charsName = Math.min(Math.max(0, ...open.map((p) => nameLabel(p).length)), STRIPS.maxChars);
+  return `--strip-w-full: calc(${chars}ch + 1.25rem); --strip-w-name: calc(${charsName}ch + 1.25rem); --nred: ${open.length}; --red-w: ${red}`;
 }
 
 /**

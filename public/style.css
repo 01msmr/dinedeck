@@ -1151,3 +1151,15 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .round-main > .tabs .tab-ready .check-pill { transform: scale(0.67); transform-origin: left center; }
   .round-main > .tabs button[data-tab="mine"] .tab-label { padding-left: 4rem; }
 }
+@media (min-width: 30.0625em) and (max-width: 56.1875em) { /* mittlere Breite: Hamburger links, Logo mittig, Nutzer rechts auf derselben Höhe (gespiegelt) */
+  .top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; }
+  .top .menu-btn { position: static; grid-column: 1; grid-row: 1; }
+  .top .brand { grid-column: 2; grid-row: 1; justify-self: center; min-width: 0; }
+  .top .tools { position: static; grid-column: 3; grid-row: 1; justify-self: end; }
+}
+
+.pay-block .card.bar { --sw: var(--strip-w-full); } /* Streifenbreite: Name + Betrag */
+@media (max-width: 43.6875em) { .pay-block .card.bar { --sw: var(--strip-w-name); } } /* schmal: Betrag ist ausgeblendet, die Streifen nur so breit wie der Name */
+@media (max-width: 43.6875em) { .pay-block .card.bar { --red-min: 9.75rem; } } /* schmal: roter Bereich mindestens so breit wie „Offen“ + Betrag oben */
+.pay-block .card.bar { --red-min: 10.5rem; } /* roter Bereich mindestens so breit wie „Offen“ + Betrag in der oberen Zeile */
+@media (max-width: 43.6875em) { .pay-block .card.bar { --red-min: 9.75rem; } }
