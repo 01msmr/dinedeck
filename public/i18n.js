@@ -175,11 +175,9 @@ const EN = {
   // Offene Beträge
   'alle bezahlt': 'all paid',
   'Zahlungen': 'Payments',
-  '1 hat bezahlt': '1 has paid',
   'Bezahlt': 'Paid',
   'Offen': 'Open',
   '{n} unbezahlt': '{n} unpaid',
-  '{n} haben bezahlt': '{n} have paid',
   'Variante': 'Variant',
   'Nutzer': 'User',
   'Bezahlen': 'Pay',

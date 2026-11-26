@@ -73,11 +73,11 @@ export const TIMING = {
 
 /** Warnton (Telefonklingeln) bei den letzten Minuten einer Frist. */
 export const SOUND = {
-  bellAtMs: [3, 1].map((m) => m * 60 * 1000), // klingelt bei 3 und 1 min Restzeit
+  bellAtMs: [3].map((m) => m * 60 * 1000), // klingelt einmal, 3 min vor Ende
   file: '/sounds/old-telephone-ringing.mp3', // Aufnahme (liegt nur lokal, nicht im Repository); ohne Datei bleibt es still
   volume: 0.3, // Lautstärke (0–1)
   fileStartSec: 0, // Anfang der Aufnahme überspringen (die Datei ist schon auf das erste Klingeln gekürzt)
-  ringSeconds: 3, // abgespielte Länge (die gekürzte Datei ist 3 s lang: genau ein Klingeln)
+  ringSeconds: 1.2, // abgespielte Länge in Sekunden
   fadeSec: 0.2, // Ausblenden am Ende
 };
 

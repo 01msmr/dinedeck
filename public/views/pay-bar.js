@@ -32,7 +32,7 @@ export function mergedVars(payers, label) {
 
 /**
  * Strips je Person (bezahlt links); `label(p)` ist der Text, `pick(p)` liefert bei offenen Personen eine Klick-Funktion oder null.
- * Mit `merge(n)` bilden die Bezahlten einen einzigen Strip ohne Trennlinien mit dem Text „n haben bezahlt“ vorn links; zum roten Bereich bleibt der Spalt.
+ * Mit `merge(n)` bilden die Bezahlten einen einzigen Strip ohne Trennlinien (Text optional: `merge` kann null liefern); zum roten Bereich bleibt der Spalt.
  * Reicht die Breite nicht, werden die Namen auf Zeilen verteilt (oben ggf. einer mehr).
  */
 export function payStrips(payers, label, pick = null, merge = null) {
@@ -46,7 +46,7 @@ export function payStrips(payers, label, pick = null, merge = null) {
     };
     const reds = open.flatMap((p, i) => [i > 0 ? h('span', { class: 'psep line' }) : null, openSeg(p)]);
     return h('div', { class: 'pstrips' }, h('div', { class: 'prow' },
-      ...(paid.length ? [h('span', { class: 'pseg paid merged' }, owed ? h('span', { class: 'pseg-name' }, merge(owed)) : null), h('div', { class: 'reds' }, h('span', { class: 'psep gap' }), ...reds)] : [h('div', { class: 'reds' }, ...reds)])));
+      ...(paid.length ? [h('span', { class: 'pseg paid merged' }, merge(owed) ? h('span', { class: 'pseg-name' }, merge(owed)) : null), h('div', { class: 'reds' }, h('span', { class: 'psep gap' }), ...reds)] : [h('div', { class: 'reds' }, ...reds)])));
   }
   const paidTotal = payers.filter((p) => p.paid && !p.isBuyer).length;
   let labelled = false;

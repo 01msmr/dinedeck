@@ -114,7 +114,7 @@ function startView() {
 function route() {
   nav.current?.destroy?.();
   nav.current = null;
-  app.classList.remove('wide');
+  app.classList.remove('wide', 'round');
   if (!me) {
     askName().then(route);
     return;

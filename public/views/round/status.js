@@ -132,7 +132,7 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
               h('div', { class: 'row between' },
                 h('span', { class: 'bar-line' }, h('strong', null, t('Bezahlt')), h('span', { class: 'badge value', title: t('bezahlt') }, eur(paidSum))), // links im grünen Bereich: Summe der Bezahlten
                 h('div', { class: 'bar-right' }, ...(paidN === payers.length ? [h('span', { class: 'bar-done' }, `✓ ${t('alle bezahlt')}`)] : [h('strong', null, t('Offen')), h('span', { class: 'badge value', title: t('unbezahlt') }, eur(openSum))])))), // ganz rechts im roten Bereich: Summe der Unbezahlten
-            ...(paidN === payers.length ? [] : [payStrips(payers, redLabel, pickPay, (n) => t(n === 1 ? '1 hat bezahlt' : '{n} haben bezahlt', { n }))])))
+            ...(paidN === payers.length ? [] : [payStrips(payers, redLabel, pickPay, () => null)])))
       : null;
     debtsHost.replaceChildren(...(payBlock ? [payBlock] : [])); // steht unter dem Bestellkopf
     for (const u of d.pending) {

@@ -954,3 +954,15 @@ button.confirm, button.btn.confirm, button.badge.confirm { background: var(--bla
 .hist:has(~ .trash-bar:not(.hidden)) { padding-bottom: 4rem; }
 
 .dialog-text { display: grid; gap: 0.75rem; } /* Absätze im Bestätigungsdialog */
+
+/* Bestellseite als feste Hülle: Kopf, Ablaufleiste und Bestellkopf stehen fest, nur der Inhalt scrollt (kein Gummiband des Dokuments) */
+body:has(#app.round) { overflow: hidden; overscroll-behavior: none; }
+.layout:has(#app.round) { height: 100lvh; overflow: hidden; }
+.layout:has(#app.round) .page { display: flex; flex-direction: column; height: 100lvh; min-height: 0; }
+.layout:has(#app.round) .top { position: relative; flex: none; }
+.layout:has(#app.round) .statusbar { flex: none; }
+main#app.round { flex: 1 1 auto; min-height: 0; max-width: none; display: flex; flex-direction: column; gap: 0; padding-inline: 0; padding-bottom: 0; overflow: hidden; }
+main#app.round > .round-grid { flex: 1 1 auto; min-height: 0; max-width: none; display: flex; flex-direction: column; }
+main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--content-max)); margin-inline: auto; } /* Kopf bleibt auf Inhaltsbreite, der Scrollbereich darunter reicht über die volle Breite */
+.round-scroll { flex: 1 1 auto; min-height: 0; display: grid; gap: 1rem; align-content: start; overflow-y: auto; overscroll-behavior: none; padding: 0 max(0.875rem, calc((100% - var(--content-max)) / 2)) 3rem; }
+.round-scroll .round-main > .tabs { top: 0; }

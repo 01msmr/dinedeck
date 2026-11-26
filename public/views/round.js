@@ -157,10 +157,10 @@ export function roundView(id) {
   for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, label)));
 
   // Mobil untereinander; ab Desktop-Breite: links Tabs, rechts Frist/Banner/Bezahlen (siehe style.css)
-  app.classList.add('wide');
+  app.classList.add('wide', 'round'); // Rahmen steht fest, nur der Inhalt darunter scrollt
   head.classList.add('round-head', 'folded'); // der Kopf bleibt immer schmal, es gibt kein Aufklappen
   const roundMain = h('div', { class: 'round-main' }, tabsEl, usersPane, minePane, orderPane);
-  const roundGrid = h('div', { class: 'round-grid' }, head, debtsHost, roundMain);
+  const roundGrid = h('div', { class: 'round-grid' }, head, h('div', { class: 'round-scroll' }, debtsHost, roundMain));
   app.replaceChildren(roundGrid);
   showTab(tab);
 
