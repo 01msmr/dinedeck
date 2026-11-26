@@ -59,7 +59,7 @@ export function renderSide() {
     ...groupHistory(rest.filter((r) => r.locked && !r.unpaid && r.created_at >= since), now, LISTS.historyMonths).flatMap((g) => group(groupTitle(g), g.items)),
     // schmale Leiste (breit, zu): alle Bestellungen als „#1“; Hintergrund rot bei offenen Zahlungen, grün wenn alles bezahlt
     h('div', { class: 'rail-orders' }, ...(today.length ? [h('div', { class: 'rail-today' }, ...today.map(railNo))] : []), ...rest.map(railNo)),
-    h('div', { class: 'side-foot' }, link('#/all', allIcon(), t('Alle Bestellungen'), countDot), link('#/stats', statsIcon(), t('Statistik')), h('a', { class: 'btn side-new', href: '#/new', 'data-tip': t('Neue Sammelbestellung'), 'aria-label': t('Neue Sammelbestellung') }, h('span', { class: 'side-plus', 'aria-hidden': 'true' }, '+'), h('span', { class: 'side-label' }, t('Neue Sammelbestellung'))))
+    h('div', { class: 'side-foot' }, link('#/all', allIcon(), t('Alle Bestellungen'), countDot), link('#/stats', statsIcon(), t('Statistik')), h('a', { class: 'btn side-new', href: '#/new', 'data-tip': t('Neue Bestellung'), 'aria-label': t('Neue Bestellung') }, h('span', { class: 'side-plus', 'aria-hidden': 'true' }, '+'), h('span', { class: 'side-label' }, t('Neue Bestellung'))))
   );
   tickCountdowns();
 }

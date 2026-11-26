@@ -1121,9 +1121,11 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
 }
 
 .mk-n, .g-short { display: none; }
+#side .side-paid-txt, #side .mk-excl { display: none; } /* Seitenleiste in jeder Breite: nur Kreis mit Zahl bzw. Haken */
+#side .mk-n { display: inline; }
 @media (max-width: 30em) { /* Seitenleiste und Kopf kürzer; #Nr links, Besteller rechtsbündig */
-  .side-paid-txt, .mk-excl, .g-long { display: none; }
-  .mk-n, .g-short { display: inline; }
+  .g-long { display: none; }
+  .g-short { display: inline; }
   .head-band .round-buyer { margin-left: auto; }
 }
 @media (max-width: 30em) { .top .brand .wordmark { transform: translateY(-0.09375rem); } } /* Logo etwas höher (1,5 px) */

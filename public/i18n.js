@@ -23,6 +23,7 @@ const EN = {
   'Frist (Minuten)': 'Deadline (minutes)',
   'Sammelbestellung eröffnen': 'Open group order',
   'Neue Sammelbestellung': 'New group order',
+  'Neue Bestellung': 'New order',
   'Bestellung heute:': 'Order today:',
   'Bestellungen heute:': 'Orders today:',
   'Noch nichts abgeschlossen.': 'Nothing finished yet.',
