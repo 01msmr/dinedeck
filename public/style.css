@@ -1180,3 +1180,5 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
 .layout:has(#app.round) .status-flow { background: var(--surround-bg); padding-block: 1px; }
 .flow-pill { outline: 1px solid var(--white); }
 .layout:has(#app.round) main#app.round { padding-top: 0.5rem; }
+#who.chip { background: color-mix(in srgb, var(--tint-bg) 50%, transparent); border-color: transparent; } /* Nutzer-Pille: Grund 50 % statt 100 % */
+#who.chip:hover { background: color-mix(in srgb, var(--tint-bg) 50%, transparent); }
