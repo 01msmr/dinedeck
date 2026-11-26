@@ -104,7 +104,9 @@ export function setMe(name, { guest = false } = {}) {
     sessionStorage.removeItem('bb_guest');
     localStorage.setItem('bb_user', me);
   }
-  whoBtn.replaceChildren(userIcon(), me ? `${me}${guest ? ` (${t('als Gast')})` : ''}` : t('Name wählen'));
+  const label = me ? `${me}${guest ? ` (${t('als Gast')})` : ''}` : t('Name wählen');
+  whoBtn.replaceChildren(userIcon(), h('span', { class: 'who-name' }, label)); // Handy: nur das Symbol, der Name steht im Menü
+  whoBtn.setAttribute('aria-label', label);
   whoBtn.classList.toggle('guest', guest);
 }
 

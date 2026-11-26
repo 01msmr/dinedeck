@@ -767,6 +767,9 @@ a.debt-card:hover > .card-head { background: color-mix(in srgb, var(--fg) 10%, v
 .all-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .all-head h2 { margin: 0; }
 .unpaid-line { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.25rem; }
+.round-main > .users-pane:has(> .filter-row) { --filter-gap: 0.5rem; padding-top: 1rem; } /* Reiter überdecken 1 rem der Fläche */
+.users-pane > .filter-row { position: sticky; top: 0; z-index: 3; margin: 0 -0.875rem calc(-1.75rem); padding: var(--filter-gap) 0.875rem; background: var(--pane-bg); } /* Filterleiste bleibt oben stehen, die Karten scrollen darunter; unten 8 px bis zur ersten Karte */
+@media (max-width: 56.1875em) { .users-pane > .filter-row { top: 3rem; } } /* schmal scrollt alles: unter den haftenden Reitern */
 .filter-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
 .overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 1rem; background: var(--scrim); } /* Overlay in der Mitte, Klick daneben schließt */
 .overlay:empty { display: none; }
@@ -964,5 +967,144 @@ body:has(#app.round) { overflow: hidden; overscroll-behavior: none; }
 main#app.round { flex: 1 1 auto; min-height: 0; max-width: none; display: flex; flex-direction: column; gap: 0; padding-inline: 0; padding-bottom: 0; overflow: hidden; }
 main#app.round > .round-grid { flex: 1 1 auto; min-height: 0; max-width: none; display: flex; flex-direction: column; }
 main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--content-max)); margin-inline: auto; } /* Kopf bleibt auf Inhaltsbreite, der Scrollbereich darunter reicht über die volle Breite */
-.round-scroll { flex: 1 1 auto; min-height: 0; display: grid; gap: 1rem; align-content: start; overflow-y: auto; overscroll-behavior: none; padding: 0 max(0.875rem, calc((100% - var(--content-max)) / 2)) 3rem; }
+.round-scroll { flex: 1 1 auto; min-height: 0; display: grid; gap: 1rem; align-content: start; overflow-y: auto; overscroll-behavior: none; padding: 0 max(0.875rem, calc((100% - var(--content-max)) / 2)) 3rem; } /* schmal (Handy): ganzer Inhalt scrollt, Reiter bleiben oben haften */
 .round-scroll .round-main > .tabs { top: 0; }
+@media (min-width: 56.25em) { /* breit: Reiter stehen fest, nur die Fläche darunter scrollt; Rahmen und Schatten scrollen nicht mit */
+  .round-scroll { display: flex; flex-direction: column; overflow: visible; padding-bottom: 1rem; }
+  .round-scroll .round-main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
+  .round-scroll .round-main > .tabs { position: relative; flex: none; }
+  .round-scroll .round-main > .users-pane, .round-scroll .round-main > .mine-pane, .round-scroll .round-main > .order-pane { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: none; }
+}
+
+/* Handy: Buttons und Adresse im Bestellkopf klappen beim Scrollen zu (Scroll-Zeitleiste), die erste Zeile mit Besteller bleibt; Außenradien bleiben */
+.head-fold, .head-fold-in { display: contents; }
+@media (max-width: 30em) {
+  main#app.round { timeline-scope: --rs; }
+  .round-scroll { scroll-timeline: --rs block; }
+  .head-band .head-fold { display: grid; grid-template-rows: 1fr; flex-basis: 100%; animation: head-fold linear both; animation-timeline: --rs; animation-range: 0 6rem; }
+  .head-band .head-fold-in { display: grid; gap: 0.125rem; overflow: hidden; min-height: 0; }
+}
+@keyframes head-fold { to { grid-template-rows: 0fr; opacity: 0; } }
+
+.tl-short { display: none; } /* kurzer Reitertext nur auf dem Handy */
+/* Handy (bis 30 em): Kopf mit Hamburger links und Nutzer-Symbol rechts, einzeilige Ablaufleiste mit Text nur am aktuellen Schritt, kürzere Texte */
+@media (max-width: 30em) {
+  :root { --top-h: 4.4375rem; }
+  .top { min-height: 3.1875rem; }
+  .tools { position: absolute; right: 0.625rem; top: 0.625rem; }
+  #who.chip { width: 2.75rem; height: 2.75rem; padding: 0; justify-content: center; border-radius: var(--radius-pill); }
+  #who .who-name { display: none; }
+  .tl-long { display: none; }
+  .tl-short { display: inline; }
+  .round-main > .tabs button[data-tab="order"], .round-main > .tabs button[data-tab="order"][aria-selected="true"] { font-size: min(0.9375rem, 4.2cqw); font-weight: 600; }
+  .head-band .round-time { display: none; }
+  .head-band .link-pill.manage-only, .link-pill.manage-only { display: none !important; }
+  .flow-pill { display: flex; flex-wrap: nowrap; width: 100%; box-sizing: border-box; border-radius: var(--radius-pill); }
+  .flow-pill .fp-seg { min-width: 0; flex: 0 0 auto; padding: 0.1875rem 0.5rem; font-size: var(--fs-sm); }
+  .flow-pill .fp-seg.fp-now, .flow-pill .fp-seg.fp-time.closed, .flow-pill .fp-seg.act { flex: 1 1 auto; }
+  .flow-pill .fp-seg:first-child > :not(.fp-mark) { display: none; } /* „eröffnet“ nur als Symbol */
+  .flow-pill .fp-seg.fp-done:not(.closed) > * { display: none; } /* erledigt: nur Haken im Kreis, invertiert */
+  .flow-pill .fp-seg.fp-done:not(.closed)::before { content: '✓'; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--fp-done-fg); color: var(--fp-done-bg); font-size: 0.75rem; font-weight: 700; }
+  .flow-pill:not([data-phase="open"]) .fp-seg.fp-todo:not(.act) > :not(.fp-mark) { display: none; } /* offen: nur leerer Kreis */
+  .flow-pill[data-phase="open"] .fp-seg:nth-child(n+4) > :not(.fp-mark) { display: none; }
+  .round-main > .tabs button[data-tab="order"], .round-main > .tabs button[data-tab="order"][aria-selected="true"] { font-size: min(0.8125rem, 3.6cqw); }
+  /* Bezahlt/Offen: Beschriftung als Chip im jeweiligen Bereich, Betrag nur bei „Offen“ rechts neben dem Chip */
+  .pay-block .bar-top > .row { display: grid; grid-template-columns: calc(100% - var(--red-w, 100%)) 1fr; align-items: start; }
+  .pay-block .bar-top.done > .row { display: flex; justify-content: space-between; }
+  .pay-block .bar-line { flex-wrap: nowrap; overflow: hidden; }
+  .pay-block .bar-line .badge.value { display: none; }
+  .pay-block .bar-right { margin-left: 0; justify-self: start; gap: 0.5rem; padding-left: 0.5rem; }
+  .pay-block .bar-top > .row strong { padding: 0.125rem 0.625rem; border-radius: var(--radius-pill); background: var(--black); color: var(--white); font-size: var(--fs-sm); white-space: nowrap; }
+}
+
+.order-table .m-title, .order-table .m-unit { display: none; } /* Handy-Zellen der Bestellliste, am Desktop unsichtbar */
+/* Handy, Runde 2: Leiste nur mit Text am aktuellen Schritt, gleich breite Reiter, Kopfzeile in einer Zeile, schlankere Bestellliste */
+@media (max-width: 30em) {
+  .round-main > .tabs button, .round-main > .tabs button[data-tab="order"] { flex: 1 1 0; }
+  .round-scroll { padding-bottom: 0.75rem; }
+  .head-band .round-title { flex: 1 1 100%; flex-wrap: nowrap; align-items: baseline; min-width: 0; }
+  .head-band .round-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .head-band .round-no, .head-band .round-buyer { flex: none; white-space: nowrap; }
+  .pay-block .bar-line > * { display: none; } /* „Bezahlt“-Chip entfällt, der grüne Bereich bleibt leer */
+  .flow-pill .fp-seg.act { flex: 0 0 auto; }
+  .flow-pill .fp-seg.act > .fp-mark { display: none; }
+  .flow-pill .fp-seg.act .step-go { display: inline-block; box-sizing: border-box; width: 1.25rem; height: 1.25rem; padding: 0; border: 2px solid currentColor; border-radius: 50%; font-size: 0; } /* nächster Schritt: der leere Kreis ist der Knopf */
+  .flow-pill .fp-seg.act .step-go .confirm-label { font-size: var(--fs-sm); }
+  .flow-pill .step-eta .eta-lbl { display: none; }
+  .order-table tbody tr { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.75rem; }
+  .order-table tbody td.qty-cell, .order-table tbody td.art-cell, .order-table tbody td.var-cell, .order-table tbody td.who-cell, .order-table tbody td.unit-qty, .order-table tbody td.unit-col { display: none; }
+  .order-table tbody td.m-title { display: block; grid-column: 1 / -1; grid-row: 1; text-align: left; padding-right: 0; }
+  .order-table tbody td.m-unit { display: block; grid-column: 1; grid-row: 2; align-self: end; padding-right: 0; font-size: var(--fs-md); }
+  .order-table tbody td.sum-cell { display: block; grid-column: 2; grid-row: 2; align-self: end; }
+  .order-table tfoot tr:first-child td.foot-lbl { display: none; } /* „10 Artikel 101 €“ statt „Summe Artikel“ */
+}
+@media (max-width: 30em) {
+  .order-table tbody tr.single td.m-title { grid-column: 1; }
+  .order-table tbody tr.single td.sum-cell { grid-row: 1; align-self: baseline; } /* Menge 1: nur eine Zeile, Summe rechts */
+  .head-band .round-date { white-space: nowrap; font-size: var(--fs-sm); }
+}
+@media (max-width: 30em) {
+  .flow-pill .fp-seg { flex-shrink: 0; }
+  .flow-pill .fp-seg.fp-now { flex-shrink: 1; min-width: 0; }
+  .flow-pill[data-phase="ordered"] .step-time { display: none; } /* Platz für das Lieferzeit-Feld */
+  .flow-pill .step-eta input, .flow-pill .step-eta input.w-eta { width: 2.75rem; }
+}
+@media (max-width: 30em) { .round-main > .tabs button[data-tab="mine"] .tab-label { padding-left: 2.25rem; } } /* Platz für das ready-Kästchen links im Reiter */
+
+.user-items .detail-line { display: contents; }
+.user-items .unit-m { display: none; }
+.user-items .var::before { content: ' · '; } /* Zusatz hinter dem Gericht; am Handy in der 2. Zeile */
+@media (max-width: 30em) {
+  /* Ablaufleiste: Text nur am aktuellen Schritt (auch reine Textknoten bei passiven Nutzern) */
+  .flow-pill .fp-seg:first-child, .flow-pill .fp-seg.fp-done:not(.closed) { font-size: 0; }
+  .flow-pill:not([data-phase="open"]) .fp-seg.fp-todo:not(.act), .flow-pill[data-phase="open"] .fp-seg:nth-child(n+4) { font-size: 0; }
+  .flow-pill .fp-seg .fp-mark { font-size: var(--fs-sm); }
+  /* Kopf in einer Zeile: Hamburger, Logo, Nutzer; Menü öffnet unter dem Nutzer nach links */
+  .top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding-block: 0.5rem; }
+  .top .menu-btn { position: static; grid-column: 1; grid-row: 1; }
+  .top .brand { grid-column: 2; grid-row: 1; justify-self: center; min-width: 0; }
+  .top .brand .wordmark { width: clamp(6.5rem, 36vw, 9.5rem); height: auto; }
+  .top .tools { position: static; grid-column: 3; grid-row: 1; justify-self: end; }
+  #flow-slot { display: none; }
+  #who.chip { width: auto; max-width: 8.5rem; height: 2.25rem; padding: 0 0.75rem 0 0.5rem; }
+  #who .who-name { display: inline; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name-pop { position: fixed; left: auto; right: 0.625rem; top: 3.5rem; width: max-content; min-width: 15rem; max-width: calc(100vw - 1.25rem); }
+  /* Alle-Tab: Kartenkopf Name + Pillen in Zeile 1, Details in Zeile 2; Artikelzusatz in eigener Zeile */
+  .user-card > .card-head { flex-wrap: wrap; }
+  .user-card .head-id { display: contents; }
+  .user-card .head-id > strong { order: 1; }
+  .user-card .head-flags { order: 2; margin-left: auto; }
+  .user-card .head-id > .muted { order: 3; flex-basis: 100%; }
+  .user-items td:nth-child(2) .detail-line { display: block; font-size: var(--fs-md); }
+  .user-items td:nth-child(2) .var::before { content: none; }
+  .user-items .unit-m { display: inline; }
+  .user-items .var + .unit-m::before { content: ' · '; }
+  .user-items td.unit { display: none; }
+  /* Offene Zahlungen: engere Abstände */
+  .overlay-card.notice-card { padding: 0.5rem 1rem 0.875rem; gap: 0.5rem; }
+  .notice-card .debts-block { gap: 0.75rem; }
+}
+@media (max-width: 30em) { .flow-pill .fp-seg:first-child { flex: 0 0 auto; } } /* „eröffnet“ bleibt auch als aktueller Schritt schmal */
+@media (max-width: 30em) { /* Bezahlstreifen genau so hoch wie der Kreis davor (--mark-size) */
+  :root { --bar-top: 1.75rem; --strip-h: 1.4375rem; }
+  .pay-block .bar-top { padding-block: 0.125rem; }
+  .pay-block .bar-top > .row strong { padding: 0.0625rem 0.5rem; }
+  .pay-block .bar-top .badge.value { padding-block: 0; line-height: 1.25; }
+  .pay-block .pseg-name { font-size: var(--fs-xs); }
+}
+.round-main > .tabs, .round-main > .tabs *, .round-main > .users-pane, .round-main > .mine-pane, .round-main > .order-pane { transition: none !important; animation: none !important; } /* Reiter und Flächen wechseln sofort */
+@media (max-width: 30em) { /* Bestellliste: etwas engere Abstände bei zweizeiligen Artikeln und im Summenbereich */
+  .order-table tbody td.m-title { padding-bottom: 0; }
+  .order-table tbody td.m-unit { padding-top: 0; }
+  .order-table tbody tr.single td.m-title, .order-table tbody tr.single td.sum-cell { padding-block: 0.25rem; }
+  .order-table tfoot tr:first-child td { padding-top: 0.75rem; }
+  .order-table tfoot tr.foot-fees td { padding-block: 0.1875rem; }
+  .order-table tfoot tr:last-child td { padding-top: 0.375rem; }
+}
+@media (max-width: 30em) { /* zweizeilige Artikel noch dichter: Zeilenhöhe 1,2, kleineres Polster */
+  .order-table tbody tr:not(.single) { padding-block: 0.25rem; }
+  .order-table tbody tr:not(.single) td { padding-block: 0; line-height: 1.2; }
+  .order-table tbody tr:not(.single) td.m-unit { padding-top: 0.125rem; }
+  .order-table tbody tr:not(.single) td.sum-cell { font-size: 1rem; }
+}
+@media (max-width: 30em) { .round-main > .order-pane { padding-top: 0.375rem; } .round-main > .order-pane .order-table { margin-top: 0; } } /* Bestellen: weniger Platz über dem ersten Artikel */

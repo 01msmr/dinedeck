@@ -56,7 +56,7 @@ export const LISTS = {
 /** Zeiten in Millisekunden. */
 export const TIMING = {
   toastMs: 2600,
-  confirmMs: 4000, // so lange bleibt die Rückfrage „ist bezahlt?“ im Button
+  confirmMs: 4000, // so lange bleibt eine Rückfrage im Knopf („bestellt melden?“, „zurücknehmen?“ usw.)
   undoMs: 10 * 1000, // so lange bleibt „Rückgängig“ nach dem Löschen einer Zeile
   refreshDebounceMs: 150,
   tickMs: 1000,

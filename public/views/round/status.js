@@ -9,22 +9,9 @@ const quiet = STATUS.quietButtons ? ' quiet' : '';
 
 export function createStatus({ banners, flowHost, debtsHost, toggle, decide, undo, advance, etaField, time, autoClose }) {
   let d = null;
-  let payConfirm = null; // {user, timer}: Rückfrage im Button vor „bezahlt“
   let confirm = null; // {key, timer}: Rückfrage vor Zurücknehmen/Weitergehen
-  // Roter Strip: wer zahlt oder der Besteller darf „bezahlt“ setzen; erster Klick fragt „ist bezahlt?“, zweiter setzt es
-  const pickPay = (p) => (lc(p.user) === lc(me) || d.viewer.is_buyer
-    ? () => {
-        if (payConfirm?.user === p.user) {
-          clearTimeout(payConfirm.timer);
-          payConfirm = null;
-          toggle('paid', { user: p.user, value: true });
-          return;
-        }
-        clearTimeout(payConfirm?.timer);
-        payConfirm = { user: p.user, timer: setTimeout(() => { payConfirm = null; render(d); }, TIMING.confirmMs) };
-        render(d);
-      }
-    : null);
+  // Roter Strip: wer zahlt oder der Besteller setzt „bezahlt“ mit einem Klick
+  const pickPay = (p) => (lc(p.user) === lc(me) || d.viewer.is_buyer ? () => toggle('paid', { user: p.user, value: true }) : null);
 
   function render(data) {
     d = data;
@@ -114,16 +101,17 @@ export function createStatus({ banners, flowHost, debtsHost, toggle, decide, und
         if (x.matches('.step-go') || x.querySelector('.step-go')) el.classList.add('act'); // nächster Schritt als Knopf
         return [el];
       });
-      return h('div', { class: 'flow-pill' }, ...segs);
+      const phase = d.delivered_at ? 'delivered' : d.ordered_at ? 'ordered' : d.locked ? 'closed' : 'open'; // Handy: bestimmt, welche Abschnitte Text zeigen
+      return h('div', { class: 'flow-pill', 'data-phase': phase }, ...segs);
     };
     flowHost.replaceChildren(...(flow ? [h('div', { class: 'status-flow' }, h('div', { class: 'flow-steps' }, pill()))] : [])); // Datum steht jetzt im Restaurant-Kopf
     // Zahlungen: Zeile wie in „Alle Bestellungen“ (Kreis, Kopfband, Personen-Strips); bleibt bei „alle bezahlt“ stehen, dann ganz grün
     const payers = paidFirst((d.payers ?? []).map((p) => ({ ...p, isBuyer: lc(p.user) === lc(d.buyer) })));
     const owed = new Map(d.debts.map((x) => [lc(x.user), x.amount_cents]));
     const paidN = payers.filter((p) => p.paid).length;
-    const paidSum = d.users.filter((u) => u.paid && u.subtotal_cents > 0 && lc(u.user) !== lc(d.buyer)).reduce((a, u) => a + u.total_cents, 0); // Besteller zahlt nicht an sich selbst
+    const paidSum = d.users.filter((u) => u.subtotal_cents > 0 && (u.paid || lc(u.user) === lc(d.buyer))).reduce((a, u) => a + u.total_cents, 0); // Besteller gilt als bezahlt: Bezahlt + Offen = Bestellsumme
     const openSum = d.debts.reduce((a, x) => a + x.amount_cents, 0);
-    const redLabel = (p) => (p.paid ? '' : payConfirm?.user === p.user ? t('ist bezahlt?') : `${p.user} ${eur(owed.get(lc(p.user)) ?? 0)}`);
+    const redLabel = (p) => (p.paid ? '' : `${p.user} ${eur(owed.get(lc(p.user)) ?? 0)}`);
     const payBlock = d.ordered_at && payers.length
       ? h('div', { class: 'pay-block' },
           payMark(payers),

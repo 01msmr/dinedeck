@@ -154,13 +154,28 @@ export function roundView(id) {
     for (const b of tabsEl.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   }
   const readySlot = h('span', { class: 'tab-ready' }); // ready-Pille im Reiter des eigenen Namens
-  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, label)));
+  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, k === 'order' ? [h('span', { class: 'tl-long' }, label), h('span', { class: 'tl-short' }, t('Bestellen'))] : label)));
 
   // Mobil untereinander; ab Desktop-Breite: links Tabs, rechts Frist/Banner/Bezahlen (siehe style.css)
   app.classList.add('wide', 'round'); // Rahmen steht fest, nur der Inhalt darunter scrollt
   head.classList.add('round-head', 'folded'); // der Kopf bleibt immer schmal, es gibt kein Aufklappen
   const roundMain = h('div', { class: 'round-main' }, tabsEl, usersPane, minePane, orderPane);
-  const roundGrid = h('div', { class: 'round-grid' }, head, h('div', { class: 'round-scroll' }, debtsHost, roundMain));
+  const roundScroll = h('div', { class: 'round-scroll' }, debtsHost, roundMain);
+  const roundGrid = h('div', { class: 'round-grid' }, head, roundScroll);
+  // Rad und Wischen über Kopf, Bestellkopf, Streifen und Seitenrändern scrollen die Fläche: breit die sichtbare Fläche, schmal den ganzen Inhalt
+  const scrollTarget = () => {
+    const pane = Object.values(panes).find((p) => !p.classList.contains('hidden'));
+    return pane && getComputedStyle(pane).overflowY === 'auto' ? pane : roundScroll;
+  };
+  const page = document.querySelector('.page');
+  const outside = (e) => !scrollTarget().contains(e.target); // was nicht ohnehin selbst scrollt
+  const onWheel = (e) => { if (outside(e) && !e.target.closest('.name-pop, .overlay')) scrollTarget().scrollTop += e.deltaY; };
+  let touchY = null;
+  const onTouchStart = (e) => { touchY = outside(e) && !e.target.closest('input, textarea, select, .name-pop, .overlay') ? e.touches[0].clientY : null; };
+  const onTouchMove = (e) => { if (touchY === null) return; const y = e.touches[0].clientY; scrollTarget().scrollTop += touchY - y; touchY = y; };
+  page.addEventListener('wheel', onWheel, { passive: true });
+  page.addEventListener('touchstart', onTouchStart, { passive: true });
+  page.addEventListener('touchmove', onTouchMove, { passive: true });
   app.replaceChildren(roundGrid);
   showTab(tab);
 
@@ -178,7 +193,7 @@ export function roundView(id) {
     return patchRound(key === 'ordered' ? { ordered: true, ...eta } : { delivered: true });
   };
   // Lieferzeit: erst nach „Bestellt“ in der Ablaufzeile vor „geliefert“; Eingabe wird sofort übernommen
-  const etaField = h('label', { class: 'step-eta' }, t('Lieferung'), inEta, t('min.'));
+  const etaField = h('label', { class: 'step-eta' }, h('span', { class: 'eta-lbl' }, t('Lieferung')), inEta, t('min.'));
   inEta.addEventListener('change', () => { if (d?.ordered_at && !d.delivered_at && inEta.value !== '') patchRound({ eta_minutes: Number(inEta.value) }); });
   inEta.addEventListener('keydown', (e) => { if (e.key === 'Enter') inEta.blur(); });
   const status = createStatus({ banners, flowHost, debtsHost, toggle, decide, undo: patchRound, advance, etaField, time: timeAction, autoClose: (v) => patchRound({ close_when_ready: v }) });
@@ -293,9 +308,11 @@ export function roundView(id) {
     const sub = [...(d.restaurant.address ? [h('span', { class: 'head-address muted' }, d.restaurant.address)] : []), ...payLink, ...(editable ? [headForm] : [])];
     delSlot.replaceChildren(...(editable && d.viewer.can_delete ? [deleteBtn] : []));
     headBand.replaceChildren(
-      h('h2', { class: 'round-title' }, h('span', { class: 'round-date' }, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at))), h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
-      h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }), ...(d.viewer.can_delete && !editable ? [deleteBtn] : []))), // Kontakt zum Bestellen für alle; Löschen nur Ersteller/Admin
-      ...(sub.length ? [h('div', { class: 'head-sub' }, ...sub)] : []) // 2. Zeile: Adresse links, dahinter (Besteller, Ersteller, Admins) das schmale Formular
+      h('h2', { class: 'round-title' }, h('span', { class: 'round-date' + (isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? ' round-time' : '') }, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at))), h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      h('div', { class: 'head-fold' }, h('div', { class: 'head-fold-in' }, // Handy: klappt beim Scrollen zu, die erste Zeile mit Besteller bleibt
+        h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }), ...(d.viewer.can_delete && !editable ? [deleteBtn] : []))), // Kontakt zum Bestellen für alle; Löschen nur Ersteller/Admin
+        ...(sub.length ? [h('div', { class: 'head-sub' }, ...sub)] : []) // 2. Zeile: Adresse links, dahinter (Besteller, Ersteller, Admins) das schmale Formular
+      ))
     );
     buyerList.replaceChildren(...d.users.map((u) => h('option', { value: u.user })));
     const vals = [d.buyer, d.paypal, money(d.delivery_fee_cents), money(d.service_fee_cents)];
@@ -492,6 +509,9 @@ export function roundView(id) {
       clearInterval(tick);
       stopEdit();
       wideQ.removeEventListener('change', placeFlow);
+      page.removeEventListener('wheel', onWheel);
+      page.removeEventListener('touchstart', onTouchStart);
+      page.removeEventListener('touchmove', onTouchMove);
       document.getElementById('statusbar').replaceChildren();
       document.getElementById('flow-slot').replaceChildren();
     },

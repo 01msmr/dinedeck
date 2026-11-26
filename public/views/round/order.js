@@ -15,7 +15,7 @@ export function orderText(d) {
 export function orderActions(d) {
   return [
     h('button', {
-      class: 'link-pill', type: 'button',
+      class: 'link-pill' + (d.viewer.can_manage ? '' : ' manage-only'), type: 'button', // Handy: nur für Besteller, Ersteller und Admins
       onclick: async (e) => {
         const btn = e.currentTarget; // nach dem await ist currentTarget leer
         try {
@@ -44,13 +44,16 @@ export function orderContent(d) {
             d.groups.map((g) =>
               h(
                 'tr',
-                null,
+                { class: g.qty === 1 && !g.variant ? 'single' : null }, // einzeilig: Menge 1 ohne Zusatz
                 h('td', { class: 'num qty-cell' }, `${g.qty}×`),
                 h('td', { class: 'art-cell' }, h('strong', { class: 'art-name' }, g.article), h('span', { class: 'muted unit-inline' }, `${g.qty}× à ${eur(g.price_cents)}`), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
                 h('td', { class: 'var-cell' }, nbspUnits(shortVariant(g.variant))), // Zusatz und Nutzer in eigenen, linksbündigen Spalten
                 h('td', { class: 'who-cell muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')),
                 h('td', { class: 'num unit-qty' }, `${g.qty}×`), h('td', { class: 'num unit-col' }, eur(g.price_cents)),
-                h('td', { class: 'num' }, eur(g.sum_cents))
+                h('td', { class: 'num sum-cell' }, eur(g.sum_cents)),
+                // Handy: Zeile 1 = Gericht + Besteller; Zeile 2 = Zusatz und „2× à 5,00“ (nur bei Menge > 1) links, Summe rechts
+                h('td', { class: 'm-title' }, h('strong', { class: 'art-name' }, g.article), ' ', h('span', { class: 'muted' }, g.users.map((x) => (x.qty > 1 ? `${x.user} ${x.qty}×` : x.user)).join(', ')), g.price_differs && !placed ? h('div', { class: 'warn-text' }, t('Preis prüfen – zuletzt {p}', { p: eur(g.known_price_cents) })) : null),
+                g.qty > 1 || g.variant ? h('td', { class: 'm-unit muted' }, [g.variant ? nbspUnits(shortVariant(g.variant)) : null, g.qty > 1 ? `${g.qty}× à ${eur(g.price_cents)}` : null].filter(Boolean).join(' · ')) : null
               )
             )
           ),

@@ -1,11 +1,8 @@
 // „Alle“-Liste: Karten je User mit Artikeln, Ready-/Bezahlt-Marken
 import { t } from '/i18n.js';
-import { TIMING } from '/config.js';
 import { eur, h, lc, me } from '/util.js';
 import { nbspUnits } from '/format.js';
 import { checkPill, filterPill } from '/views/check-pill.js';
-
-let payConfirm = null; // { user, timer }: wartet auf die zweite Bestätigung
 
 export function flagBadge(d, toggle, u, flag) {
   const on = !!u[flag];
@@ -17,27 +14,10 @@ export function flagBadge(d, toggle, u, flag) {
   const editable = lc(u.user) === lc(me) || d.viewer.is_buyer;
   const blocked = !d.ordered_at ? t('Bezahlen erst nach „Bestellt“') : !u.done ? t('Erst ready setzen, dann bezahlen') : null; // vorher stehen Anteile bzw. Artikel nicht fest
   const clickable = editable && !blocked;
-  const key = lc(u.user);
-  const confirming = !on; // „bezahlt“ setzen braucht eine zweite Bestätigung
-  const asking = confirming && payConfirm?.user === key;
-  const pill = checkPill(asking ? t('ist bezahlt?') : t('bezahlt'), {
-    on, dim: !on && !!blocked, confirm: asking, title: blocked ?? (clickable ? t('Umschalten') : null),
-    onclick: clickable
-      ? () => {
-          if (!confirming) return toggle(flag, { user: u.user, value: false });
-          if (payConfirm?.user === key) {
-            clearTimeout(payConfirm.timer);
-            payConfirm = null;
-            return toggle(flag, { user: u.user, value: true });
-          }
-          clearTimeout(payConfirm?.timer);
-          payConfirm = { user: key, timer: setTimeout(() => { payConfirm = null; pill.querySelector('.cp-label').textContent = t('bezahlt'); pill.classList.remove('confirm'); }, TIMING.confirmMs) };
-          pill.querySelector('.cp-label').textContent = t('ist bezahlt?');
-          pill.classList.add('confirm');
-        }
-      : null,
+  return checkPill(t('bezahlt'), {
+    on, dim: !on && !!blocked, title: blocked ?? (clickable ? t('Umschalten') : null),
+    onclick: clickable ? () => toggle(flag, { user: u.user, value: !on }) : null, // sofort, ohne Rückfrage
   });
-  return pill;
 }
 
 // „ist Besteller“: nur eine Anzeige, Text mit Haken davor, ab „geliefert“ blass
@@ -54,7 +34,7 @@ function itemsTable(u, single, total) {
       null,
       u.items.map((i, n) => h('tr', null,
         h('td', { class: 'num' }, `${i.qty}×`),
-        h('td', null, i.article, i.variant ? h('span', { class: 'muted' }, ` · ${nbspUnits(i.variant)}`) : null),
+        h('td', null, i.article, h('span', { class: 'detail-line' }, i.variant ? h('span', { class: 'muted var' }, nbspUnits(i.variant)) : null, single ? null : h('span', { class: 'muted unit-m' }, eur(i.price_cents)))), // Handy: Zusatz und Einzelpreis in Zeile 2
         h('td', { class: 'num unit' }, single ? null : eur(i.price_cents)),
         h('td', { class: 'num total' }, single ? h('strong', { class: 'text-fg' }, eur(i.price_cents)) : total && n === last ? h('strong', { class: 'text-fg' }, total) : null)))
     )
@@ -72,7 +52,7 @@ export function renderUsers(d, toggle, usersPane) {
     return h(
       'section',
       { class: `card user-card ${u.done ? (u.paid || lc(u.user) === lc(d.buyer) ? 'paid' : 'unpaid') : 'unready'}` },
-      h('div', { class: 'row between card-head' }, h('div', { class: 'row gap-3' }, h('strong', null, u.user + (lc(u.user) === lc(d.buyer) ? t(' (Besteller)') : '')), count > 1 || u.fee_cents ? h('span', { class: 'muted' }, [count > 1 ? t('{n} Artikel', { n: count }) : null, u.fee_cents ? `${t('Liefer- und Serviceanteil')} ${eur(u.fee_cents)}` : null].filter(Boolean).join(' · ')) : null), h('div', { class: 'row' }, flagBadge(d, toggle, u, 'done'), lc(u.user) === lc(d.buyer) ? buyerBadge(d) : null, !u.done || lc(u.user) === lc(d.buyer) ? null : flagBadge(d, toggle, u, 'paid'))),
+      h('div', { class: 'row between card-head' }, h('div', { class: 'row gap-3 head-id' }, h('strong', null, u.user + (lc(u.user) === lc(d.buyer) ? t(' (Besteller)') : '')), count > 1 || u.fee_cents ? h('span', { class: 'muted' }, [count > 1 ? t('{n} Artikel', { n: count }) : null, u.fee_cents ? `${t('Liefer- und Serviceanteil')} ${eur(u.fee_cents)}` : null].filter(Boolean).join(' · ')) : null), h('div', { class: 'row head-flags' }, flagBadge(d, toggle, u, 'done'), lc(u.user) === lc(d.buyer) ? buyerBadge(d) : null, !u.done || lc(u.user) === lc(d.buyer) ? null : flagBadge(d, toggle, u, 'paid'))),
       u.items.length
         ? itemsTable(u, u.done && count === 1 && !u.fee_cents, u.done && (count > 1 || u.fee_cents) ? eur(u.total_cents) : null) // bei nur 1 Artikel ohne Lieferanteil wäre die Summe doppelt
         : h('div', { class: 'muted' }, t('noch nichts'))

@@ -182,7 +182,6 @@ const EN = {
   'Nutzer': 'User',
   'Bezahlen': 'Pay',
   'alles bezahlt': 'all paid',
-  'ist bezahlt?': 'is paid?',
   '{buyer} bezahlen': 'Pay {buyer}',
   '✓ Du hast bezahlt': '✓ You have paid',
   '{amount} per PayPal zahlen': 'Pay {amount} via PayPal',
