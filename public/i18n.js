@@ -52,6 +52,7 @@ const EN = {
   'Als Gast': 'As guest',
   'als Gast': 'as guest',
   'Gast': 'guest',
+  'Liste': 'List',
   'Erst ready setzen, dann bezahlen': 'Set ready first, then pay',
   'Bezahlen erst nach „Bestellt“': 'Payment opens once the order is placed',
   'Keine passenden Bestellungen.': 'No matching orders.',

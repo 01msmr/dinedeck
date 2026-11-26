@@ -881,7 +881,7 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table .art-name { display: inline-block; max-width: 100%; margin-right: 0.625rem; } /* Gerichtname bleibt in einer Zeile, solange er allein passt; Namen brechen um */
 .order-table .lbl-short { display: none; }
 .order-table .unit-inline { display: none; }
-@media (max-width: 30em) {
+@container orderpane (max-width: 44rem) {
   /* Handy: jede Zeile als Raster – Menge | Gericht mit Namenszeile darunter | Summe unten rechts auf Höhe der Namenszeile */
   .order-table, .order-table tbody, .order-table tfoot, .order-table tbody tr { display: block; }
   .order-table thead { display: none; }
@@ -902,17 +902,17 @@ button.btn.copy-btn:hover { background: var(--black); color: var(--white); borde
 .order-table td.unit-col, .order-table thead th.unit-head { width: 1%; white-space: nowrap; padding-left: 0; padding-right: 2rem; } /* Preisspalte schrumpft auf den Inhalt */
 .order-table thead th.unit-head { position: relative; }
 .order-table .unit-head-lbl { position: absolute; right: 1.5rem; top: 0.375rem; } /* Überschrift ragt nach links, ohne die Spalte zu verbreitern */
-@media (max-width: 30em) { .order-table td.unit-col { padding: 0; } }
+@container orderpane (max-width: 44rem) { .order-table td.unit-col { padding: 0; } }
 .order-table tbody td:nth-child(7) { font-size: 1.0625rem; } /* Summen je Gericht */
 .order-table td.art-cell, .order-table td.var-cell, .order-table td.who-cell { text-align: left; padding-right: 1.25rem; } /* Zusatz und Nutzer: eigene linksbündige Spalten */
 .order-table td.var-cell, .order-table td.who-cell { font-size: var(--fs-md); }
 .order-table td.art-cell { width: 1%; white-space: nowrap; }
-@media (max-width: 30em) { .order-table td.art-cell { width: auto; white-space: normal; padding-right: 0; } }
+@container orderpane (max-width: 44rem) { .order-table td.art-cell { width: auto; white-space: normal; padding-right: 0; } }
 .order-table tfoot tr:not(:last-child) td { font-size: var(--fs-lg); font-weight: 400; } /* „Summe Artikel“, nicht fett */
 .order-table thead th:first-child, .order-table td.qty-cell, .user-items td:first-child { text-align: right; padding-right: 1.25rem; } /* Anzahl: eigene rechtsbündige Spalte mit mehr Abstand zum Namen */
-@media (max-width: 30em) { .order-table tbody tr { column-gap: 0.75rem; } .order-table td.qty-cell { padding-right: 0; } }
+@container orderpane (max-width: 44rem) { .order-table tbody tr { column-gap: 0.75rem; } .order-table td.qty-cell { padding-right: 0; } }
 .order-table tfoot td.qty-total { font-weight: 700; color: var(--fg); text-align: left; padding-left: 0.25rem; }
-@media (max-width: 30em) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
+@container orderpane (max-width: 44rem) { .order-table tfoot tr { justify-content: flex-end; } .order-table tfoot td.qty-total { margin-right: auto; } }
 .order-table tfoot tr:not(:last-child) td:last-child, .order-table tfoot tr:not(:last-child) td.qty-total { font-weight: 700; } /* Betrag und Gesamtzahl fett, nur das Wort „Summe Artikel“ normal */
 /* Dunkler Kopfbereich: alle Texte auf einer gemeinsamen Grundlinie */
 .round-head .head-band { align-items: baseline; } /* alle Elemente des Restaurant-Bands auf einer Grundlinie */
@@ -940,7 +940,7 @@ button.side-paid { border: 0; background: none; padding: 0; cursor: pointer; fon
 
 /* Bestellliste: Tabelle nur so breit wie nötig (bis zum Rand des Blocks); Abstand zwischen den Spalten bleibt */
 .order-table { width: 100%; } /* nutzt die ganze Breite der Karte */
-@media (max-width: 30em) { .order-table { width: 100%; } }
+@container orderpane (max-width: 44rem) { .order-table { width: 100%; } }
 .status-flow .now.unready { background: var(--bad); color: var(--on-bad); }
 button.confirm, button.btn.confirm, button.badge.confirm { background: var(--black); color: var(--white); border-color: color-mix(in srgb, var(--white) 35%, var(--black)); } /* Rückfrage „ist bezahlt?“: schwarz */
 
@@ -1031,16 +1031,8 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .flow-pill .fp-seg.act .step-go { display: inline-block; box-sizing: border-box; width: 1.25rem; height: 1.25rem; padding: 0; border: 2px solid currentColor; border-radius: 50%; font-size: 0; } /* nächster Schritt: der leere Kreis ist der Knopf */
   .flow-pill .fp-seg.act .step-go .confirm-label { font-size: var(--fs-sm); }
   .flow-pill .step-eta .eta-lbl { display: none; }
-  .order-table tbody tr { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.75rem; }
-  .order-table tbody td.qty-cell, .order-table tbody td.art-cell, .order-table tbody td.var-cell, .order-table tbody td.who-cell, .order-table tbody td.unit-qty, .order-table tbody td.unit-col { display: none; }
-  .order-table tbody td.m-title { display: block; grid-column: 1 / -1; grid-row: 1; text-align: left; padding-right: 0; }
-  .order-table tbody td.m-unit { display: block; grid-column: 1; grid-row: 2; align-self: end; padding-right: 0; font-size: var(--fs-md); }
-  .order-table tbody td.sum-cell { display: block; grid-column: 2; grid-row: 2; align-self: end; }
-  .order-table tfoot tr:first-child td.foot-lbl { display: none; } /* „10 Artikel 101 €“ statt „Summe Artikel“ */
 }
 @media (max-width: 30em) {
-  .order-table tbody tr.single td.m-title { grid-column: 1; }
-  .order-table tbody tr.single td.sum-cell { grid-row: 1; align-self: baseline; } /* Menge 1: nur eine Zeile, Summe rechts */
   .head-band .round-date { white-space: nowrap; font-size: var(--fs-sm); }
 }
 @media (max-width: 30em) {
@@ -1092,7 +1084,7 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .pay-block .bar-top .badge.value { padding-block: 0; line-height: 1.25; }
   .pay-block .pseg-name { font-size: var(--fs-xs); }
 }
-@media (max-width: 30em) { /* Bestellliste: etwas engere Abstände bei zweizeiligen Artikeln und im Summenbereich */
+@container orderpane (max-width: 44rem) { /* Bestellliste: etwas engere Abstände bei zweizeiligen Artikeln und im Summenbereich */
   .order-table tbody td.m-title { padding-bottom: 0; }
   .order-table tbody td.m-unit { padding-top: 0; }
   .order-table tbody tr.single td.m-title, .order-table tbody tr.single td.sum-cell { padding-block: 0.25rem; }
@@ -1100,7 +1092,7 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .order-table tfoot tr.foot-fees td { padding-block: 0.1875rem; }
   .order-table tfoot tr:last-child td { padding-top: 0.375rem; }
 }
-@media (max-width: 30em) { /* zweizeilige Artikel noch dichter: Zeilenhöhe 1,2, kleineres Polster */
+@container orderpane (max-width: 44rem) { /* zweizeilige Artikel noch dichter: Zeilenhöhe 1,2, kleineres Polster */
   .order-table tbody tr:not(.single) { padding-block: 0.25rem; }
   .order-table tbody tr:not(.single) td { padding-block: 0; line-height: 1.2; }
   .order-table tbody tr:not(.single) td.m-unit { padding-top: 0.125rem; }
@@ -1135,9 +1127,27 @@ main#app.round .round-head { flex: none; width: min(100% - 1.75rem, var(--conten
   .head-band .round-buyer { margin-left: auto; }
 }
 @media (max-width: 30em) { .top .brand .wordmark { transform: translateY(-0.09375rem); } } /* Logo etwas höher (1,5 px) */
-@media (max-width: 30em) { /* Summenbereich der Bestellliste noch etwas kompakter */
+@media (max-width: 30em) { .round-main > .order-pane { padding-bottom: 0.125rem; } }
+
+@container orderpane (max-width: 44rem) { /* Bestellliste im Handy-Raster, sobald die Fläche für die Tabelle zu schmal ist (nicht nur auf dem Handy) */
+  .order-table tbody tr { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.75rem; }
+  .order-table tbody td.qty-cell, .order-table tbody td.art-cell, .order-table tbody td.var-cell, .order-table tbody td.who-cell, .order-table tbody td.unit-qty, .order-table tbody td.unit-col { display: none; }
+  .order-table tbody td.m-title { display: block; grid-column: 1 / -1; grid-row: 1; text-align: left; padding-right: 0; }
+  .order-table tbody td.m-unit { display: block; grid-column: 1; grid-row: 2; align-self: end; padding-right: 0; font-size: var(--fs-md); }
+  .order-table tbody td.sum-cell { display: block; grid-column: 2; grid-row: 2; align-self: end; }
+  .order-table tfoot tr:first-child td.foot-lbl { display: none; } /* „10 Artikel 101 €“ statt „Summe Artikel“ */
+  .order-table tbody tr.single td.m-title { grid-column: 1; }
+  .order-table tbody tr.single td.sum-cell { grid-row: 1; align-self: baseline; } /* Menge 1: nur eine Zeile, Summe rechts */
   .order-table tfoot tr:first-child td { padding-top: 0.5rem; padding-bottom: 0.125rem; }
   .order-table tfoot tr.foot-fees td { padding-block: 0.0625rem; }
   .order-table tfoot tr:last-child td { padding-top: 0.25rem; padding-bottom: 0; }
-  .round-main > .order-pane { padding-bottom: 0.125rem; }
+}
+.round-main > .order-pane { container: orderpane / inline-size; }
+
+.tl-mid { display: none; }
+@media (min-width: 30.0625em) and (max-width: 43.6875em) { .tl-long { display: none; } .tl-mid { display: inline; } } /* schmaler als Desktop, breiter als Handy: „Liste“ statt „Bestellliste“ */
+@media (min-width: 30.0625em) and (max-width: 43.6875em) { /* mittlere Breite: ready-Pille im „Meine“-Reiter auf 67 % verkleinert, Name bleibt frei */
+  .round-main > .tabs .tab-ready { left: 0.25rem; }
+  .round-main > .tabs .tab-ready .check-pill { transform: scale(0.67); transform-origin: left center; }
+  .round-main > .tabs button[data-tab="mine"] .tab-label { padding-left: 4rem; }
 }

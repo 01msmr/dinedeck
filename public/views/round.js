@@ -154,7 +154,7 @@ export function roundView(id) {
     for (const b of tabsEl.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   }
   const readySlot = h('span', { class: 'tab-ready' }); // ready-Pille im Reiter des eigenen Namens
-  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, k === 'order' ? [h('span', { class: 'tl-long' }, label), h('span', { class: 'tl-short' }, t('Bestellen'))] : label)));
+  for (const [k, label] of tabDefs) tabsEl.append(h('button', { 'data-tab': k, role: 'tab', onclick: () => showTab(k) }, ...(k === 'mine' ? [readySlot] : []), h('span', { class: 'tab-label' }, k === 'order' ? [h('span', { class: 'tl-long' }, label), h('span', { class: 'tl-mid' }, t('Liste')), h('span', { class: 'tl-short' }, t('Bestellen'))] : label)));
 
   // Mobil untereinander; ab Desktop-Breite: links Tabs, rechts Frist/Banner/Bezahlen (siehe style.css)
   app.classList.add('wide', 'round'); // Rahmen steht fest, nur der Inhalt darunter scrollt
