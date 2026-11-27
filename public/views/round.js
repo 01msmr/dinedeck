@@ -8,6 +8,7 @@ import { nbspUnits, payHref, isToday, beforeThisYear, usableEta } from '/format.
 import { flagBadge as flagBadgeOf, renderUsers as renderUsersList } from '/views/round/users.js';
 import { checkPill } from '/views/check-pill.js';
 import { payRows } from '/views/round/pay.js';
+import { trashIcon } from '/icons.js';
 import { app, eur, fmtDate, fmtDay, fmtClock, lc, h, toast, api, act, me, contactLinks, fmtRemaining, fold, parseMoney, flashButton, money, nav } from '/util.js';
 
 // Ausklapp-Chevron wie im Finder: dünner Winkel mit runden Enden, dreht sich beim Öffnen nach unten
@@ -273,7 +274,7 @@ export function roundView(id) {
   };
   // Löschen: nur Ersteller oder Admin, mit Sicherheitsabfrage
   const deleteBtn = h('button', {
-    class: 'btn small danger', type: 'button',
+    class: 'btn small danger del-btn', type: 'button', title: t('Bestellung löschen'), 'aria-label': t('Bestellung löschen'),
     onclick: async () => {
       const ok = await confirmDialog({
         title: t('Bestellung löschen?'),
@@ -285,7 +286,7 @@ export function roundView(id) {
       toast(t('Bestellung gelöscht'));
       location.hash = '#/';
     },
-  }, t('Bestellung löschen'));
+  }, trashIcon(), h('span', { class: 'del-label' }, t('Bestellung löschen')));
   head.append(headBand, h('div', { class: 'head-side' }, timerCard, orderCard));
 
   // Klick auf die Bestellnummer: Link zu dieser Bestellung in die Zwischenablage
@@ -305,10 +306,16 @@ export function roundView(id) {
     const editable = manage && !locked;
     const payHref0 = d.paypal_visible && d.paypal && !d.viewer.is_buyer ? payHref(d.paypal, 0) : null; // allgemeiner Bezahllink ohne Betrag, für alle außer dem Besteller
     const payLink = payHref0 ? [h('a', { class: 'head-paylink', href: payHref0, target: '_blank', rel: 'noopener noreferrer', title: t('Bezahlen') }, payHref0.replace(/^https?:\/\//, ''))] : [];
+    const addr = d.restaurant.address ?? '';
+    const cut = addr.lastIndexOf(', ');
+    const street = cut > 0 ? addr.slice(0, cut) : addr;
+    const city = cut > 0 ? addr.slice(cut + 2) : '';
+    const addr2 = addr ? h('div', { class: 'head-addr2 muted' }, h('span', { class: 'addr-street' }, street), city ? h('span', { class: 'addr-city' }, city) : null) : null; // Desktop: Straße unter dem Namen, PLZ Ort direkt darunter auf Höhe der Kontaktknöpfe
     const sub = [...(d.restaurant.address ? [h('span', { class: 'head-address muted' }, d.restaurant.address)] : []), ...payLink, ...(editable ? [headForm] : [])];
     delSlot.replaceChildren(...(editable && d.viewer.can_delete ? [deleteBtn] : []));
     headBand.replaceChildren(
       h('h2', { class: 'round-title' }, h('span', { class: 'round-date' + (isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? ' round-time' : '') }, isToday(d.created_at, Date.now(), DEFAULTS.nightEndHour) ? fmtClock(d.created_at) : fmtDay(d.created_at, beforeThisYear(d.created_at))), h('span', { class: 'round-name' }, d.restaurant.name), h('button', { class: 'round-no', type: 'button', title: t('Link zur Bestellung kopieren'), onclick: copyOrderUrl }, `#${d.id}`), h('span', { class: 'round-buyer' }, h('strong', null, d.buyer), ` ${t('bestellt')}`)),
+      ...(addr2 ? [addr2] : []),
       h('div', { class: 'head-fold' }, h('div', { class: 'head-fold-in' }, // Handy: klappt beim Scrollen zu, die erste Zeile mit Besteller bleibt
         h('div', { class: 'head-contact' }, h('div', { class: 'row' }, ...orderActions(d), contactLinks(d.restaurant, { linkPill: true }), ...(d.viewer.can_delete && !editable ? [deleteBtn] : []))), // Kontakt zum Bestellen für alle; Löschen nur Ersteller/Admin
         ...(sub.length ? [h('div', { class: 'head-sub' }, ...sub)] : []) // 2. Zeile: Adresse links, dahinter (Besteller, Ersteller, Admins) das schmale Formular

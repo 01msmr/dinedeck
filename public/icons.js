@@ -20,6 +20,7 @@ export const lockIcon = () => svgIcon([['rect', { x: 5, y: 11, width: 14, height
 export const undoIcon = () => svgIcon([['path', { d: 'M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-3' }]], { cls: 'lock-icon' });
 export const allIcon = () => svgIcon([['path', { d: 'M9 6h12M9 12h12M9 18h12' }], ['path', { d: 'M4 6h.01M4 12h.01M4 18h.01' }]], { cls: 'nav-icon', stroke: 2.4 }); // „Alle Bestellungen“: Liste
 export const statsIcon = () => svgIcon([['path', { d: 'M5 21V11M12 21V4M19 21v-7' }]], { cls: 'nav-icon', stroke: 2.6 }); // „Statistik“: Säulen
+export const trashIcon = () => svgIcon([['path', { d: 'M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6' }]], { cls: 'trash-icon' }); // Papierkorb: „Bestellung löschen“ auf schmalen Ansichten
 export const closeIcon = () => svgIcon([['path', { d: 'M6 6l12 12M18 6L6 18' }]], { cls: 'close-icon' });
 export const copyIcon = () => svgIcon([['path', { d: 'M5 15V5a2 2 0 0 1 2-2h10' }], ['rect', { x: 9, y: 7, width: 12, height: 14, rx: 2 }]], { cls: 'copy-icon', viewBox: '1 0 24 24' }); // Zeichnung liegt bei x 5–21: Ausschnitt verschoben, damit sie mittig sitzt
 export const recycleIcon = () => svgIcon([
